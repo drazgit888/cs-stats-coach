@@ -348,11 +348,12 @@ def build_payload(player, cs2, matches, mates):
 
     return {
         "player": {"nickname": player.get("nickname"), "avatar": player.get("avatar") or "",
+                   "url": (player.get("faceit_url") or "").replace("{lang}", "en"),
                    "level": level, "elo": elo, "progress": progress, "to_next": to_next},
         "summary": {"matches": int(len(matches)), "wins": wins, "losses": int(len(matches) - wins),
                     "win_rate": clean_num(matches["won"].mean()), "kd": clean_num(matches["kd"].mean()),
                     "hs": clean_num(matches["hs_pct"].mean()), "adr": clean_num(matches["adr"].mean()),
-                    "streak_text": streak_text},
+                    "streak_text": streak_text, "streak": streak, "streak_win": bool(last)},
         "form": [bool(x) for x in matches["won"].tail(10)],
         "tips": [{"icon": e, "html": tip_html(t)} for e, t in coach_tips(matches, mates)],
         "kd": records(kd, {"n": "match_nr", "kd": "kd", "avg10": "avg10", "map": "map", "won": "won"}),
@@ -377,7 +378,7 @@ def build_payload(player, cs2, matches, mates):
 # Hide Streamlit's own header and spacing so the dashboard fills the page
 st.markdown(
     """<style>
-    header[data-testid="stHeader"] {background: transparent;}
+    header[data-testid="stHeader"] {display: none;}
     .block-container {padding: 0.5rem 0.5rem 0 0.5rem; max-width: 100%;}
     iframe {display: block;}
     </style>""",

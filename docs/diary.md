@@ -81,3 +81,16 @@
 - **What I learned:** sometimes the tool's default look isn't enough, and it's OK to change approach halfway. Version 2 still exists in my GitHub history (commit `51c6282`) so I can compare.
 - **Before/after:** `images/v1-live-app.png` → `images/v3-hud-design-test-data.png` (v2) → `images/v3-briefing-test-data.png`, `images/v3-mappool-test-data.png`, `images/v3-matches-test-data.png` (v3, made with test data)
 - **What I think / what friends think:** _[YOUR WORDS]_
+
+## 2026-11-20: Version 4 – my own design reference
+- **What happened:** I still wanted it more beautiful, so I made a **mockup picture** of what I want (dark, orange, big bold italic titles, a menu at the top, cards with icons and orange progress bars) and used the official CS website as a mood reference.
+- **What I built from it:** a new page design with a top menu (**Home, Briefing, Matches, Maps, Squad, Progress, Highlights**):
+  - **Home:** big title "Your CS2 stats. Your own progression.", a button to the briefing, and my level/Elo, win rate, K/D and headshot % with line icons
+  - **Briefing:** each coach tip is a card with its own icon
+  - **Maps:** a card per map with an orange "wins / games" bar, plus aim charts
+  - **Squad:** teammate cards with a win bar, friends vs strangers
+  - **Progress:** a ring showing how close I am to the next FACEIT level, my current streak with a flame, a "recent wins" checklist, the weekday × time heatmap and K/D by hour
+- **Originality rule:** I used the official website only as *inspiration for the mood*. The backgrounds (walls, arches, windows, crates, warm light, dust) are drawn with code, and the font is a free Google font (Barlow Condensed). No logos, game art, map graffiti or official fonts.
+- **What I learned:** a picture of what you want ("mockup") makes it much easier to explain a design than words.
+- **Pictures:** `images/v4-home-test-data.png`, `images/v4-maps-test-data.png`, `images/v4-progress-test-data.png` (made with test data)
+- **What I think / what friends think:** _[YOUR WORDS]_

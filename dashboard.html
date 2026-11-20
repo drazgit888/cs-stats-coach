@@ -4,231 +4,180 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-/* CS Stats Coach v3 – original "game menu" design. No game logos or art. */
+/* CS Stats Coach v4 – original "tactical poster" design.
+   All backgrounds are drawn with code (SVG shapes, gradients, noise). No game art, logos or fonts. */
 :root {
-  --bg: #07090c;
-  --panel: rgba(20, 24, 31, 0.78);
-  --panel-solid: #12161c;
-  --line: rgba(255, 186, 92, 0.16);
-  --text: #ece7da;
-  --muted: #8f96a3;
-  --orange: #ffad3b;
-  --orange-2: #ff7a1a;
-  --khaki: #c8b98a;
-  --win: #4fd18b;
-  --loss: #ff5a5f;
-  --sky: #6ec3ff;
-  --radius: 14px;
+  --bg: #0b0b0c;
+  --card: rgba(22, 22, 24, 0.82);
+  --card-line: rgba(255, 255, 255, 0.08);
+  --text: #f1ede6;
+  --muted: #a39c92;
+  --orange: #ff7a00;
+  --orange-2: #ff9a2e;
+  --win: #ff7a00;
+  --loss: #6b6560;
+  --good: #52d18a;
+  --bad: #ff5b4f;
+  --head: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
-body { overflow-x: hidden; }
+html, body { background: var(--bg); color: var(--text); font-family: Barlow, system-ui, sans-serif; }
+a { color: inherit; text-decoration: none; }
 
-/* animated background */
-.bg {
-  position: fixed; inset: 0; z-index: -1; overflow: hidden;
-  background:
-    radial-gradient(1200px 600px at 85% -10%, rgba(255,122,26,0.18), transparent 60%),
-    radial-gradient(900px 500px at -10% 30%, rgba(110,195,255,0.08), transparent 60%),
-    var(--bg);
+/* ---------- top bar ---------- */
+.top {
+  position: relative; z-index: 10; display: flex; align-items: center; gap: 34px;
+  padding: 18px 40px; background: linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,0));
 }
-.bg::before {
-  content: ""; position: absolute; inset: -50%;
-  background-image:
-    linear-gradient(rgba(200,185,138,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200,185,138,0.05) 1px, transparent 1px);
-  background-size: 48px 48px;
-  transform: perspective(600px) rotateX(55deg);
-  animation: gridmove 18s linear infinite;
+.logo { font: italic 900 30px/1 var(--head); letter-spacing: -.02em; display: flex; align-items: center; gap: 2px; }
+.logo span { color: var(--orange); }
+.links { display: flex; gap: 26px; flex-wrap: wrap; flex: 1; }
+.links button {
+  background: none; border: 0; color: #d9d3ca; cursor: pointer; padding: 6px 0; position: relative;
+  font: 700 15px var(--head); letter-spacing: .08em; text-transform: uppercase; transition: color .2s;
 }
-@keyframes gridmove { to { background-position: 0 480px, 0 0; } }
+.links button::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--orange);
+  transform: scaleX(0); transition: transform .25s; }
+.links button:hover { color: #fff; }
+.links button.on { color: #fff; }
+.links button.on::after { transform: scaleX(1); }
+.btn-out { border: 1.5px solid rgba(255,255,255,.7); padding: 7px 14px; border-radius: 3px;
+  font: 700 13px var(--head); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; transition: all .2s; }
+.btn-out:hover { background: #fff; color: #000; }
 
-.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 18px 40px; }
+/* ---------- pages ---------- */
+.page { display: none; position: relative; min-height: 760px; overflow: hidden; }
+.page.on { display: block; animation: fade .5s ease both; }
+@keyframes fade { from { opacity: 0; } }
+.scene { position: absolute; inset: 0; z-index: 0; }
+.scene svg { width: 100%; height: 100%; display: block; }
+.shade { position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(90deg, rgba(8,8,9,.92) 0%, rgba(8,8,9,.55) 45%, rgba(8,8,9,.15) 100%),
+              linear-gradient(0deg, rgba(8,8,9,1) 0%, rgba(8,8,9,0) 45%); }
+.inner { position: relative; z-index: 2; padding: 46px 40px 60px; max-width: 1240px; }
 
-/* ---------- HERO ---------- */
-.hero {
-  position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: 26px; align-items: center;
-  padding: 26px 28px; border-radius: 20px; overflow: hidden;
-  background: linear-gradient(120deg, rgba(255,173,59,0.14), rgba(18,22,28,0.9) 45%), var(--panel-solid);
-  border: 1px solid var(--line);
-  box-shadow: 0 30px 80px -30px rgba(255,122,26,0.35);
-  animation: rise .7s ease both;
+h1 { font: italic 900 clamp(48px, 7.4vw, 92px)/0.9 var(--head); text-transform: uppercase; letter-spacing: -.01em;
+  text-shadow: 0 6px 30px rgba(0,0,0,.6); animation: slide .7s cubic-bezier(.2,.8,.2,1) both; }
+h1 .o { color: var(--orange); }
+@keyframes slide { from { opacity: 0; transform: translateX(-30px); } }
+.lead { font-size: 19px; line-height: 1.45; max-width: 520px; margin: 18px 0 26px; color: #e6e0d7; animation: slide .7s .1s both; }
+.cta { display: inline-flex; align-items: center; gap: 12px; background: var(--orange); color: #111; cursor: pointer; border: 0;
+  padding: 14px 24px; border-radius: 3px; font: 700 18px var(--head); letter-spacing: .06em; text-transform: uppercase;
+  box-shadow: 0 10px 30px -10px var(--orange); transition: transform .2s, background .2s; animation: slide .7s .2s both; }
+.cta:hover { background: var(--orange-2); transform: translateY(-2px); }
+
+/* feature row under hero */
+.features { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 90px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 22px; }
+.feat { display: flex; gap: 14px; align-items: center; padding: 0 18px; border-left: 1px solid rgba(255,255,255,.12); }
+.feat:first-child { border-left: 0; padding-left: 0; }
+.feat svg { width: 34px; height: 34px; flex: none; }
+.feat .t { font: 700 15px var(--head); letter-spacing: .06em; text-transform: uppercase; }
+.feat .v { font: italic 800 30px/1 var(--head); color: var(--orange); }
+.feat .s { font-size: 13px; color: var(--muted); }
+
+/* ---------- cards ---------- */
+.cards { display: grid; gap: 18px; margin-top: 34px; }
+.c3 { grid-template-columns: repeat(3, 1fr); }
+.c4 { grid-template-columns: repeat(4, 1fr); }
+.c2 { grid-template-columns: repeat(2, 1fr); }
+.card {
+  position: relative; background: var(--card); border: 1px solid var(--card-line); border-radius: 6px; padding: 24px;
+  backdrop-filter: blur(4px); overflow: hidden; transition: transform .25s, border-color .25s, box-shadow .25s;
+  animation: up .55s cubic-bezier(.2,.8,.2,1) both;
 }
-.hero::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px);
-}
-.avatar {
-  width: 104px; height: 104px; border-radius: 22px; object-fit: cover;
-  border: 2px solid var(--orange); box-shadow: 0 0 0 6px rgba(255,173,59,0.12), 0 0 40px rgba(255,173,59,0.35);
-  background: #1d232c; display: grid; place-items: center; font: 700 44px 'Chakra Petch'; color: var(--orange);
-}
-.kicker { font: 700 12px 'JetBrains Mono'; letter-spacing: .3em; color: var(--khaki); text-transform: uppercase; }
-.name { font: 700 46px/1.05 'Chakra Petch'; letter-spacing: .02em; margin: 6px 0 10px; }
-.name span { color: var(--orange); }
-.elo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.elo-bar { flex: 1; min-width: 200px; max-width: 420px; height: 10px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
-.elo-bar i { display: block; height: 100%; width: 0; border-radius: inherit;
-  background: linear-gradient(90deg, var(--orange-2), var(--orange)); box-shadow: 0 0 18px var(--orange);
-  transition: width 1.6s cubic-bezier(.2,.8,.2,1); }
-.elo-note { font: 500 13px 'JetBrains Mono'; color: var(--muted); }
-.elo-note b { color: var(--orange); }
+.card:hover { transform: translateY(-4px); border-color: rgba(255,122,0,.45); box-shadow: 0 20px 40px -20px rgba(255,122,0,.4); }
+@keyframes up { from { opacity: 0; transform: translateY(18px); } }
+.card .ico { width: 44px; height: 44px; margin-bottom: 26px; }
+.card h3 { font: italic 800 30px/1 var(--head); text-transform: uppercase; margin-bottom: 8px; }
+.card h4 { font: italic 800 22px/1 var(--head); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 4px; }
+.card h4::after { content: ""; display: block; width: 46px; height: 2px; background: var(--orange); margin-top: 8px; }
+.card p { color: #cfc8be; font-size: 15px; line-height: 1.45; }
+.card p b { color: var(--orange-2); font-weight: 600; }
+.card .bg-art { position: absolute; inset: 0; opacity: .32; z-index: -1; }
+.prog { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.prog .bar { flex: 1; height: 7px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
+.prog .bar i { display: block; height: 100%; width: 0; background: var(--orange); transition: width 1.3s cubic-bezier(.2,.8,.2,1); }
+.prog .n { font: 600 14px var(--head); color: var(--muted); letter-spacing: .05em; min-width: 46px; text-align: right; }
+.arrow { position: absolute; right: 22px; bottom: 18px; color: var(--orange); font: 700 22px var(--head); }
+.tag { display: inline-block; font: 700 12px var(--head); letter-spacing: .12em; padding: 3px 8px; border-radius: 2px; margin-bottom: 10px; }
+.tag.best { background: var(--orange); color: #111; }
+.tag.worst { border: 1px solid var(--bad); color: var(--bad); }
 
-.level {
-  position: relative; width: 120px; height: 120px; display: grid; place-items: center;
-}
-.level svg { position: absolute; inset: 0; animation: spin 14s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.level .num { font: 700 54px 'Chakra Petch'; color: var(--lvl, var(--orange)); text-shadow: 0 0 24px var(--lvl, var(--orange)); }
-.level .lbl { position: absolute; bottom: -6px; font: 700 10px 'JetBrains Mono'; letter-spacing: .3em; color: var(--muted); }
+.minis { display: flex; gap: 24px; margin-top: 16px; }
+.minis div { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.minis b { display: block; font: italic 800 24px var(--head); color: var(--text); letter-spacing: 0; }
 
-/* ---------- STAT CARDS ---------- */
-.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 18px 0; }
-.stat {
-  position: relative; padding: 16px 18px; border-radius: var(--radius); background: var(--panel);
-  border: 1px solid var(--line); backdrop-filter: blur(6px); overflow: hidden;
-  animation: rise .7s ease both; transition: transform .2s, border-color .2s;
-}
-.stat:hover { transform: translateY(-3px); border-color: rgba(255,173,59,0.5); }
-.stat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(var(--orange), transparent); }
-.stat .t { font: 700 11px 'JetBrains Mono'; letter-spacing: .22em; color: var(--muted); text-transform: uppercase; }
-.stat .v { font: 700 34px 'Chakra Petch'; margin-top: 6px; }
-.stat .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.stat .ico { position: absolute; right: 12px; top: 10px; font-size: 22px; opacity: .55; }
+/* ring + streak + recent wins */
+.center { text-align: center; }
+.ring { position: relative; width: 170px; height: 170px; margin: 18px auto 10px; }
+.ring svg { transform: rotate(-90deg); }
+.ring .rv { position: absolute; inset: 0; display: grid; place-items: center; font: 800 46px var(--head); }
+.ring circle.fg { transition: stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1); }
+.streak { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 42px 0 30px; }
+.streak .flame { width: 70px; height: 80px; animation: flick 1.4s ease-in-out infinite alternate; transform-origin: bottom; }
+@keyframes flick { to { transform: scaleY(1.06) scaleX(.96); filter: brightness(1.2); } }
+.streak .sv { font: 700 46px var(--head); }
+.hr { border-top: 1px solid var(--card-line); padding-top: 16px; color: var(--muted); }
+.checks { list-style: none; margin-top: 10px; }
+.checks li { display: flex; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--card-line); font-size: 15px; }
+.checks li:last-child { border: 0; }
+.checks svg { width: 18px; height: 18px; flex: none; }
+.checks small { color: var(--muted); margin-left: auto; font-size: 12px; }
 
-/* form strip */
-.form { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
-.form .t { font: 700 11px 'JetBrains Mono'; letter-spacing: .22em; color: var(--muted); }
-.pip { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font: 700 13px 'Chakra Petch';
-  animation: pop .4s ease both; }
-.pip.w { background: rgba(79,209,139,0.15); color: var(--win); border: 1px solid rgba(79,209,139,0.5); }
-.pip.l { background: rgba(255,90,95,0.12); color: var(--loss); border: 1px solid rgba(255,90,95,0.45); }
-@keyframes pop { from { transform: scale(.3); opacity: 0; } }
-.streak { font: 600 13px Inter; color: var(--khaki); margin-left: 6px; }
+/* heatmap */
+.heat { display: grid; grid-template-columns: 70px repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+.heat .h { font: 700 13px var(--head); letter-spacing: .1em; color: var(--muted); text-align: center; text-transform: uppercase; }
+.heat .d { font: 700 14px var(--head); color: var(--muted); align-self: center; text-transform: uppercase; }
+.cell { height: 44px; border-radius: 3px; display: grid; place-items: center; font: 700 16px var(--head); }
+.cell small { display: block; font: 500 10px Barlow; opacity: .75; margin-top: -4px; }
 
-/* ---------- NAV ---------- */
-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; position: sticky; top: 0; z-index: 5;
-  padding: 10px 0; background: linear-gradient(var(--bg) 70%, transparent); }
-nav button {
-  font: 700 13px 'Chakra Petch'; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
-  background: var(--panel); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; cursor: pointer;
-  transition: all .2s;
-}
-nav button:hover { color: var(--text); border-color: rgba(255,173,59,0.5); }
-nav button.on { color: #1a1206; background: linear-gradient(90deg, var(--orange), var(--orange-2)); border-color: transparent;
-  box-shadow: 0 8px 26px -8px rgba(255,122,26,0.7); }
+.chart { position: relative; height: 300px; margin-top: 12px; }
 
-section { display: none; }
-section.on { display: block; animation: rise .45s ease both; }
-@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+/* table */
+table { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 12px; }
+th { text-align: left; font: 700 13px var(--head); letter-spacing: .12em; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--card-line); text-transform: uppercase; }
+td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.04); font-variant-numeric: tabular-nums; }
+tr:hover td { background: rgba(255,122,0,.06); }
+.res { font: 700 13px var(--head); letter-spacing: .1em; padding: 3px 9px; border-radius: 2px; }
+.res.w { background: var(--orange); color: #111; }
+.res.l { border: 1px solid #5e5852; color: #a9a29a; }
 
-h2 { font: 700 24px 'Chakra Petch'; letter-spacing: .04em; margin: 4px 0 4px; }
-h2 .q { color: var(--orange); }
-.sub { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 18px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.chart { position: relative; height: 300px; }
+/* squad */
+.av { width: 54px; height: 54px; border-radius: 4px; display: grid; place-items: center; margin-bottom: 20px;
+  font: italic 900 28px var(--head); color: #111; background: linear-gradient(135deg, var(--orange-2), var(--orange)); }
+.rank { position: absolute; right: 22px; top: 18px; font: italic 900 42px var(--head); color: rgba(255,255,255,.08); }
+.vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; }
+.vs .big { font: italic 900 70px/1 var(--head); }
+.vs .x { font: italic 900 28px var(--head); color: var(--muted); }
+.vs .lab { font: 700 14px var(--head); letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
 
-/* ---------- BRIEFING ---------- */
-.tips { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.tip {
-  display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(255,173,59,0.08), rgba(20,24,31,0.85) 50%); border: 1px solid var(--line);
-  animation: rise .5s ease both; transition: transform .2s;
-}
-.tip:hover { transform: translateY(-3px); }
-.tip .i { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;
-  background: rgba(255,173,59,0.12); border: 1px solid rgba(255,173,59,0.35); }
-.tip p { line-height: 1.5; font-size: 15px; }
-.tip b { color: var(--orange); }
-.note { color: var(--muted); font-size: 12px; margin-top: 12px; }
-
-/* ---------- MAP CARDS ---------- */
-.maps { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
-.map {
-  position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); padding: 16px;
-  min-height: 170px; background: var(--panel-solid); transition: transform .25s, box-shadow .25s;
-}
-.map:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 18px 40px -18px var(--c1); }
-.map .art { position: absolute; inset: 0; opacity: .5;
-  background:
-    radial-gradient(circle at 80% 20%, var(--c1), transparent 55%),
-    linear-gradient(135deg, transparent 40%, var(--c2) 140%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 12px); }
-.map > * { position: relative; }
-.map .mn { font: 700 22px 'Chakra Petch'; letter-spacing: .06em; text-transform: uppercase; }
-.map .mg { font: 500 12px 'JetBrains Mono'; color: var(--muted); }
-.ring { width: 74px; height: 74px; position: absolute !important; right: 14px; top: 14px; }
-.ring .p { position: absolute; inset: 0; display: grid; place-items: center; font: 700 17px 'Chakra Petch'; }
-.map .row { display: flex; gap: 16px; margin-top: 34px; font: 600 13px Inter; color: var(--muted); }
-.map .row b { display: block; color: var(--text); font: 700 18px 'Chakra Petch'; }
-.badge { display: inline-block; margin-top: 8px; font: 700 10px 'JetBrains Mono'; letter-spacing: .15em; padding: 4px 8px; border-radius: 6px; }
-.badge.best { background: rgba(79,209,139,0.15); color: var(--win); }
-.badge.worst { background: rgba(255,90,95,0.13); color: var(--loss); }
-
-/* ---------- HEATMAP ---------- */
-.heat { display: grid; grid-template-columns: 110px repeat(4, 1fr); gap: 6px; font: 600 12px Inter; }
-.heat .h { color: var(--muted); font: 700 11px 'JetBrains Mono'; letter-spacing: .1em; text-align: center; align-self: end; padding-bottom: 4px; }
-.heat .d { color: var(--muted); align-self: center; }
-.cell { height: 46px; border-radius: 8px; display: grid; place-items: center; font: 700 14px 'Chakra Petch';
-  border: 1px solid rgba(255,255,255,0.05); transition: transform .15s; }
-.cell:hover { transform: scale(1.06); }
-.cell small { display: block; font: 500 10px Inter; color: rgba(255,255,255,0.6); }
-
-/* ---------- SQUAD ---------- */
-.squad { display: grid; gap: 10px; }
-.mate { display: grid; grid-template-columns: 34px 46px 1fr 160px 70px; align-items: center; gap: 14px; padding: 12px 14px;
-  border-radius: 12px; background: var(--panel); border: 1px solid var(--line); animation: rise .5s ease both; }
-.mate .rk { font: 700 18px 'Chakra Petch'; color: var(--muted); text-align: center; }
-.mate:first-child .rk { color: var(--orange); }
-.mate .av { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font: 700 20px 'Chakra Petch';
-  background: linear-gradient(135deg, var(--c1), var(--c2)); color: #0b0d10; }
-.mate .nm { font: 700 17px 'Chakra Petch'; }
-.mate .gm { font-size: 12px; color: var(--muted); }
-.bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: inherit; width: 0; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
-.mate .wr { font: 700 20px 'Chakra Petch'; text-align: right; }
-.vs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; text-align: center; }
-.vs .big { font: 700 52px 'Chakra Petch'; }
-.vs .lab { font: 700 11px 'JetBrains Mono'; letter-spacing: .2em; color: var(--muted); }
-.vs .x { font: 700 22px 'Chakra Petch'; color: var(--muted); }
-
-/* ---------- SCOREBOARD TABLE ---------- */
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th { text-align: left; font: 700 11px 'JetBrains Mono'; letter-spacing: .15em; color: var(--muted); padding: 10px; border-bottom: 1px solid var(--line); }
-td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); font-variant-numeric: tabular-nums; }
-tr:hover td { background: rgba(255,173,59,0.05); }
-.res { font: 700 12px 'Chakra Petch'; padding: 3px 9px; border-radius: 6px; }
-.res.w { background: rgba(79,209,139,0.15); color: var(--win); }
-.res.l { background: rgba(255,90,95,0.13); color: var(--loss); }
-
-/* ---------- HIGHLIGHTS ---------- */
-.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-.shot { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--panel-solid); }
-.shot img { width: 100%; display: block; transition: transform .4s; }
+/* highlights */
+.shot { padding: 0; }
+.shot img { width: 100%; display: block; transition: transform .5s; }
 .shot:hover img { transform: scale(1.04); }
-.shot p { padding: 12px 14px; font: 700 15px 'Chakra Petch'; letter-spacing: .04em; }
-.empty { text-align: center; padding: 40px; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
+.shot p { padding: 14px 18px; font: italic 800 20px var(--head); text-transform: uppercase; color: var(--text); }
+.empty { color: var(--muted); }
 
-footer { margin-top: 26px; color: var(--muted); font: 500 12px 'JetBrains Mono'; text-align: center; letter-spacing: .08em; }
+footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962; font: 600 13px var(--head); letter-spacing: .12em; text-transform: uppercase; border-top: 1px solid var(--card-line); }
 
 @media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; text-align: center; justify-items: center; }
-  .elo-row { justify-content: center; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
-  .tips, .grid2 { grid-template-columns: 1fr; }
-  .mate { grid-template-columns: 30px 40px 1fr 60px; }
-  .mate .bar { display: none; }
-  .name { font-size: 36px; }
+  .top { padding: 14px 18px; gap: 14px; flex-wrap: wrap; }
+  .logo { flex: 1; }
+  .links { order: 3; flex: 1 1 100%; gap: 16px; }
+  .inner { padding: 30px 18px 40px; }
+  .features, .c3, .c4, .c2 { grid-template-columns: 1fr 1fr; }
+  .features { gap: 18px; margin-top: 50px; }
+  .feat { border: 0; padding: 0; }
+  .shade { background: linear-gradient(0deg, rgba(8,8,9,1) 10%, rgba(8,8,9,.55) 100%); }
 }
+@media (max-width: 560px) { .features, .c3, .c4, .c2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div class="bg"></div>
-<div class="wrap" id="app"></div>
+<div id="app"></div>
 
 <script>
 const D = __DATA__;
@@ -236,231 +185,286 @@ const $ = (s, el = document) => el.querySelector(s);
 const pct = x => (x == null || isNaN(x)) ? "–" : Math.round(x * 100) + "%";
 const f2 = x => (x == null || isNaN(x)) ? "–" : x.toFixed(2);
 const f0 = x => (x == null || isNaN(x)) ? "–" : Math.round(x);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LEVEL_COLORS = {1:"#e8e8e8",2:"#3edb5a",3:"#3edb5a",4:"#ffc800",5:"#ffc800",6:"#ffc800",7:"#ffc800",8:"#ff6309",9:"#ff6309",10:"#fe1f00"};
-const winColor = r => r >= 0.55 ? "var(--win)" : r <= 0.45 ? "var(--loss)" : "var(--orange)";
-function hashColors(name) {
-  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
-  return [`hsl(${h} 85% 58%)`, `hsl(${(h + 50) % 360} 70% 40%)`];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const p = D.player, s = D.summary;
+
+/* ---------- line icons (drawn by me) ---------- */
+const I = {
+  cross: `<circle cx="24" cy="24" r="13"/><path d="M24 4v10M24 34v10M4 24h10M34 24h10"/><circle cx="24" cy="24" r="1.5" fill="currentColor"/>`,
+  bars: `<path d="M8 40V30M18 40V22M28 40V14M38 40V6"/>`,
+  laurel: `<path d="M14 40c-8-6-9-18-3-28M34 40c8-6 9-18 3-28"/><path d="M11 30l-5 1M10 22l-5-1M12 15l-4-3M37 30l5 1M38 22l5-1M36 15l4-3"/><path d="M24 14l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/>`,
+  star: `<path d="M24 5l5.6 12 13 1.4-9.7 8.8 2.8 12.8L24 33.4 12.3 40l2.8-12.8L5.4 18.4l13-1.4z"/>`,
+  map: `<path d="M5 10l12-4 14 5 12-4v31l-12 4-14-5-12 4z"/><path d="M17 6v31M31 11v31"/>`,
+  users: `<circle cx="24" cy="16" r="6"/><circle cx="11" cy="20" r="4.5"/><circle cx="37" cy="20" r="4.5"/><path d="M13 40c0-7 5-12 11-12s11 5 11 12M3 38c0-5 3-9 8-9M45 38c0-5-3-9-8-9"/>`,
+  clock: `<circle cx="24" cy="24" r="18"/><path d="M24 12v12l8 5"/>`,
+  shield: `<path d="M24 4l16 6v12c0 10-7 18-16 22C15 40 8 32 8 22V10z"/><path d="M17 24l5 5 9-10"/>`,
+  chart: `<path d="M5 40h38"/><path d="M8 32l10-10 8 6 14-16"/><path d="M34 12h6v6"/>`,
+  cal: `<rect x="6" y="9" width="36" height="32" rx="2"/><path d="M6 18h36M15 4v9M33 4v9"/>`,
+  cam: `<rect x="5" y="13" width="38" height="27" rx="3"/><circle cx="24" cy="26" r="8"/><path d="M17 13l3-6h8l3 6"/>`,
+  brain: `<path d="M18 8a6 6 0 0 0-6 6 6 6 0 0 0-4 10 6 6 0 0 0 4 10 6 6 0 0 0 10 4V8zM30 8a6 6 0 0 1 6 6 6 6 0 0 1 4 10 6 6 0 0 1-4 10 6 6 0 0 1-10 4V8z"/>`,
+};
+const icon = (n, cls = "ico") => `<svg class="${cls}" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#f1ede6">${I[n]}</svg>`;
+const check = `<svg viewBox="0 0 20 20" fill="none" stroke="#ff7a00" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l4.5 4.5L17 5"/></svg>`;
+
+/* ---------- original atmospheric scenes (SVG) ----------
+   Abstract desert-town shapes: walls, arches, windows, crates and warm light. Made from scratch. */
+function scene(seed, opts = {}) {
+  const light = opts.light ?? 0.7, lx = opts.lx ?? 72, cool = opts.cool ?? false;
+  let r = seed * 9301 + 49297; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const id = "s" + seed;
+  const wall = cool ? "#1e2228" : "#2a2119", wall2 = cool ? "#15181d" : "#1a140f";
+  let shapes = "";
+  // back buildings
+  for (let i = 0; i < 7; i++) {
+    const x = 30 + i * 15 + rnd() * 6, w = 10 + rnd() * 10, h = 25 + rnd() * 35;
+    shapes += `<rect x="${x}%" y="${100 - h - 18}%" width="${w}%" height="${h + 18}%" fill="${wall2}" opacity="${0.6 + rnd() * 0.3}"/>`;
+    if (rnd() > 0.4) shapes += `<rect x="${x + w * 0.35}%" y="${100 - h - 6}%" width="${w * 0.22}%" height="9%" fill="${cool ? "#2b3a4a" : "#ff8a1e"}" opacity="${cool ? 0.35 : 0.18 + rnd() * 0.3}"/>`;
+  }
+  // big wall with arch
+  const ax = opts.ax ?? (58 + rnd() * 10);
+  shapes += `<path d="M ${ax - 14}% 100% V 30% H ${ax + 40}% V 100%" fill="url(#${id}w)"/>`;
+  shapes += `<rect x="${ax - 14}%" y="30%" width="54%" height="70%" fill="url(#${id}w)" filter="url(#${id}n)"/>`;
+  for (let y = 36; y < 100; y += 5.5) shapes += `<path d="M ${ax - 14}% ${y}% H ${ax + 40}%" stroke="#000" stroke-opacity=".22" stroke-width=".35"/>`;
+  for (let y = 36, k = 0; y < 100; y += 5.5, k++) for (let x = ax - 14 + (k % 2) * 4; x < ax + 40; x += 8)
+    shapes += `<path d="M ${x}% ${y}% V ${y + 5.5}%" stroke="#000" stroke-opacity=".15" stroke-width=".3"/>`;
+  shapes += `<rect x="${ax - 15}%" y="28.5%" width="56%" height="2.2%" fill="#0e0a07"/>`;
+  shapes += `<rect x="${ax + 24}%" y="40%" width="7%" height="11%" fill="#050505"/><rect x="${ax + 24.6}%" y="40.8%" width="5.8%" height="9.4%" fill="${cool ? "#4d6a8a" : "#ff9a3a"}" opacity="${cool ? .35 : .55}"/>`;
+  shapes += `<path d="M ${ax}% 100% V 62% A 6 7 0 0 1 ${ax + 12}% 62% V 100% Z" fill="#070707"/>`;
+  shapes += `<rect x="0" y="96%" width="100%" height="4%" fill="#0a0806"/>`;
+  // crates
+  for (let i = 0; i < 2; i++) {
+    const cx = ax + 18 + i * 9, sz = 8 + rnd() * 3;
+    shapes += `<g opacity=".95"><rect x="${cx}%" y="${100 - sz * 1.4 - 4}%" width="${sz}%" height="${sz * 1.4}%" fill="#120d09" stroke="#3b2a1a" stroke-width="2"/>
+      <path d="M ${cx}% ${100 - sz * 1.4 - 4}% L ${cx + sz}% ${96}%" stroke="#3b2a1a" stroke-width="2"/></g>`;
+  }
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="${id}g" cx="${lx}%" cy="35%" r="70%">
+        <stop offset="0" stop-color="${cool ? "#3a4a5c" : "#ff8a1e"}" stop-opacity="${light}"/>
+        <stop offset=".45" stop-color="${cool ? "#1a2129" : "#5a2e0c"}" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#0b0b0c" stop-opacity="1"/>
+      </radialGradient>
+      <linearGradient id="${id}w" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="${wall}"/><stop offset=".6" stop-color="${cool ? "#2c3540" : "#6b3d17"}" stop-opacity=".9"/><stop offset="1" stop-color="${wall2}"/>
+      </linearGradient>
+      <filter id="${id}n" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9 .35" numOctaves="3" seed="${seed}"/>
+        <feColorMatrix values="0 0 0 0 .42  0 0 0 0 .26  0 0 0 0 .12  0 0 0 .5 0"/>
+        <feComposite in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="${id}grain"><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="2"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/></filter>
+    </defs>
+    <rect width="100" height="100" fill="url(#${id}g)"/>
+    <g transform="scale(1)">${shapes.replace(/(\d+(\.\d+)?)%/g, "$1")}</g>
+    <polygon points="${lx - 20},0 ${lx + 4},0 ${lx + 30},100 ${lx - 6},100" fill="${cool ? "#7aa0c8" : "#ffb35a"}" opacity=".06"/>
+    ${Array.from({ length: 18 }, () => `<circle cx="${rnd() * 100}" cy="${rnd() * 100}" r=".18" fill="#ffd9a8" opacity="${.2 + rnd() * .5}">
+      <animate attributeName="cy" values="${rnd() * 100};${rnd() * 100}" dur="${14 + rnd() * 10}s" repeatCount="indefinite" /></circle>`).join("")}
+    <rect width="100" height="100" filter="url(#${id}grain)"/>
+  </svg>`;
 }
 
-/* ---------- build page ---------- */
-const p = D.player, s = D.summary;
-const lvlColor = LEVEL_COLORS[p.level] || "var(--orange)";
-const initials = esc((p.nickname || "?").slice(0, 1).toUpperCase());
-const tabs = [
-  ["briefing", "🧠 Briefing"], ["matches", "📈 Matches"], ["maps", "🗺️ Map pool"],
-  ["timing", "🕒 Timing"], ["squad", "👥 Squad"], ["aim", "🎯 Aim"], ["highlights", "📸 Highlights"],
+/* ---------- pages ---------- */
+const pages = [
+  ["home", "Home"], ["briefing", "Briefing"], ["matches", "Matches"], ["maps", "Maps"],
+  ["squad", "Squad"], ["progress", "Progress"], ["highlights", "Highlights"],
 ];
 
-$("#app").innerHTML = `
-<div class="hero">
-  ${p.avatar ? `<img class="avatar" src="${esc(p.avatar)}" alt="">` : `<div class="avatar">${initials}</div>`}
-  <div>
-    <div class="kicker">CS Stats Coach · Player card</div>
-    <div class="name">${esc(p.nickname)}<span>.</span></div>
-    <div class="elo-row">
-      <div class="elo-bar"><i id="elobar"></i></div>
-      <div class="elo-note">${p.elo} ELO ${p.to_next != null ? `· <b>${p.to_next}</b> to level ${p.level + 1}` : "· max level"}</div>
-    </div>
-  </div>
-  <div class="level" style="--lvl:${lvlColor}">
-    <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="${lvlColor}" stroke-opacity=".25" stroke-width="2"/>
-      <circle cx="60" cy="60" r="54" fill="none" stroke="${lvlColor}" stroke-width="4" stroke-dasharray="40 300" stroke-linecap="round"/>
-      <circle cx="60" cy="60" r="44" fill="none" stroke="${lvlColor}" stroke-opacity=".35" stroke-dasharray="3 7"/></svg>
-    <div class="num">${p.level ?? "?"}</div><div class="lbl">LEVEL</div>
-  </div>
-</div>
+function pageWrap(id, seed, opts, body) {
+  return `<section class="page ${id === "home" ? "on" : ""}" id="${id}">
+    <div class="scene">${scene(seed, opts)}</div><div class="shade"></div>
+    <div class="inner">${body}</div></section>`;
+}
+function bar(frac, label) {
+  return `<div class="prog"><div class="bar"><i data-w="${Math.max(0, Math.min(1, frac || 0))}"></i></div><div class="n">${label}</div></div>`;
+}
 
-<div class="stats">
-  ${stat("Matches", s.matches, `${s.wins}W · ${s.losses}L`, "🎮", 0)}
-  ${stat("Win rate", s.win_rate * 100, "of all matches", "🏆", 0, "%")}
-  ${stat("K/D", s.kd, "kills per death", "⚔️", 2)}
-  ${stat("Headshot", s.hs, "of my kills", "🎯", 0, "%")}
-  ${stat("ADR", s.adr, "damage per round", "💥", 0)}
-</div>
+const home = `
+  <h1>Your CS2 stats.<br><span class="o">Your own<br>progression.</span></h1>
+  <p class="lead">A personal coach built from ${esc(p.nickname)}'s last ${s.matches} FACEIT matches. See what works, fix what doesn't, and level up.</p>
+  <button class="cta" data-go="briefing">See your briefing <span>›</span></button>
+  <div class="features">
+    <div class="feat">${icon("cross", "")}<div><div class="t">Level ${p.level ?? "?"}</div><div class="v" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
+    <div class="feat">${icon("bars", "")}<div><div class="t">Win rate</div><div class="v" data-count="${s.win_rate * 100}" data-dec="0" data-unit="%"></div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
+    <div class="feat">${icon("laurel", "")}<div><div class="t">K/D ratio</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2"></div><div class="s">kills per death</div></div></div>
+    <div class="feat">${icon("star", "")}<div><div class="t">Headshots</div><div class="v" data-count="${s.hs ?? ""}" data-dec="0" data-unit="%"></div><div class="s">of my kills</div></div></div>
+  </div>`;
 
-<div class="form"><span class="t">LAST ${D.form.length}</span>
-  ${D.form.map((w, i) => `<span class="pip ${w ? "w" : "l"}" style="animation-delay:${i * 60}ms">${w ? "W" : "L"}</span>`).join("")}
-  <span class="streak">${s.streak_text}</span>
-</div>
+const tipIcons = { "🗺️": "map", "🚫": "shield", "🕒": "clock", "📈": "chart", "📉": "chart", "😤": "brain", "🧊": "brain", "🤝": "users", "🎯": "cross" };
+const briefing = `
+  <h1>Briefing</h1>
+  <p class="lead">What your coach learned. Only groups with ${D.min_games}+ games count, so it isn't just luck.</p>
+  <div class="cards c3">${D.tips.length ? D.tips.map((t, i) => `
+    <div class="card" style="animation-delay:${i * 80}ms">${icon(tipIcons[t.icon] || "star")}<p>${t.html}</p></div>`).join("")
+    : `<div class="card"><p class="empty">Play a few more games so the coach has enough to go on!</p></div>`}</div>`;
 
-<nav>${tabs.map(([id, t], i) => `<button data-t="${id}" class="${i ? "" : "on"}">${t}</button>`).join("")}</nav>
-
-<section id="briefing" class="on">
-  <h2>Pre-match <span class="q">briefing</span></h2>
-  <div class="sub">What your coach learned from your last ${s.matches} matches.</div>
-  <div class="tips">${D.tips.length ? D.tips.map((t, i) => `<div class="tip" style="animation-delay:${i * 90}ms"><div class="i">${t.icon}</div><p>${t.html}</p></div>`).join("")
-    : `<div class="empty">Play a few more games so the coach has enough to go on!</div>`}</div>
-  <div class="note">Tips only use groups with at least ${D.min_games} games, so they aren't just luck.</div>
-</section>
-
-<section id="matches">
-  <h2>Is my aim getting <span class="q">better?</span></h2>
-  <div class="sub">Every match from oldest to newest. The orange line is my average of the last 10 games.</div>
-  <div class="panel"><div class="chart"><canvas id="kdChart"></canvas></div></div>
-  <h2>Scoreboard</h2>
-  <div class="sub">My last ${D.recent.length} matches.</div>
-  <div class="panel" style="overflow-x:auto"><table>
-    <tr><th>DATE</th><th>MAP</th><th>RESULT</th><th>K</th><th>D</th><th>A</th><th>K/D</th><th>HS%</th><th>ADR</th></tr>
+const matchesPage = `
+  <h1>Matches</h1>
+  <p class="lead">Is my aim getting better? Every match from oldest to newest. The orange line is the average of the last 10.</p>
+  <div class="cards"><div class="card"><h4>K/D over time</h4><div class="chart"><canvas id="kdChart"></canvas></div></div></div>
+  <div class="cards"><div class="card" style="overflow-x:auto"><h4>Scoreboard · last ${D.recent.length}</h4><table>
+    <tr><th>Date</th><th>Map</th><th>Result</th><th>K</th><th>D</th><th>A</th><th>K/D</th><th>HS%</th><th>ADR</th></tr>
     ${D.recent.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.map)}</td><td><span class="res ${r.won ? "w" : "l"}">${r.won ? "WIN" : "LOSS"}</span></td>
-      <td>${f0(r.kills)}</td><td>${f0(r.deaths)}</td><td>${f0(r.assists)}</td><td style="color:${r.kd >= 1 ? "var(--win)" : "var(--loss)"}">${f2(r.kd)}</td><td>${f0(r.hs)}%</td><td>${f0(r.adr)}</td></tr>`).join("")}
-  </table></div>
-</section>
+      <td>${f0(r.kills)}</td><td>${f0(r.deaths)}</td><td>${f0(r.assists)}</td><td style="color:${r.kd >= 1 ? "var(--good)" : "var(--bad)"}">${f2(r.kd)}</td><td>${f0(r.hs)}%</td><td>${f0(r.adr)}</td></tr>`).join("")}
+  </table></div></div>`;
 
-<section id="maps">
-  <h2>Which maps am I <span class="q">best</span> on?</h2>
-  <div class="sub">The ring shows how often I win on that map.</div>
-  <div class="maps">${D.maps.map((m, i) => { const [c1, c2] = hashColors(m.map); return `
-    <div class="map" style="--c1:${c1};--c2:${c2};animation:rise .5s ${i * 70}ms ease both">
-      <div class="art"></div>
-      <div class="mn">${esc(m.map)}</div><div class="mg">${m.games} games</div>
-      ${m.tag ? `<span class="badge ${m.tag}">${m.tag === "best" ? "BEST MAP" : "HARDEST MAP"}</span>` : ""}
-      <div class="ring">${ring(m.win_rate)}<div class="p">${pct(m.win_rate)}</div></div>
-      <div class="row"><div><b>${f2(m.kd)}</b>K/D</div><div><b>${f0(m.hs)}%</b>HS</div><div><b>${f0(m.adr)}</b>ADR</div></div>
-    </div>`; }).join("")}</div>
-</section>
+const mapsPage = `
+  <h1>Maps</h1>
+  <p class="lead">Which maps am I best on? The bar shows how many of my games I win there.</p>
+  <div class="cards c4">${D.maps.map((m, i) => `
+    <div class="card" style="animation-delay:${i * 70}ms"><div class="bg-art">${scene(40 + i, { light: .5, lx: 60 })}</div>
+      ${icon("map")}
+      ${m.tag ? `<span class="tag ${m.tag}">${m.tag === "best" ? "BEST MAP" : "HARDEST MAP"}</span>` : ""}
+      <h3>${esc(m.map)}</h3>
+      <div class="minis"><div><b>${f2(m.kd)}</b>K/D</div><div><b>${f0(m.hs)}%</b>HS</div><div><b>${f0(m.adr)}</b>ADR</div></div>
+      ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
+    </div>`).join("")}</div>
+  <div class="cards c2">
+    <div class="card"><h4>Does good aim mean I win?</h4><p>Every dot is a match. Orange = won, grey = lost.</p><div class="chart"><canvas id="scatter"></canvas></div></div>
+    <div class="card"><h4>Headshot % per map</h4><p>My average is ${f0(s.hs)}%.</p><div class="chart"><canvas id="hsMap"></canvas></div></div>
+  </div>`;
 
-<section id="timing">
-  <h2>Do I play worse <span class="q">late at night?</span></h2>
-  <div class="sub">Dutch time. Each square shows my win rate and how many games I played then. Greener is better.</div>
-  <div class="panel"><div class="heat" id="heat"></div></div>
-  <div class="grid2">
-    <div class="panel"><h2 style="font-size:18px">Win rate by time of day</h2><div class="chart"><canvas id="todChart"></canvas></div></div>
-    <div class="panel"><h2 style="font-size:18px">K/D by hour</h2><div class="chart"><canvas id="hourChart"></canvas></div></div>
-  </div>
-</section>
-
-<section id="squad">
-  <h2>Which teammates help me <span class="q">win?</span></h2>
-  <div class="sub">People who were on my team at least 2 times.</div>
-  <div class="panel vs">
-    <div><div class="lab">WITH A FRIEND</div><div class="big" style="color:${winColor(D.friends.with)}">${pct(D.friends.with)}</div><div class="gm">${D.friends.with_games} games</div></div>
+const squadPage = `
+  <h1>Squad</h1>
+  <p class="lead">Which teammates help me win? People who were on my team at least 2 times.</p>
+  <div class="cards"><div class="card vs">
+    <div><div class="lab">With a friend</div><div class="big" style="color:var(--orange)">${pct(D.friends.with)}</div><div class="lab">${D.friends.with_games} games</div></div>
     <div class="x">VS</div>
-    <div><div class="lab">ONLY STRANGERS</div><div class="big" style="color:${winColor(D.friends.without)}">${pct(D.friends.without)}</div><div class="gm">${D.friends.without_games} games</div></div>
+    <div><div class="lab">Only strangers</div><div class="big">${pct(D.friends.without)}</div><div class="lab">${D.friends.without_games} games</div></div>
+  </div></div>
+  <div class="cards c3">${D.squad.length ? D.squad.map((m, i) => `
+    <div class="card" style="animation-delay:${i * 70}ms"><div class="rank">#${i + 1}</div>
+      <div class="av">${esc(m.name.slice(0, 1).toUpperCase())}</div>
+      <h3>${esc(m.name)}</h3><p>${m.games} games together · my K/D ${f2(m.kd)}</p>
+      ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
+    </div>`).join("") : `<div class="card"><p class="empty">No repeat teammates in these matches yet.</p></div>`}</div>`;
+
+const wins = D.recent.filter(r => r.won).slice(0, 5);
+const ringC = 2 * Math.PI * 70;
+const progressPage = `
+  <h1>Progress</h1>
+  <p class="lead">Track your stats, see your growth, and keep the momentum.</p>
+  <div class="cards c3">
+    <div class="card center"><h4 style="text-align:left">Level ${p.level ?? "?"} progress</h4>
+      <div class="ring"><svg viewBox="0 0 170 170" width="170" height="170">
+        <circle cx="85" cy="85" r="70" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="14"/>
+        <circle class="fg" cx="85" cy="85" r="70" fill="none" stroke="#ff7a00" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="${ringC}" stroke-dashoffset="${ringC}" data-off="${ringC * (1 - (p.progress || 0))}"/></svg>
+        <div class="rv">${Math.round((p.progress || 0) * 100)}%</div></div>
+      <p>${p.to_next != null ? `<b>${p.to_next} Elo</b> to level ${p.level + 1}` : "Max level reached!"}</p></div>
+    <div class="card center"><h4 style="text-align:left">Current streak</h4>
+      <div class="streak">
+        <svg class="flame" viewBox="0 0 60 70"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset="1" stop-color="#ffb347"/></linearGradient></defs>
+          <path d="M30 2c4 14 20 20 20 40a20 20 0 0 1-40 0c0-10 6-16 10-22 0 8 4 12 8 12 0-12-2-20 2-30z" fill="${s.streak_win ? "url(#fl)" : "#5a5550"}"/>
+          <path d="M30 40c2 6 9 8 9 16a9 9 0 0 1-18 0c0-6 5-8 9-16z" fill="#ffe0a8" opacity="${s.streak_win ? .9 : .25}"/></svg>
+        <div class="sv">${s.streak} ${s.streak_win ? (s.streak > 1 ? "wins" : "win") : (s.streak > 1 ? "losses" : "loss")}</div>
+      </div>
+      <div class="hr">${s.streak_win ? "Keep it up!" : "Take a short break, then go again."}</div></div>
+    <div class="card"><h4>Recent wins</h4><ul class="checks">${wins.length ? wins.map(w => `<li>${check}Won on ${esc(w.map)} · ${f0(w.kills)} kills<small>${esc(w.date)}</small></li>`).join("") : "<li>No wins in the last 20 games yet.</li>"}</ul></div>
   </div>
-  <div class="squad">${D.squad.length ? D.squad.map((m, i) => { const [c1, c2] = hashColors(m.name); return `
-    <div class="mate" style="--c1:${c1};--c2:${c2};animation-delay:${i * 60}ms">
-      <div class="rk">#${i + 1}</div><div class="av">${esc(m.name.slice(0, 1).toUpperCase())}</div>
-      <div><div class="nm">${esc(m.name)}</div><div class="gm">${m.games} games together · my K/D ${f2(m.kd)}</div></div>
-      <div class="bar"><i data-w="${m.win_rate}" style="background:${winColor(m.win_rate)}"></i></div>
-      <div class="wr" style="color:${winColor(m.win_rate)}">${pct(m.win_rate)}</div>
-    </div>`; }).join("") : `<div class="empty">No repeat teammates in these matches yet.</div>`}</div>
-</section>
+  <div class="cards c2">
+    <div class="card"><h4>When do I win?</h4><p>Dutch time. Brighter orange = I win more. The small number is how many games.</p><div class="heat" id="heat"></div></div>
+    <div class="card"><h4>K/D by hour</h4><p>Do I play worse late at night?</p><div class="chart"><canvas id="hourChart"></canvas></div></div>
+  </div>`;
 
-<section id="aim">
-  <h2>Does good aim mean I <span class="q">win?</span></h2>
-  <div class="sub">Every dot is a match. Green = won, red = lost.</div>
-  <div class="grid2">
-    <div class="panel"><div class="chart"><canvas id="scatter"></canvas></div></div>
-    <div class="panel"><div class="chart"><canvas id="hsMap"></canvas></div></div>
+const highlightsPage = `
+  <h1>Highlights</h1>
+  <p class="lead">My own moments from the game.</p>
+  <div class="cards c2">${D.shots.length ? D.shots.map(x => `<div class="card shot"><img src="${x.src}" alt=""><p>${esc(x.caption)}</p></div>`).join("")
+    : `<div class="card"><p class="empty">No screenshots yet. Send them to Claude and they'll appear here!</p></div>`}</div>`;
+
+$("#app").innerHTML = `
+  <div class="top">
+    <div class="logo">CS<span>/</span>SC</div>
+    <div class="links">${pages.map(([id, t]) => `<button data-go="${id}" class="${id === "home" ? "on" : ""}">${t}</button>`).join("")}</div>
+    ${p.url ? `<a class="btn-out" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.nickname)} ↗</a>` : `<span class="btn-out">${esc(p.nickname)}</span>`}
   </div>
-</section>
-
-<section id="highlights">
-  <h2>Highlight <span class="q">reel</span></h2>
-  <div class="sub">My own moments from the game.</div>
-  ${D.shots.length ? `<div class="shots">${D.shots.map(x => `<div class="shot"><img src="${x.src}" alt=""><p>${esc(x.caption)}</p></div>`).join("")}</div>`
-    : `<div class="empty">No screenshots yet. Send them to Claude and they'll appear here!</div>`}
-</section>
-
-<footer>DATA · FACEIT DATA API &nbsp;│&nbsp; LOADED ${esc(D.loaded)} &nbsp;│&nbsp; MADE BY ${esc(p.nickname).toUpperCase()}</footer>
-`;
-
-function stat(t, v, sub, ico, dec, unit = "") {
-  return `<div class="stat"><span class="ico">${ico}</span><div class="t">${t}</div>
-    <div class="v" data-count="${v ?? ""}" data-dec="${dec}" data-unit="${unit}">–</div><div class="s">${sub}</div></div>`;
-}
-function ring(r) {
-  const c = 2 * Math.PI * 30, v = isNaN(r) ? 0 : r;
-  return `<svg viewBox="0 0 74 74" width="74" height="74"><circle cx="37" cy="37" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/>
-    <circle cx="37" cy="37" r="30" fill="none" stroke="${winColor(v)}" stroke-width="7" stroke-linecap="round"
-      stroke-dasharray="${c * v} ${c}" transform="rotate(-90 37 37)"/></svg>`;
-}
-
-/* ---------- animations ---------- */
-document.querySelectorAll("[data-count]").forEach(el => {
-  const target = parseFloat(el.dataset.count), dec = +el.dataset.dec, unit = el.dataset.unit;
-  if (isNaN(target)) return;
-  const t0 = performance.now();
-  (function tick(now) {
-    const k = Math.min(1, (now - t0) / 1200), e = 1 - Math.pow(1 - k, 3);
-    el.textContent = (target * e).toFixed(dec) + unit;
-    if (k < 1) requestAnimationFrame(tick);
-  })(t0);
-});
-setTimeout(() => { $("#elobar").style.width = (p.progress * 100) + "%"; }, 200);
-function growBars(root) { root.querySelectorAll(".bar i").forEach(b => b.style.width = (b.dataset.w * 100) + "%"); }
+  ${pageWrap("home", 3, { light: .85, lx: 70 }, home)}
+  ${pageWrap("briefing", 11, { light: .55, lx: 30, cool: true }, briefing)}
+  ${pageWrap("matches", 7, { light: .6, lx: 80 }, matchesPage)}
+  ${pageWrap("maps", 19, { light: .5, lx: 55, cool: true }, mapsPage)}
+  ${pageWrap("squad", 23, { light: .65, lx: 75 }, squadPage)}
+  ${pageWrap("progress", 5, { light: .5, lx: 85, cool: true }, progressPage)}
+  ${pageWrap("highlights", 29, { light: .7, lx: 65 }, highlightsPage)}
+  <footer>CS Stats Coach · data from the FACEIT Data API · loaded ${esc(D.loaded)} · made by ${esc(p.nickname)}</footer>`;
 
 /* heatmap */
 (function () {
-  const h = $("#heat"); let html = `<div></div>` + D.heat.cols.map(c => `<div class="h">${c.toUpperCase()}</div>`).join("");
+  let h = `<div></div>` + D.heat.cols.map(c => `<div class="h">${c}</div>`).join("");
   D.heat.rows.forEach(r => {
-    html += `<div class="d">${r.day}</div>`;
+    h += `<div class="d">${r.day}</div>`;
     r.cells.forEach(c => {
-      if (!c.games) { html += `<div class="cell" style="background:rgba(255,255,255,0.02);color:var(--muted)">·</div>`; return; }
-      const g = Math.round(c.win_rate * 100), hue = Math.round(c.win_rate * 130);
-      const a = Math.min(0.85, 0.25 + c.games * 0.08);
-      html += `<div class="cell" style="background:hsla(${hue},75%,45%,${a})">${g}%<small>${c.games} g</small></div>`;
+      if (!c.games) { h += `<div class="cell" style="background:rgba(255,255,255,.03);color:#555">·</div>`; return; }
+      const a = 0.12 + 0.88 * c.win_rate;
+      h += `<div class="cell" style="background:rgba(255,122,0,${a});color:${c.win_rate > .55 ? "#111" : "#f1ede6"}">${Math.round(c.win_rate * 100)}%<small>${c.games} g</small></div>`;
     });
   });
-  h.innerHTML = html;
+  $("#heat").innerHTML = h;
 })();
 
+/* ---------- animations ---------- */
+function animate(root) {
+  root.querySelectorAll("[data-count]").forEach(el => {
+    const target = parseFloat(el.dataset.count), dec = +el.dataset.dec, unit = el.dataset.unit || "";
+    if (isNaN(target)) { el.textContent = "–"; return; }
+    const t0 = performance.now();
+    (function tick(now) {
+      const k = Math.min(1, (now - t0) / 1100), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = (target * e).toFixed(dec) + unit;
+      if (k < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+  setTimeout(() => {
+    root.querySelectorAll(".prog .bar i").forEach(b => b.style.width = (b.dataset.w * 100) + "%");
+    root.querySelectorAll("circle.fg").forEach(c => c.style.strokeDashoffset = c.dataset.off);
+  }, 120);
+}
+
 /* ---------- charts ---------- */
-const charts = {};
-function setupCharts(id) {
-  if (!window.Chart || charts[id]) return;
-  Chart.defaults.color = "#8f96a3"; Chart.defaults.font.family = "Inter";
-  Chart.defaults.borderColor = "rgba(255,255,255,0.06)";
-  const grid = { color: "rgba(255,255,255,0.05)" };
+const made = {};
+function charts(id) {
+  if (!window.Chart || made[id]) return;
+  made[id] = true;
+  Chart.defaults.color = "#a39c92"; Chart.defaults.font.family = "Barlow";
+  const grid = { color: "rgba(255,255,255,0.06)" };
   if (id === "matches") {
     const ctx = $("#kdChart").getContext("2d");
-    const grad = ctx.createLinearGradient(0, 0, 0, 300);
-    grad.addColorStop(0, "rgba(255,173,59,0.35)"); grad.addColorStop(1, "rgba(255,173,59,0)");
-    charts[id] = new Chart(ctx, { type: "line", data: { labels: D.kd.map(x => x.n), datasets: [
-      { label: "K/D per match", data: D.kd.map(x => x.kd), borderColor: "rgba(110,195,255,0.55)", borderWidth: 1.5,
-        pointRadius: 3, pointBackgroundColor: D.kd.map(x => x.won ? "#4fd18b" : "#ff5a5f"), tension: .25 },
-      { label: "Average of last 10", data: D.kd.map(x => x.avg10), borderColor: "#ffad3b", borderWidth: 4, pointRadius: 0,
-        fill: true, backgroundColor: grad, tension: .4 },
-      { label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,0.3)", borderDash: [5, 5], borderWidth: 1, pointRadius: 0 },
+    const g = ctx.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, "rgba(255,122,0,.35)"); g.addColorStop(1, "rgba(255,122,0,0)");
+    new Chart(ctx, { type: "line", data: { labels: D.kd.map(x => x.n), datasets: [
+      { label: "K/D per match", data: D.kd.map(x => x.kd), borderColor: "rgba(241,237,230,.35)", borderWidth: 1.5, tension: .25,
+        pointRadius: 3, pointBackgroundColor: D.kd.map(x => x.won ? "#ff7a00" : "#6b6560") },
+      { label: "Average of last 10", data: D.kd.map(x => x.avg10), borderColor: "#ff7a00", borderWidth: 4, pointRadius: 0, fill: true, backgroundColor: g, tension: .4 },
+      { label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.3)", borderDash: [5, 5], borderWidth: 1, pointRadius: 0 },
     ]}, options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
       plugins: { tooltip: { callbacks: { title: i => `Match ${D.kd[i[0].dataIndex].n} · ${D.kd[i[0].dataIndex].map}` } } },
       scales: { x: { grid, title: { display: true, text: "Match (oldest → newest)" } }, y: { grid } } } });
   }
-  if (id === "timing") {
-    charts.tod = new Chart($("#todChart"), { type: "bar", data: { labels: D.tod.map(x => x.label), datasets: [{
-      data: D.tod.map(x => x.win_rate * 100), backgroundColor: D.tod.map(x => x.win_rate >= .5 ? "#4fd18b" : "#ff7a1a"), borderRadius: 8 }] },
-      options: { maintainAspectRatio: false, plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: c => `${Math.round(c.raw)}% wins · ${D.tod[c.dataIndex].games} games` } } },
-        scales: { y: { min: 0, max: 100, grid, ticks: { callback: v => v + "%" } }, x: { grid: { display: false } } } } });
-    charts[id] = new Chart($("#hourChart"), { type: "bar", data: { labels: D.hours.map(x => x.hour + ":00"), datasets: [{
-      data: D.hours.map(x => x.kd), backgroundColor: D.hours.map(x => x.kd >= 1 ? "#ffad3b" : "rgba(255,173,59,0.35)"), borderRadius: 6 }] },
+  if (id === "maps") {
+    new Chart($("#scatter"), { type: "scatter", data: { datasets: [
+      { label: "Won", data: D.points.filter(x => x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "#ff7a00", pointRadius: 5 },
+      { label: "Lost", data: D.points.filter(x => !x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "rgba(160,152,144,.7)", pointRadius: 5 },
+    ]}, options: { maintainAspectRatio: false, scales: { x: { grid, title: { display: true, text: "Headshot %" } }, y: { grid, title: { display: true, text: "K/D" } } } } });
+    new Chart($("#hsMap"), { type: "bar", data: { labels: D.maps.map(m => m.map), datasets: [{ data: D.maps.map(m => m.hs),
+      backgroundColor: D.maps.map(m => m.hs >= s.hs ? "#ff7a00" : "rgba(255,122,0,.35)"), borderRadius: 2 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid }, y: { grid: { display: false } } } } });
+  }
+  if (id === "progress") {
+    new Chart($("#hourChart"), { type: "bar", data: { labels: D.hours.map(x => x.hour + ":00"), datasets: [{ data: D.hours.map(x => x.kd),
+      backgroundColor: D.hours.map(x => x.kd >= 1 ? "#ff7a00" : "rgba(255,122,0,.35)"), borderRadius: 2 }] },
       options: { maintainAspectRatio: false, plugins: { legend: { display: false },
         tooltip: { callbacks: { label: c => `K/D ${c.raw.toFixed(2)} · ${D.hours[c.dataIndex].games} games` } } },
         scales: { y: { grid }, x: { grid: { display: false } } } } });
   }
-  if (id === "aim") {
-    charts.sc = new Chart($("#scatter"), { type: "scatter", data: { datasets: [
-      { label: "Won", data: D.points.filter(x => x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "rgba(79,209,139,0.8)", pointRadius: 5 },
-      { label: "Lost", data: D.points.filter(x => !x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "rgba(255,90,95,0.75)", pointRadius: 5 },
-    ]}, options: { maintainAspectRatio: false, scales: { x: { grid, title: { display: true, text: "Headshot %" } },
-      y: { grid, title: { display: true, text: "K/D" } } } } });
-    const avg = D.summary.hs;
-    charts[id] = new Chart($("#hsMap"), { type: "bar", data: { labels: D.maps.map(m => m.map), datasets: [
-      { label: "Headshot % per map", data: D.maps.map(m => m.hs), backgroundColor: D.maps.map(m => m.hs >= avg ? "#ffad3b" : "rgba(255,173,59,0.35)"), borderRadius: 8 }] },
-      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false },
-        title: { display: true, text: `Headshot % per map (my average: ${Math.round(avg)}%)`, color: "#ece7da" } },
-        scales: { x: { grid }, y: { grid: { display: false } } } } });
-  }
 }
 
-/* ---------- tabs ---------- */
-document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  document.querySelectorAll("section").forEach(sec => sec.classList.toggle("on", sec.id === b.dataset.t));
-  setupCharts(b.dataset.t); growBars(document);
-}));
+/* ---------- navigation ---------- */
+function go(id) {
+  document.querySelectorAll(".links button").forEach(b => b.classList.toggle("on", b.dataset.go === id));
+  document.querySelectorAll(".page").forEach(pg => pg.classList.toggle("on", pg.id === id));
+  const pg = document.getElementById(id); charts(id); animate(pg);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+animate(document.getElementById("home"));
 </script>
 </body>
 </html>
