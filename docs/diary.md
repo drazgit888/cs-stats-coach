@@ -12,3 +12,11 @@
 - **First version shows:** level, Elo, win rate, K/D, headshot %, K/D over time, win rate per map and a "best map" tip.
 - **How the key stays safe:** it is pasted into Streamlit Cloud's Secrets box, never into the code or GitHub.
 - **Next:** put the app online on Streamlit Community Cloud and look at what my numbers say.
+
+## 2026-11-20 (evening): Version 1 is online 🎉
+- **What I did:** Put the app online on Streamlit Community Cloud and pasted my FACEIT key into the Secrets box.
+- **Result:** It loaded my real data: **61 FACEIT matches, level 3, Elo 888, 46% win rate, K/D 0.98, 39% headshots.**
+- **What I noticed:** My K/D jumps up and down a lot from match to match, but the 10-match average sits right around 1.0.
+- **How I felt:** _[YOUR WORDS: how did it feel to see your own numbers for the first time? Surprised? Proud?]_
+
+![Version 1 of the app](images/v1-live-app.png)
