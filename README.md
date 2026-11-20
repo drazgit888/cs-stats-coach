@@ -30,12 +30,16 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## What the app shows (version 1)
-- My FACEIT level, Elo, win rate, average K/D and headshot %
-- A line chart: is my K/D going up or down over my last 100 matches?
-- A bar chart: which maps do I win most?
-- A "coach tip" telling me my best map
-- A table with every match
+## What the app shows
+- **Big numbers:** FACEIT level, Elo, win rate, average K/D and headshot %
+- **🧠 Coach tips:** advice in plain words, made from my numbers
+- **📈 Overview:** is my K/D going up? Which maps do I win most?
+- **🕒 When I play:** win rate by time of day, weekday and hour
+- **👥 Teammates:** who I win most with, friends vs strangers
+- **🎯 Aim per map:** headshot %, K/D and damage per map; does good aim mean I win?
 
 ## Status
-✅ Version 1: loads my last 100 FACEIT matches. Next: more coach tips, Premier data.
+✅ Version 2 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
+Next ideas: Premier data, follow one coach tip for a week and measure the result.
+
+The portfolio is in [`docs/`](docs/README.md).
