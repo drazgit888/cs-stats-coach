@@ -221,7 +221,9 @@ c3.metric("Win rate", f"{matches['won'].mean():.0%}")
 c4.metric("Average K/D", f"{matches['kd'].mean():.2f}")
 c5.metric("Average headshot %", f"{matches['hs_pct'].mean():.0f}%")
 
-tab_overview, tab_time, tab_mates = st.tabs(["📈 Overview", "🕒 When I play", "👥 Teammates"])
+tab_overview, tab_time, tab_mates, tab_aim = st.tabs(
+    ["📈 Overview", "🕒 When I play", "👥 Teammates", "🎯 Aim per map"]
+)
 
 mates = find_teammates(matches, player_id, api_key)
 
@@ -322,6 +324,48 @@ with tab_mates:
             win_rate_bar(summary_by(squad, "who"), "who", ""), width="stretch"
         )
         st.caption("A \"friend\" here means someone who was on my team in 2 or more of these matches.")
+
+# ===== Aim per map =====
+with tab_aim:
+    st.markdown("### 🎯 How good is my aim on each map?")
+    aim = (
+        matches.groupby("map")
+        .agg(games=("kd", "size"), hs_pct=("hs_pct", "mean"), kd=("kd", "mean"),
+             adr=("adr", "mean"), win_rate=("won", "mean"))
+        .reset_index()
+        .sort_values("hs_pct", ascending=False)
+    )
+    metric_names = {
+        "Headshot %": "hs_pct",
+        "K/D": "kd",
+        "Damage per round (ADR)": "adr",
+    }
+    if aim["adr"].isna().all():
+        metric_names.pop("Damage per round (ADR)")
+    choice = st.radio("Show", list(metric_names), horizontal=True)
+    col = metric_names[choice]
+    fig_a = px.bar(
+        aim.sort_values(col, ascending=False), x="map", y=col,
+        text=aim.sort_values(col, ascending=False)["games"].astype(str) + " games",
+        labels={"map": "Map", col: choice},
+    )
+    fig_a.add_hline(y=matches[col].mean(), line_dash="dot", annotation_text="my average")
+    st.plotly_chart(fig_a, width="stretch")
+    st.caption("The dotted line is my average over all maps. Bars above it = better than usual.")
+
+    st.markdown("### 🤔 Does good aim mean I win?")
+    pts = matches.dropna(subset=["hs_pct", "kd"]).copy()
+    pts["result"] = pts["won"].map({True: "Won", False: "Lost"})
+    fig_s = px.scatter(
+        pts, x="hs_pct", y="kd", color="result", hover_data=["map", "played_at"],
+        color_discrete_map={"Won": "#31a354", "Lost": "#de2d26"},
+        labels={"hs_pct": "Headshot %", "kd": "K/D", "result": ""},
+    )
+    st.plotly_chart(fig_s, width="stretch")
+    st.caption(
+        "Every dot is one match. If green dots sit higher up, a good K/D helps me win. "
+        "If green dots sit more to the right, headshots help me win."
+    )
 
 st.caption(
     f"Data from the FACEIT Data API · loaded {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC"

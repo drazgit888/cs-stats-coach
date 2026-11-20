@@ -35,3 +35,9 @@
 - **How:** The match list from FACEIT doesn't say who was on my team. So for every match, the app asks FACEIT for the match details (the two teams) and finds the team I was on. This is one extra question to FACEIT per match, so the app saves (caches) the answers for a day to stay fast.
 - **Be careful:** a friend I played 3 games with could have a 100% win rate by luck. More games = more trustworthy.
 - **What my data says:** _[YOUR WORDS: who is your "lucky" teammate? Did you show them? What did they say?]_
+
+## 2026-11-20: Iteration 4 – "Aim per map"
+- **Question:** Is my aim better on some maps than others? And does good aim actually make me win?
+- **What I built:** An **"Aim per map"** tab. I can switch between headshot %, K/D and damage per round (ADR) for every map, compared with my overall average. A dot chart shows every match: green = won, red = lost.
+- **Why this is interesting:** Win rate per map (in the Overview) depends on my whole team. Aim per map is more about *me*.
+- **What my data says:** _[YOUR WORDS: on which map is your aim best? Is that also the map you win most on? Surprising?]_
