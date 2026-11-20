@@ -47,6 +47,34 @@ def load_matches(player_id, api_key, how_many=100):
     return [item.get("stats", {}) for item in data.get("items", [])]
 
 
+@st.cache_data(ttl=24 * 3600, show_spinner=False)
+def load_match_details(match_id, api_key):
+    """Who played in one match (both teams). Old matches never change, so cache for a day."""
+    try:
+        return faceit_get(f"/matches/{match_id}", api_key)
+    except requests.RequestException:
+        return {}
+
+
+def find_teammates(matches, player_id, api_key):
+    """One row per (match, teammate): who was on my team in each match."""
+    rows = []
+    ids = [m for m in matches["match_id"].dropna().unique()]
+    bar = st.progress(0.0, text="Finding out who you played with...")
+    for i, match_id in enumerate(ids):
+        details = load_match_details(match_id, api_key)
+        for team in (details.get("teams") or {}).values():
+            roster = team.get("roster") or team.get("players") or []
+            if any(p.get("player_id") == player_id for p in roster):
+                for p in roster:
+                    if p.get("player_id") != player_id:
+                        rows.append({"match_id": match_id, "teammate": p.get("nickname", "?")})
+        bar.progress((i + 1) / len(ids), text="Finding out who you played with...")
+    bar.empty()
+    mates = pd.DataFrame(rows, columns=["match_id", "teammate"])
+    return mates.merge(matches[["match_id", "won", "kd"]], on="match_id")
+
+
 def to_number(series):
     return pd.to_numeric(series, errors="coerce")
 
@@ -193,7 +221,9 @@ c3.metric("Win rate", f"{matches['won'].mean():.0%}")
 c4.metric("Average K/D", f"{matches['kd'].mean():.2f}")
 c5.metric("Average headshot %", f"{matches['hs_pct'].mean():.0f}%")
 
-tab_overview, tab_time = st.tabs(["📈 Overview", "🕒 When I play"])
+tab_overview, tab_time, tab_mates = st.tabs(["📈 Overview", "🕒 When I play", "👥 Teammates"])
+
+mates = find_teammates(matches, player_id, api_key)
 
 # ===== Overview =====
 with tab_overview:
@@ -246,6 +276,52 @@ with tab_time:
     fig_h.update_xaxes(dtick=1)
     st.plotly_chart(fig_h, width="stretch")
     st.caption("The number on each bar is how many games I played in that hour.")
+
+# ===== Teammates =====
+with tab_mates:
+    st.markdown("### 👥 Which teammates help me win?")
+    if mates.empty:
+        st.info("Couldn't find teammate information for these matches.")
+    else:
+        per_mate = (
+            mates.groupby("teammate")
+            .agg(games=("won", "size"), win_rate=("won", "mean"), my_kd=("kd", "mean"))
+            .reset_index()
+        )
+        regulars = per_mate[per_mate["games"] >= 2].sort_values(
+            ["win_rate", "games"], ascending=False
+        )
+        if regulars.empty:
+            st.info("You never played with the same person twice in these matches.")
+        else:
+            st.caption(
+                "People I played with at least 2 times. Bars show how often we won "
+                "together; the label shows how many games."
+            )
+            fig_m = win_rate_bar(regulars, "teammate", "Teammate")
+            st.plotly_chart(fig_m, width="stretch")
+            st.dataframe(
+                regulars.rename(columns={
+                    "teammate": "Teammate", "games": "Games together",
+                    "win_rate": "Win rate", "my_kd": "My K/D with them",
+                }).style.format({"Win rate": "{:.0%}", "My K/D with them": "{:.2f}"}),
+                width="stretch", hide_index=True,
+            )
+
+        st.markdown("### 🤝 With friends or with strangers?")
+        friends = set(regulars["teammate"])
+        with_friend = mates.groupby("match_id")["teammate"].apply(
+            lambda names: any(n in friends for n in names)
+        )
+        squad = matches[["match_id", "won", "kd"]].copy()
+        squad["who"] = squad["match_id"].map(with_friend).map(
+            {True: "With a friend", False: "Only strangers"}
+        )
+        squad = squad.dropna(subset=["who"])
+        st.plotly_chart(
+            win_rate_bar(summary_by(squad, "who"), "who", ""), width="stretch"
+        )
+        st.caption("A \"friend\" here means someone who was on my team in 2 or more of these matches.")
 
 st.caption(
     f"Data from the FACEIT Data API · loaded {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC"
