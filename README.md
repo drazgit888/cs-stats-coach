@@ -17,10 +17,25 @@ I have played around 210 hours of CS2. Every match leaves numbers behind (kills,
 | `.streamlit/secrets.toml.example` | Example of where the secret FACEIT key goes (the real one is never uploaded) |
 
 ## How to run it
+**Online (no installing needed):** the app runs on Streamlit Community Cloud (share.streamlit.io).
+The FACEIT key is pasted into the app's **Settings → Secrets** box like this:
+```toml
+FACEIT_API_KEY = "my-key"
+FACEIT_NICKNAME = "busiks1"
+```
+
+**On a computer:**
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
+## What the app shows (version 1)
+- My FACEIT level, Elo, win rate, average K/D and headshot %
+- A line chart: is my K/D going up or down over my last 100 matches?
+- A bar chart: which maps do I win most?
+- A "coach tip" telling me my best map
+- A table with every match
+
 ## Status
-🚧 Starting point. Next step: connect my FACEIT match data.
+✅ Version 1: loads my last 100 FACEIT matches. Next: more coach tips, Premier data.
