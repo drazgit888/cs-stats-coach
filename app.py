@@ -167,6 +167,83 @@ def win_rate_bar(table, x, title_x):
     return fig
 
 
+def pct(x):
+    return f"{x:.0%}"
+
+
+def coach_tips(matches, mates):
+    """Simple rules that turn my numbers into advice. Returns (emoji, tip) pairs."""
+    tips = []
+
+    # 1. Maps
+    maps = summary_by(matches, "map")
+    maps = maps[maps["games"] >= MIN_GAMES].sort_values("win_rate", ascending=False)
+    if len(maps) >= 2:
+        best, worst = maps.iloc[0], maps.iloc[-1]
+        tips.append(("🗺️", f"Your best map is **{best['map']}**: you win **{pct(best['win_rate'])}** there "
+                           f"({best['games']} games). Pick it when you can."))
+        if worst["win_rate"] < 0.45:
+            tips.append(("🚫", f"**{worst['map']}** is your hardest map: only **{pct(worst['win_rate'])}** wins "
+                               f"({worst['games']} games). Ban it, or watch a short guide for it."))
+
+    # 2. Time of day
+    times = summary_by(matches, "time_of_day", TIME_ORDER)
+    times = times[times["games"] >= MIN_GAMES]
+    if len(times) >= 2:
+        best_t = times.sort_values("win_rate").iloc[-1]
+        worst_t = times.sort_values("win_rate").iloc[0]
+        if best_t["win_rate"] - worst_t["win_rate"] >= 0.10:
+            tips.append(("🕒", f"You win **{pct(best_t['win_rate'])}** in the **{best_t['time_of_day'].split(' (')[0].lower()}** "
+                               f"but only **{pct(worst_t['win_rate'])}** in the **{worst_t['time_of_day'].split(' (')[0].lower()}**. "
+                               f"Try to play your FACEIT games at your best time."))
+        else:
+            tips.append(("🕒", "The time you play doesn't change your results much. Play whenever suits you!"))
+
+    # 3. Form: last 10 games vs before
+    if len(matches) >= 20:
+        recent, before = matches["kd"].tail(10).mean(), matches["kd"].iloc[:-10].mean()
+        if recent > before + 0.05:
+            tips.append(("📈", f"You're in form! K/D in your last 10 games is **{recent:.2f}**, "
+                               f"up from **{before:.2f}** before. Keep doing what you're doing."))
+        elif recent < before - 0.05:
+            tips.append(("📉", f"Your last 10 games went a bit worse (K/D **{recent:.2f}** vs **{before:.2f}** before). "
+                               f"A short break or an aim warm-up could help."))
+
+    # 4. Tilt: what happens in the next game (within 2 hours) after a loss?
+    m = matches.dropna(subset=["played_at"]).sort_values("played_at").copy()
+    m["prev_won"] = m["won"].shift()
+    m["gap"] = m["played_at"].diff()
+    same_session = m[m["gap"] <= pd.Timedelta(hours=2)]
+    after_loss = same_session[same_session["prev_won"] == False]  # noqa: E712
+    after_win = same_session[same_session["prev_won"] == True]  # noqa: E712
+    if len(after_loss) >= MIN_GAMES and len(after_win) >= MIN_GAMES:
+        wl, ww = after_loss["won"].mean(), after_win["won"].mean()
+        if wl < ww - 0.10:
+            tips.append(("😤", f"Watch out for tilt: right after a loss you win only **{pct(wl)}** of the next games, "
+                               f"after a win **{pct(ww)}**. After a loss, take a 10-minute break."))
+        else:
+            tips.append(("🧊", f"You handle losses well: after a loss you still win **{pct(wl)}** of the next games."))
+
+    # 5. Teammates
+    if not mates.empty:
+        per = mates.groupby("teammate").agg(games=("won", "size"), win_rate=("won", "mean")).reset_index()
+        per = per[per["games"] >= MIN_GAMES].sort_values(["win_rate", "games"], ascending=False)
+        if not per.empty and per.iloc[0]["win_rate"] > matches["won"].mean():
+            b = per.iloc[0]
+            tips.append(("🤝", f"Your lucky teammate is **{b['teammate']}**: you win **{pct(b['win_rate'])}** together "
+                               f"({b['games']} games). Invite them more often!"))
+
+    # 6. Aim: weakest map for headshots
+    aim = matches.groupby("map").agg(games=("hs_pct", "size"), hs=("hs_pct", "mean")).reset_index()
+    aim = aim[aim["games"] >= MIN_GAMES].sort_values("hs")
+    if len(aim) >= 2 and aim.iloc[0]["hs"] < matches["hs_pct"].mean() - 3:
+        w = aim.iloc[0]
+        tips.append(("🎯", f"Your headshot % is lowest on **{w['map']}** (**{w['hs']:.0f}%** vs your usual "
+                           f"**{matches['hs_pct'].mean():.0f}%**). Practise pre-aiming the common angles on that map."))
+
+    return tips
+
+
 def secret(name, default=None):
     """Read a value from Streamlit secrets without crashing if there are none."""
     try:
@@ -221,11 +298,24 @@ c3.metric("Win rate", f"{matches['won'].mean():.0%}")
 c4.metric("Average K/D", f"{matches['kd'].mean():.2f}")
 c5.metric("Average headshot %", f"{matches['hs_pct'].mean():.0f}%")
 
-tab_overview, tab_time, tab_mates, tab_aim = st.tabs(
-    ["📈 Overview", "🕒 When I play", "👥 Teammates", "🎯 Aim per map"]
+tab_tips, tab_overview, tab_time, tab_mates, tab_aim = st.tabs(
+    ["🧠 Coach tips", "📈 Overview", "🕒 When I play", "👥 Teammates", "🎯 Aim per map"]
 )
 
 mates = find_teammates(matches, player_id, api_key)
+
+# ===== Coach tips =====
+with tab_tips:
+    st.markdown("### 🧠 What your coach says")
+    tips = coach_tips(matches, mates)
+    if not tips:
+        st.info("Play a few more games so the coach has enough to go on!")
+    for emoji, tip in tips:
+        st.markdown(f"{emoji} {tip}")
+    st.caption(
+        f"Tips only use groups with at least {MIN_GAMES} games. With few games, "
+        "a tip can be luck, so look at the other tabs to check."
+    )
 
 # ===== Overview =====
 with tab_overview:

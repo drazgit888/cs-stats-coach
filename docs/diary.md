@@ -41,3 +41,17 @@
 - **What I built:** An **"Aim per map"** tab. I can switch between headshot %, K/D and damage per round (ADR) for every map, compared with my overall average. A dot chart shows every match: green = won, red = lost.
 - **Why this is interesting:** Win rate per map (in the Overview) depends on my whole team. Aim per map is more about *me*.
 - **What my data says:** _[YOUR WORDS: on which map is your aim best? Is that also the map you win most on? Surprising?]_
+
+## 2026-11-20: Iteration 5 – "Coach tips"
+- **Question:** Can the app tell me *what to do*, not just show charts?
+- **What I built:** A **"Coach tips"** tab (now the first tab). It reads my numbers and writes advice in normal words, for example "Your best map is X, pick it when you can" or "After a loss you win less, take a 10-minute break".
+- **The rules the coach uses:**
+  1. Best and hardest map (by win rate)
+  2. Best and worst time of day (only if the difference is 10% or more)
+  3. Am I in form? (K/D of my last 10 games vs the games before)
+  4. Tilt check: do I win less in the next game right after a loss? (games less than 2 hours apart)
+  5. Lucky teammate (the friend I win most with)
+  6. Weakest map for headshots
+- **Safety rule:** the coach only talks about groups with **at least 3 games**, so it doesn't give advice based on luck.
+- **What I think of the tips:** _[YOUR WORDS: are the tips true for you? Did one surprise you? Will you actually follow one?]_
+- **Feedback from friends:** _[YOUR WORDS: show the app to a friend you play with. What did they say?]_
