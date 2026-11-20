@@ -55,3 +55,14 @@
 - **Safety rule:** the coach only talks about groups with **at least 3 games**, so it doesn't give advice based on luck.
 - **What I think of the tips:** _[YOUR WORDS: are the tips true for you? Did one surprise you? Will you actually follow one?]_
 - **Feedback from friends:** _[YOUR WORDS: show the app to a friend you play with. What did they say?]_
+
+## 2026-11-20: Design experiment – make it look like a CS HUD
+- **Question:** Can the app *feel* like the game, so it's more fun to look at? (Fun is 25% of the grade!)
+- **What I built:**
+  - A dark "tactical" theme with orange and khaki colours (`.streamlit/config.toml` + `theme.py`).
+  - A banner I made myself (`assets/banner.svg`): a crosshair, a grid and a small radar that turns around. It's drawn with code, so it's **original**, with no logos or pictures from the real game.
+  - HUD-style score cards, briefing cards for the coach tips, and game words in the titles: *Scoreboard, Briefing, Squad, Map pool, Loadout check*.
+  - A **📸 Highlights** tab where my own screenshots from the game appear (just put them in `assets/screenshots/`).
+- **Copyright choice:** I did not use Valve/CS logos, official art or fonts. The style is *inspired by* shooter games but made by me.
+- **Before/after:** version 1 = `images/v1-live-app.png`, new look (with test data) = `images/v3-hud-design-test-data.png`.
+- **What I think / what friends think:** _[YOUR WORDS: does it feel more like CS now? What would you change?]_

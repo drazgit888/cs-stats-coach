@@ -6,10 +6,14 @@ stored in this repository.
 """
 from datetime import datetime, timezone
 
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 import requests
 import streamlit as st
+
+from theme import LOSS, ORANGE, SKY, WIN, apply_theme, banner, hud_strip, tip_card
 
 API = "https://open.faceit.com/data/v4"
 GAME = "cs2"
@@ -17,6 +21,7 @@ LOCAL_TZ = "Europe/Amsterdam"  # I play in the Netherlands
 MIN_GAMES = 3  # don't draw conclusions from fewer games than this
 
 st.set_page_config(page_title="CS Stats Coach", page_icon="🎯", layout="wide")
+apply_theme()
 
 
 # ---------- Getting the data ----------
@@ -162,7 +167,8 @@ def win_rate_bar(table, x, title_x):
         text=table["games"].astype(str) + " games",
         labels={x: title_x, "win_rate": "Win rate"},
     )
-    fig.update_yaxes(tickformat=".0%", range=[0, 1])
+    fig.update_yaxes(tickformat=".0%", range=[0, 1.08])
+    fig.update_traces(textposition="outside", cliponaxis=False)
     fig.add_hline(y=0.5, line_dash="dot", annotation_text="50%")
     return fig
 
@@ -254,8 +260,8 @@ def secret(name, default=None):
 
 # ---------- The page ----------
 
-st.title("🎯 CS Stats Coach")
-st.caption("A coach made from my own Counter-Strike 2 numbers.")
+banner()
+st.caption("Your personal tactical coach, built from your own CS2 match data.")
 
 api_key = secret("FACEIT_API_KEY")
 if not api_key:
@@ -288,30 +294,39 @@ if matches.empty:
     st.stop()
 
 # --- Big numbers at the top ---
-st.subheader(
-    f"Hi {player.get('nickname', nickname)} 👋 here are your last {len(matches)} FACEIT matches"
+hud_strip(
+    player=player.get("nickname", nickname),
+    matches=len(matches),
+    level=cs2.get("skill_level", "?"),
+    elo=cs2.get("faceit_elo", "?"),
 )
+st.subheader("📋 Scoreboard")
 c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("FACEIT level", cs2.get("skill_level", "?"))
 c2.metric("Elo", cs2.get("faceit_elo", "?"))
 c3.metric("Win rate", f"{matches['won'].mean():.0%}")
 c4.metric("Average K/D", f"{matches['kd'].mean():.2f}")
-c5.metric("Average headshot %", f"{matches['hs_pct'].mean():.0f}%")
+c5.metric("Headshot %", f"{matches['hs_pct'].mean():.0f}%")
 
-tab_tips, tab_overview, tab_time, tab_mates, tab_aim = st.tabs(
-    ["🧠 Coach tips", "📈 Overview", "🕒 When I play", "👥 Teammates", "🎯 Aim per map"]
+SHOTS = sorted(
+    p for p in Path(__file__).parent.joinpath("assets", "screenshots").glob("*")
+    if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+)
+tab_tips, tab_overview, tab_time, tab_mates, tab_aim, tab_shots = st.tabs(
+    ["🧠 Briefing", "📈 Match history", "🕒 Round timing", "👥 Squad",
+     "🎯 Aim & map pool", "📸 Highlights"]
 )
 
 mates = find_teammates(matches, player_id, api_key)
 
 # ===== Coach tips =====
 with tab_tips:
-    st.markdown("### 🧠 What your coach says")
+    st.markdown("### 🧠 Pre-match briefing: what your coach says")
     tips = coach_tips(matches, mates)
     if not tips:
         st.info("Play a few more games so the coach has enough to go on!")
     for emoji, tip in tips:
-        st.markdown(f"{emoji} {tip}")
+        tip_card(emoji, tip)
     st.caption(
         f"Tips only use groups with at least {MIN_GAMES} games. With few games, "
         "a tip can be luck, so look at the other tabs to check."
@@ -326,7 +341,7 @@ with tab_overview:
         x="match_nr",
         y=["kd", "kd_trend"],
         labels={"match_nr": "Match (oldest → newest)", "value": "K/D", "variable": ""},
-        color_discrete_sequence=["#9ecae1", "#e6550d"],
+        color_discrete_sequence=[SKY, ORANGE],
     )
     fig.for_each_trace(
         lambda t: t.update(
@@ -337,7 +352,7 @@ with tab_overview:
     fig.add_hline(y=1, line_dash="dot", annotation_text="K/D = 1")
     st.plotly_chart(fig, width="stretch")
 
-    st.markdown("### 🗺️ Which maps am I best on?")
+    st.markdown("### 🗺️ Map pool: which maps am I best on?")
     per_map = summary_by(matches, "map").sort_values("win_rate", ascending=False)
     st.plotly_chart(win_rate_bar(per_map, "map", "Map"), width="stretch")
 
@@ -371,7 +386,7 @@ with tab_time:
 
 # ===== Teammates =====
 with tab_mates:
-    st.markdown("### 👥 Which teammates help me win?")
+    st.markdown("### 👥 Squad: which teammates help me win?")
     if mates.empty:
         st.info("Couldn't find teammate information for these matches.")
     else:
@@ -417,7 +432,7 @@ with tab_mates:
 
 # ===== Aim per map =====
 with tab_aim:
-    st.markdown("### 🎯 How good is my aim on each map?")
+    st.markdown("### 🎯 Loadout check: how good is my aim on each map?")
     aim = (
         matches.groupby("map")
         .agg(games=("kd", "size"), hs_pct=("hs_pct", "mean"), kd=("kd", "mean"),
@@ -448,7 +463,7 @@ with tab_aim:
     pts["result"] = pts["won"].map({True: "Won", False: "Lost"})
     fig_s = px.scatter(
         pts, x="hs_pct", y="kd", color="result", hover_data=["map", "played_at"],
-        color_discrete_map={"Won": "#31a354", "Lost": "#de2d26"},
+        color_discrete_map={"Won": WIN, "Lost": LOSS},
         labels={"hs_pct": "Headshot %", "kd": "K/D", "result": ""},
     )
     st.plotly_chart(fig_s, width="stretch")
@@ -456,6 +471,16 @@ with tab_aim:
         "Every dot is one match. If green dots sit higher up, a good K/D helps me win. "
         "If green dots sit more to the right, headshots help me win."
     )
+
+# ===== Highlights (my own screenshots) =====
+with tab_shots:
+    st.markdown("### 📸 Highlight reel")
+    if not SHOTS:
+        st.info("No screenshots yet. Add your own CS2 screenshots to the assets/screenshots folder.")
+    cols = st.columns(2)
+    for i, shot in enumerate(SHOTS):
+        caption = shot.stem.replace("-", " ").replace("_", " ").capitalize()
+        cols[i % 2].image(str(shot), caption=caption, width="stretch")
 
 st.caption(
     f"Data from the FACEIT Data API · loaded {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC"

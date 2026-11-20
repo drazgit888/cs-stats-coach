@@ -1,0 +1,8 @@
+# "Tactical HUD" theme: dark background, orange + khaki accents.
+[theme]
+base = "dark"
+primaryColor = "#F2A33A"
+backgroundColor = "#0D0F12"
+secondaryBackgroundColor = "#1A1E24"
+textColor = "#E8E2D0"
+font = "sans serif"

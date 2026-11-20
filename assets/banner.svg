@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" width="1200" height="220">
+  <!-- Original artwork for CS Stats Coach: tactical grid, radar and crosshair. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A1E24"/><stop offset="1" stop-color="#0D0F12"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#B8A77A" stroke-opacity="0.12"/>
+    </pattern>
+    <radialGradient id="sweep" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#F2A33A" stop-opacity="0.35"/><stop offset="1" stop-color="#F2A33A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="220" fill="url(#bg)"/>
+  <rect width="1200" height="220" fill="url(#grid)"/>
+  <!-- corner brackets -->
+  <g stroke="#F2A33A" stroke-width="4" fill="none">
+    <path d="M14 44V14H44"/><path d="M1156 14H1186V44"/><path d="M14 176V206H44"/><path d="M1186 176V206H1156"/>
+  </g>
+  <!-- radar -->
+  <g transform="translate(1010 110)">
+    <circle r="88" fill="#0D0F12" stroke="#B8A77A" stroke-opacity="0.6" stroke-width="2"/>
+    <circle r="58" fill="none" stroke="#B8A77A" stroke-opacity="0.35"/>
+    <circle r="28" fill="none" stroke="#B8A77A" stroke-opacity="0.35"/>
+    <path d="M-88 0H88M0 -88V88" stroke="#B8A77A" stroke-opacity="0.35"/>
+    <path d="M0 0L88 0A88 88 0 0 0 62 -62Z" fill="url(#sweep)">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="30" cy="-40" r="5" fill="#7BC67B"/><circle cx="-45" cy="20" r="5" fill="#7BC67B"/>
+    <circle cx="52" cy="38" r="5" fill="#E0574F"><animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
+  </g>
+  <!-- crosshair -->
+  <g transform="translate(110 110)" stroke="#F2A33A" stroke-width="5" stroke-linecap="square">
+    <path d="M0 -46V-16M0 16V46M-46 0H-16M16 0H46"/>
+    <circle r="3" fill="#F2A33A" stroke="none"/>
+  </g>
+  <!-- text -->
+  <g font-family="Rajdhani, Arial Narrow, sans-serif" font-weight="700">
+    <text x="190" y="98" fill="#F2A33A" font-size="54" letter-spacing="4">CS STATS COACH</text>
+    <text x="192" y="138" fill="#B8A77A" font-size="22" letter-spacing="6">TACTICAL DATA BRIEFING · FACEIT CS2</text>
+  </g>
+  <g font-family="Share Tech Mono, monospace" font-size="16" fill="#E8E2D0" fill-opacity="0.75">
+    <text x="192" y="176">&gt; LOADING MATCH DATA ........ OK</text>
+    <text x="560" y="176">&gt; COACH ONLINE</text>
+  </g>
+</svg>
