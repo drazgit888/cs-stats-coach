@@ -10,7 +10,8 @@ I have played around 210 hours of CS2. Every match leaves numbers behind (kills,
 ## What is in this folder
 | Folder / file | What it is |
 |---|---|
-| `app.py` | The Streamlit dashboard (the website you click around in) |
+| `app.py` | Gets my FACEIT data and calculates everything (Python + Streamlit) |
+| `dashboard.html` | The design of the page you see (HTML, CSS, JavaScript) |
 | `requirements.txt` | The list of Python tools the app needs |
 | `docs/diary.md` | My process diary: what I did each day and why |
 | `docs/` | Everything for the portfolio (data sources, methods, experiments) |
@@ -31,15 +32,17 @@ streamlit run app.py
 ```
 
 ## What the app shows
-- **Big numbers:** FACEIT level, Elo, win rate, average K/D and headshot %
-- **🧠 Coach tips:** advice in plain words, made from my numbers
-- **📈 Overview:** is my K/D going up? Which maps do I win most?
-- **🕒 When I play:** win rate by time of day, weekday and hour
-- **👥 Teammates:** who I win most with, friends vs strangers
-- **🎯 Aim per map:** headshot %, K/D and damage per map; does good aim mean I win?
+- **Player card:** level badge, Elo bar to the next level, animated stats, last 10 games
+- **🧠 Briefing:** coach tips in plain words, made from my numbers
+- **📈 Matches:** is my K/D going up? + scoreboard of my last 20 matches
+- **🗺️ Map pool:** map cards with win-rate rings, best and hardest map
+- **🕒 Timing:** heatmap of weekday × time of day, win rate by time, K/D by hour
+- **👥 Squad:** who I win most with, friends vs strangers
+- **🎯 Aim:** does good aim mean I win? Headshot % per map
+- **📸 Highlights:** my own screenshots
 
 ## Status
-✅ Version 2 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
+✅ Version 3 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
 Next ideas: Premier data, follow one coach tip for a week and measure the result.
 
 The portfolio is in [`docs/`](docs/README.md).

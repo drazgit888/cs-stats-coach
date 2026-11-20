@@ -66,3 +66,18 @@
 - **Copyright choice:** I did not use Valve/CS logos, official art or fonts. The style is *inspired by* shooter games but made by me.
 - **Before/after:** version 1 = `images/v1-live-app.png`, new look (with test data) = `images/v3-hud-design-test-data.png`.
 - **What I think / what friends think:** _[YOUR WORDS: does it feel more like CS now? What would you change?]_
+
+## 2026-11-20: Version 3 – I changed my approach for the design
+- **Problem:** I didn't like how version 2 looked. Streamlit's normal building blocks (tabs, metrics, charts) all look a bit the same, and CSS tricks on top of them only go so far.
+- **New approach:** Streamlit still does the "secret" work on the server: it holds my FACEIT key, downloads my matches and calculates everything. But the page you see is now **my own HTML/CSS/JavaScript design** (`dashboard.html`), shown inside the Streamlit app. Python sends it only the finished numbers, never the key.
+- **What's new in the design:**
+  - A **player card**: avatar, nickname, FACEIT level badge and an Elo bar that shows how many points I need for the next level
+  - Animated stat cards (numbers count up), a "last 10 games" W/L strip and my current streak
+  - **Map cards** with a win-rate ring and BEST / HARDEST map badges
+  - A **heatmap** of weekday × time of day (greener = I win more then)
+  - **Squad ranking** of teammates and a big "with a friend vs only strangers" comparison
+  - Smooth interactive charts (Chart.js), free Google Fonts, a moving grid background
+- **Originality:** all graphics are made with code (shapes, gradients, rings). No logos, art or fonts from the real game.
+- **What I learned:** sometimes the tool's default look isn't enough, and it's OK to change approach halfway. Version 2 still exists in my GitHub history (commit `51c6282`) so I can compare.
+- **Before/after:** `images/v1-live-app.png` → `images/v3-hud-design-test-data.png` (v2) → `images/v3-briefing-test-data.png`, `images/v3-mappool-test-data.png`, `images/v3-matches-test-data.png` (v3, made with test data)
+- **What I think / what friends think:** _[YOUR WORDS]_

@@ -5,23 +5,26 @@ The API key is read from Streamlit secrets (FACEIT_API_KEY) and is never
 stored in this repository.
 """
 from datetime import datetime, timezone
-
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
+import base64
+import html
+import json
+import re
+
 import requests
 import streamlit as st
 
-from theme import LOSS, ORANGE, SKY, WIN, apply_theme, banner, hud_strip, tip_card
 
 API = "https://open.faceit.com/data/v4"
 GAME = "cs2"
 LOCAL_TZ = "Europe/Amsterdam"  # I play in the Netherlands
 MIN_GAMES = 3  # don't draw conclusions from fewer games than this
 
-st.set_page_config(page_title="CS Stats Coach", page_icon="🎯", layout="wide")
-apply_theme()
+st.set_page_config(
+    page_title="CS Stats Coach", page_icon="🎯", layout="wide", initial_sidebar_state="collapsed"
+)
 
 
 # ---------- Getting the data ----------
@@ -159,20 +162,6 @@ def summary_by(df, column, order=None):
     return out
 
 
-def win_rate_bar(table, x, title_x):
-    fig = px.bar(
-        table,
-        x=x,
-        y="win_rate",
-        text=table["games"].astype(str) + " games",
-        labels={x: title_x, "win_rate": "Win rate"},
-    )
-    fig.update_yaxes(tickformat=".0%", range=[0, 1.08])
-    fig.update_traces(textposition="outside", cliponaxis=False)
-    fig.add_hline(y=0.5, line_dash="dot", annotation_text="50%")
-    return fig
-
-
 def pct(x):
     return f"{x:.0%}"
 
@@ -258,10 +247,142 @@ def secret(name, default=None):
         return default
 
 
+# ---------- Building the data for the dashboard ----------
+
+# FACEIT Elo needed for each level (level: (min, max))
+LEVELS = {1: (100, 500), 2: (501, 750), 3: (751, 900), 4: (901, 1050), 5: (1051, 1200),
+          6: (1201, 1350), 7: (1351, 1530), 8: (1531, 1750), 9: (1751, 2000), 10: (2001, None)}
+HERE = Path(__file__).parent
+
+
+def clean_num(x, digits=3):
+    """JSON can't hold NaN, so turn missing numbers into None."""
+    try:
+        return None if pd.isna(x) else round(float(x), digits)
+    except (TypeError, ValueError):
+        return None
+
+
+def records(df, cols):
+    out = []
+    for _, row in df.iterrows():
+        out.append({k: (clean_num(row[c]) if isinstance(row[c], (int, float)) and not isinstance(row[c], bool)
+                        else (bool(row[c]) if isinstance(row[c], bool) else str(row[c])))
+                    for k, c in cols.items()})
+    return out
+
+
+def tip_html(text):
+    safe = html.escape(text)
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", safe)
+
+
+def screenshots():
+    shots = []
+    for f in sorted(HERE.joinpath("assets", "screenshots").glob("*")):
+        mime = {".png": "png", ".jpg": "jpeg", ".jpeg": "jpeg", ".webp": "webp", ".gif": "gif"}.get(f.suffix.lower())
+        if mime:
+            data = base64.b64encode(f.read_bytes()).decode()
+            caption = f.stem.replace("-", " ").replace("_", " ").capitalize()
+            shots.append({"src": f"data:image/{mime};base64,{data}", "caption": caption})
+    return shots
+
+
+def build_payload(player, cs2, matches, mates):
+    level = cs2.get("skill_level")
+    elo = cs2.get("faceit_elo")
+    lo, hi = LEVELS.get(level, (None, None))
+    progress = 1.0 if hi is None or elo is None or lo is None else max(0, min(1, (elo - lo) / (hi - lo + 1)))
+    to_next = None if hi is None or elo is None else hi + 1 - elo
+
+    wins = int(matches["won"].sum())
+    # current streak
+    streak, last = 0, None
+    for w in reversed(matches["won"].tolist()):
+        if last is None or w == last:
+            streak, last = streak + 1, w
+        else:
+            break
+    streak_text = f"{'🔥 ' if last else ''}{streak} {'win' if last else 'loss'}{'es' if not last and streak > 1 else ''}{'s' if last and streak > 1 else ''} in a row"
+
+    kd = matches[["match_nr", "kd", "map", "won"]].copy()
+    kd["avg10"] = matches["kd"].rolling(10, min_periods=1).mean()
+
+    maps = summary_by(matches, "map").merge(
+        matches.groupby("map").agg(hs=("hs_pct", "mean"), adr=("adr", "mean")).reset_index(), on="map"
+    ).sort_values(["win_rate", "games"], ascending=False)
+    maps["tag"] = ""
+    enough = maps[maps["games"] >= MIN_GAMES]
+    if len(enough) >= 2:
+        maps.loc[enough.index[0], "tag"] = "best"
+        maps.loc[enough.index[-1], "tag"] = "worst"
+
+    tod = summary_by(matches, "time_of_day", TIME_ORDER).dropna(subset=["games"])
+    tod["label"] = tod["time_of_day"].astype(str).str.split(" ").str[0] + \
+        tod["time_of_day"].astype(str).str.extract(r"( night)?")[0].fillna("")
+    hours = matches.groupby("hour").agg(games=("kd", "size"), kd=("kd", "mean")).reset_index()
+
+    heat_rows = []
+    for day in DAY_ORDER:
+        cells = []
+        for t in TIME_ORDER:
+            g = matches[(matches["weekday"] == day) & (matches["time_of_day"] == t)]
+            cells.append({"games": int(len(g)), "win_rate": clean_num(g["won"].mean()) if len(g) else None})
+        heat_rows.append({"day": day[:3], "cells": cells})
+
+    squad, friends = [], {"with": None, "without": None, "with_games": 0, "without_games": 0}
+    if not mates.empty:
+        per = (mates.groupby("teammate")
+               .agg(games=("won", "size"), win_rate=("won", "mean"), kd=("kd", "mean")).reset_index())
+        per = per[per["games"] >= 2].sort_values(["win_rate", "games"], ascending=False)
+        squad = records(per, {"name": "teammate", "games": "games", "win_rate": "win_rate", "kd": "kd"})
+        known = set(per["teammate"])
+        has_friend = mates.groupby("match_id")["teammate"].apply(lambda n: any(x in known for x in n))
+        m = matches.assign(friend=matches["match_id"].map(has_friend)).dropna(subset=["friend"])
+        w, wo = m[m["friend"] == True], m[m["friend"] == False]  # noqa: E712
+        friends = {"with": clean_num(w["won"].mean()), "without": clean_num(wo["won"].mean()),
+                   "with_games": int(len(w)), "without_games": int(len(wo))}
+
+    recent = matches.sort_values("played_at", ascending=False).head(20).copy()
+    recent["date"] = recent["played_at"].dt.tz_convert(LOCAL_TZ).dt.strftime("%d %b %H:%M")
+
+    return {
+        "player": {"nickname": player.get("nickname"), "avatar": player.get("avatar") or "",
+                   "level": level, "elo": elo, "progress": progress, "to_next": to_next},
+        "summary": {"matches": int(len(matches)), "wins": wins, "losses": int(len(matches) - wins),
+                    "win_rate": clean_num(matches["won"].mean()), "kd": clean_num(matches["kd"].mean()),
+                    "hs": clean_num(matches["hs_pct"].mean()), "adr": clean_num(matches["adr"].mean()),
+                    "streak_text": streak_text},
+        "form": [bool(x) for x in matches["won"].tail(10)],
+        "tips": [{"icon": e, "html": tip_html(t)} for e, t in coach_tips(matches, mates)],
+        "kd": records(kd, {"n": "match_nr", "kd": "kd", "avg10": "avg10", "map": "map", "won": "won"}),
+        "maps": records(maps, {"map": "map", "games": "games", "win_rate": "win_rate", "kd": "avg_kd",
+                               "hs": "hs", "adr": "adr", "tag": "tag"}),
+        "tod": records(tod, {"label": "label", "games": "games", "win_rate": "win_rate"}),
+        "hours": records(hours, {"hour": "hour", "games": "games", "kd": "kd"}),
+        "heat": {"cols": [t.split(" (")[0] for t in TIME_ORDER], "rows": heat_rows},
+        "squad": squad,
+        "friends": friends,
+        "points": records(matches.dropna(subset=["hs_pct", "kd"]), {"hs": "hs_pct", "kd": "kd", "won": "won"}),
+        "recent": records(recent, {"date": "date", "map": "map", "won": "won", "kills": "kills", "deaths": "deaths",
+                                   "assists": "assists", "kd": "kd", "hs": "hs_pct", "adr": "adr"}),
+        "shots": screenshots(),
+        "min_games": MIN_GAMES,
+        "loaded": f"{datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC",
+    }
+
+
 # ---------- The page ----------
 
-banner()
-st.caption("Your personal tactical coach, built from your own CS2 match data.")
+# Hide Streamlit's own header and spacing so the dashboard fills the page
+st.markdown(
+    """<style>
+    header[data-testid="stHeader"] {background: transparent;}
+    .block-container {padding: 0.5rem 0.5rem 0 0.5rem; max-width: 100%;}
+    iframe {display: block;}
+    </style>""",
+    unsafe_allow_html=True,
+)
 
 api_key = secret("FACEIT_API_KEY")
 if not api_key:
@@ -293,195 +414,10 @@ if matches.empty:
     st.info("No CS2 matches found on FACEIT for this player yet.")
     st.stop()
 
-# --- Big numbers at the top ---
-hud_strip(
-    player=player.get("nickname", nickname),
-    matches=len(matches),
-    level=cs2.get("skill_level", "?"),
-    elo=cs2.get("faceit_elo", "?"),
-)
-st.subheader("📋 Scoreboard")
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("FACEIT level", cs2.get("skill_level", "?"))
-c2.metric("Elo", cs2.get("faceit_elo", "?"))
-c3.metric("Win rate", f"{matches['won'].mean():.0%}")
-c4.metric("Average K/D", f"{matches['kd'].mean():.2f}")
-c5.metric("Headshot %", f"{matches['hs_pct'].mean():.0f}%")
-
-SHOTS = sorted(
-    p for p in Path(__file__).parent.joinpath("assets", "screenshots").glob("*")
-    if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"}
-)
-tab_tips, tab_overview, tab_time, tab_mates, tab_aim, tab_shots = st.tabs(
-    ["🧠 Briefing", "📈 Match history", "🕒 Round timing", "👥 Squad",
-     "🎯 Aim & map pool", "📸 Highlights"]
-)
-
 mates = find_teammates(matches, player_id, api_key)
 
-# ===== Coach tips =====
-with tab_tips:
-    st.markdown("### 🧠 Pre-match briefing: what your coach says")
-    tips = coach_tips(matches, mates)
-    if not tips:
-        st.info("Play a few more games so the coach has enough to go on!")
-    for emoji, tip in tips:
-        tip_card(emoji, tip)
-    st.caption(
-        f"Tips only use groups with at least {MIN_GAMES} games. With few games, "
-        "a tip can be luck, so look at the other tabs to check."
-    )
-
-# ===== Overview =====
-with tab_overview:
-    st.markdown("### 📈 Is my aim getting better?")
-    matches["kd_trend"] = matches["kd"].rolling(10, min_periods=1).mean()
-    fig = px.line(
-        matches,
-        x="match_nr",
-        y=["kd", "kd_trend"],
-        labels={"match_nr": "Match (oldest → newest)", "value": "K/D", "variable": ""},
-        color_discrete_sequence=[SKY, ORANGE],
-    )
-    fig.for_each_trace(
-        lambda t: t.update(
-            name={"kd": "K/D per match", "kd_trend": "Average of last 10"}[t.name]
-        )
-    )
-    fig.update_traces(line_width=3, selector={"name": "Average of last 10"})
-    fig.add_hline(y=1, line_dash="dot", annotation_text="K/D = 1")
-    st.plotly_chart(fig, width="stretch")
-
-    st.markdown("### 🗺️ Map pool: which maps am I best on?")
-    per_map = summary_by(matches, "map").sort_values("win_rate", ascending=False)
-    st.plotly_chart(win_rate_bar(per_map, "map", "Map"), width="stretch")
-
-    with st.expander("See all matches as a table"):
-        st.dataframe(
-            matches[["played_at", "map", "won", "kills", "deaths", "assists", "kd", "hs_pct", "adr"]]
-            .sort_values("played_at", ascending=False),
-            width="stretch",
-            hide_index=True,
-        )
-
-# ===== When I play =====
-with tab_time:
-    st.markdown("### 🌙 Do I play worse late at night?")
-    st.caption("Times are Dutch time. Bars show how often I win; the label shows how many games.")
-    by_time = summary_by(matches, "time_of_day", TIME_ORDER)
-    st.plotly_chart(win_rate_bar(by_time, "time_of_day", "Time of day"), width="stretch")
-
-    st.markdown("### 📅 Which day of the week is my best?")
-    by_day = summary_by(matches, "weekday", DAY_ORDER)
-    st.plotly_chart(win_rate_bar(by_day, "weekday", "Day"), width="stretch")
-
-    st.markdown("### 🔥 Hour by hour: my K/D")
-    by_hour = matches.groupby("hour").agg(games=("kd", "size"), avg_kd=("kd", "mean")).reset_index()
-    fig_h = px.bar(by_hour, x="hour", y="avg_kd", text="games",
-                   labels={"hour": "Hour of the day", "avg_kd": "Average K/D"})
-    fig_h.add_hline(y=1, line_dash="dot")
-    fig_h.update_xaxes(dtick=1)
-    st.plotly_chart(fig_h, width="stretch")
-    st.caption("The number on each bar is how many games I played in that hour.")
-
-# ===== Teammates =====
-with tab_mates:
-    st.markdown("### 👥 Squad: which teammates help me win?")
-    if mates.empty:
-        st.info("Couldn't find teammate information for these matches.")
-    else:
-        per_mate = (
-            mates.groupby("teammate")
-            .agg(games=("won", "size"), win_rate=("won", "mean"), my_kd=("kd", "mean"))
-            .reset_index()
-        )
-        regulars = per_mate[per_mate["games"] >= 2].sort_values(
-            ["win_rate", "games"], ascending=False
-        )
-        if regulars.empty:
-            st.info("You never played with the same person twice in these matches.")
-        else:
-            st.caption(
-                "People I played with at least 2 times. Bars show how often we won "
-                "together; the label shows how many games."
-            )
-            fig_m = win_rate_bar(regulars, "teammate", "Teammate")
-            st.plotly_chart(fig_m, width="stretch")
-            st.dataframe(
-                regulars.rename(columns={
-                    "teammate": "Teammate", "games": "Games together",
-                    "win_rate": "Win rate", "my_kd": "My K/D with them",
-                }).style.format({"Win rate": "{:.0%}", "My K/D with them": "{:.2f}"}),
-                width="stretch", hide_index=True,
-            )
-
-        st.markdown("### 🤝 With friends or with strangers?")
-        friends = set(regulars["teammate"])
-        with_friend = mates.groupby("match_id")["teammate"].apply(
-            lambda names: any(n in friends for n in names)
-        )
-        squad = matches[["match_id", "won", "kd"]].copy()
-        squad["who"] = squad["match_id"].map(with_friend).map(
-            {True: "With a friend", False: "Only strangers"}
-        )
-        squad = squad.dropna(subset=["who"])
-        st.plotly_chart(
-            win_rate_bar(summary_by(squad, "who"), "who", ""), width="stretch"
-        )
-        st.caption("A \"friend\" here means someone who was on my team in 2 or more of these matches.")
-
-# ===== Aim per map =====
-with tab_aim:
-    st.markdown("### 🎯 Loadout check: how good is my aim on each map?")
-    aim = (
-        matches.groupby("map")
-        .agg(games=("kd", "size"), hs_pct=("hs_pct", "mean"), kd=("kd", "mean"),
-             adr=("adr", "mean"), win_rate=("won", "mean"))
-        .reset_index()
-        .sort_values("hs_pct", ascending=False)
-    )
-    metric_names = {
-        "Headshot %": "hs_pct",
-        "K/D": "kd",
-        "Damage per round (ADR)": "adr",
-    }
-    if aim["adr"].isna().all():
-        metric_names.pop("Damage per round (ADR)")
-    choice = st.radio("Show", list(metric_names), horizontal=True)
-    col = metric_names[choice]
-    fig_a = px.bar(
-        aim.sort_values(col, ascending=False), x="map", y=col,
-        text=aim.sort_values(col, ascending=False)["games"].astype(str) + " games",
-        labels={"map": "Map", col: choice},
-    )
-    fig_a.add_hline(y=matches[col].mean(), line_dash="dot", annotation_text="my average")
-    st.plotly_chart(fig_a, width="stretch")
-    st.caption("The dotted line is my average over all maps. Bars above it = better than usual.")
-
-    st.markdown("### 🤔 Does good aim mean I win?")
-    pts = matches.dropna(subset=["hs_pct", "kd"]).copy()
-    pts["result"] = pts["won"].map({True: "Won", False: "Lost"})
-    fig_s = px.scatter(
-        pts, x="hs_pct", y="kd", color="result", hover_data=["map", "played_at"],
-        color_discrete_map={"Won": WIN, "Lost": LOSS},
-        labels={"hs_pct": "Headshot %", "kd": "K/D", "result": ""},
-    )
-    st.plotly_chart(fig_s, width="stretch")
-    st.caption(
-        "Every dot is one match. If green dots sit higher up, a good K/D helps me win. "
-        "If green dots sit more to the right, headshots help me win."
-    )
-
-# ===== Highlights (my own screenshots) =====
-with tab_shots:
-    st.markdown("### 📸 Highlight reel")
-    if not SHOTS:
-        st.info("No screenshots yet. Add your own CS2 screenshots to the assets/screenshots folder.")
-    cols = st.columns(2)
-    for i, shot in enumerate(SHOTS):
-        caption = shot.stem.replace("-", " ").replace("_", " ").capitalize()
-        cols[i % 2].image(str(shot), caption=caption, width="stretch")
-
-st.caption(
-    f"Data from the FACEIT Data API · loaded {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC"
-)
+# The key never leaves the server: only the finished numbers go into the page.
+payload = build_payload(player, cs2, matches, mates)
+data_json = json.dumps(payload).replace("</", "<\\/")
+page = HERE.joinpath("dashboard.html").read_text(encoding="utf-8").replace("__DATA__", data_json)
+st.iframe(page, height="content")

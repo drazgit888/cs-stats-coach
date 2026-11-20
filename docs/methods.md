@@ -6,7 +6,10 @@
 | **Python** | The language the app is written in |
 | **Streamlit** | Turns the Python script into an interactive website |
 | **pandas** | Tables: cleaning data, grouping (per map, per time, per teammate), averages |
-| **Plotly** | Interactive charts (hover to see numbers, zoom) |
+| **Plotly** | Charts in versions 1–2 |
+| **HTML, CSS, JavaScript** | Version 3: my own page design (`dashboard.html`) shown inside Streamlit |
+| **Chart.js** | Version 3: animated, interactive charts |
+| **Google Fonts** | Free fonts (Chakra Petch, Inter, JetBrains Mono) |
 | **requests** | Asking the FACEIT API for data |
 | **GitHub** | Storing the code and its history (every step is a commit) |
 | **Streamlit Community Cloud** | Free hosting, so the app is online without installing anything |
@@ -17,7 +20,7 @@
 2. **Clean:** turn text into numbers, remove `de_` from map names, turn the end time into Dutch time, sort oldest → newest.
 3. **Add new columns:** time of day (morning/afternoon/evening/late night), weekday, hour, and "with a friend or only strangers".
 4. **Group and compare:** win rate, average K/D, headshot % and ADR per map, per time, per teammate.
-5. **Show:** charts with question titles, game counts and reference lines.
+5. **Show:** charts with question titles, game counts and reference lines. In version 3, Python packs all results into one data package (JSON) and the HTML page draws it. The FACEIT key never goes to the page.
 6. **Advise:** simple rules turn the numbers into coach tips.
 
 ## Analysis methods (simple explanations)
