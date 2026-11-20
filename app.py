@@ -419,6 +419,25 @@ mates = find_teammates(matches, player_id, api_key)
 
 # The key never leaves the server: only the finished numbers go into the page.
 payload = build_payload(player, cs2, matches, mates)
+
+# ---------- Leetify (separate source, off unless LEETIFY_ENABLED = "true") ----------
+# Runs after FACEIT and can never stop the FACEIT page: errors become a message.
+# No caching on purpose (Leetify guidelines: don't store their data).
+if str(secret("LEETIFY_ENABLED", "false")).strip().lower() == "true":
+    from sources import load_leetify
+
+    steam_id = str(secret("STEAM_ID", "") or "").strip()
+    steam_id_from = "Secrets" if steam_id else ""
+    if not steam_id:
+        steam_id = str(cs2.get("game_player_id") or player.get("steam_id_64") or "").strip()
+        steam_id_from = "FACEIT profile" if steam_id else ""
+    try:
+        payload["leetify"] = load_leetify(
+            steam_id, api_key=secret("LEETIFY_API_KEY") or None, steam_id_from=steam_id_from
+        )
+    except Exception:  # last safety net; never show raw error text
+        payload["leetify"] = {"enabled": True, "status": "error",
+                              "message": "Leetify part failed to load.", "check": {}}
 data_json = json.dumps(payload).replace("</", "<\\/")
 page = HERE.joinpath("dashboard.html").read_text(encoding="utf-8").replace("__DATA__", data_json)
 st.iframe(page, height="content")

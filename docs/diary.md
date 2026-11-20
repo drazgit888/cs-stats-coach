@@ -94,3 +94,12 @@
 - **What I learned:** a picture of what you want ("mockup") makes it much easier to explain a design than words.
 - **Pictures:** `images/v4-home-test-data.png`, `images/v4-maps-test-data.png`, `images/v4-progress-test-data.png` (made with test data)
 - **What I think / what friends think:** _[YOUR WORDS]_
+
+
+## 2026-11-20: Leetify – my Premier and matchmaking games
+- **Why:** FACEIT only knows my FACEIT games. A big part of my ~210 hours is Premier, so I connected my Steam account to Leetify and added Leetify as a second data source.
+- **What I built:** a new **Leetify** page with my Premier rank, my Competitive rank per map (kept separate from Premier), other ranks, my Leetify rating, recent matches and a "Data check" box that shows what Leetify actually sent.
+- **Rules I followed:** Leetify's API guidelines. Data is fetched fresh and never stored, numbers are shown exactly as Leetify gives them, and the official "Data Provided by Leetify" badge and "View on Leetify" links are on the page. The page is off until I switch it on in Secrets (`LEETIFY_ENABLED`), and FACEIT keeps working even if Leetify is down.
+- **How I tested it:** 53 automatic checks with fake answers (good data, wrong key, no profile, rate limit, timeout, no internet). My FACEIT numbers were exactly the same before and after.
+- **Picture:** `images/leetify-page-test-data.png` (made with test data, not my real numbers)
+- **What I think / what I learned:** _[YOUR WORDS]_

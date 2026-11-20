@@ -15,6 +15,8 @@ I have played around 210 hours of CS2. Every match leaves numbers behind (kills,
 | `requirements.txt` | The list of Python tools the app needs |
 | `docs/diary.md` | My process diary: what I did each day and why |
 | `docs/` | Everything for the portfolio (data sources, methods, experiments) |
+| `sources.py` | Leetify connection (separate from FACEIT, fresh data, nothing stored) |
+| `assets/leetify/` | Official "Data Provided by Leetify" badges, unchanged |
 | `.streamlit/secrets.toml.example` | Example of where the secret FACEIT key goes (the real one is never uploaded) |
 
 ## How to run it
@@ -24,6 +26,14 @@ The FACEIT key is pasted into the app's **Settings → Secrets** box like this:
 FACEIT_API_KEY = "my-key"
 FACEIT_NICKNAME = "busiks1"
 ```
+**Leetify (optional, off by default):** add these lines to the same Secrets box to switch on the Leetify page
+(Premier and matchmaking data). Leave `LEETIFY_ENABLED` out or `"false"` and the app works with FACEIT only.
+```toml
+LEETIFY_ENABLED = "true"
+LEETIFY_API_KEY = "my-leetify-key"
+STEAM_ID = "my-17-digit-steam-id"   # optional, otherwise the Steam ID from FACEIT is used
+```
+After saving, open the **Leetify** page and check the **Data check** box to see what Leetify returned.
 
 **On a computer:**
 ```bash
@@ -40,9 +50,11 @@ streamlit run app.py
 - **👥 Squad:** who I win most with, friends vs strangers
 - **🎯 Aim:** does good aim mean I win? Headshot % per map
 - **📸 Highlights:** my own screenshots
+- **Leetify** (only when switched on): Premier rank, Competitive rank per map, rating and recent matches, shown exactly as Leetify returns them, with the "Data Provided by Leetify" badge
 
 ## Status
 ✅ Version 3 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
-Next ideas: Premier data, follow one coach tip for a week and measure the result.
+Leetify page (Premier + matchmaking) added, off until switched on in Secrets.
+Next ideas: follow one coach tip for a week and measure the result.
 
 The portfolio is in [`docs/`](docs/README.md).

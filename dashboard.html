@@ -161,6 +161,21 @@ tr:hover td { background: rgba(255,122,0,.06); }
 .shot p { padding: 14px 18px; font: italic 800 20px var(--head); text-transform: uppercase; color: var(--text); }
 .empty { color: var(--muted); }
 
+/* ---------- Leetify (official badge shown unmodified, never animated) ---------- */
+#leetify.page.on, #leetify .card { animation: none !important; }
+.lt-badge { display: inline-block; line-height: 0; }
+.lt-badge img { height: 46px; width: auto; display: block; }
+.lt-badge.large img { height: 86px; }
+.lt-link { color: #F84982; font-weight: 700; text-decoration: underline; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 8px 18px; margin-top: 14px; font-size: 15px; }
+.kv span { color: var(--muted); }
+.kv b { font: 700 18px var(--head); text-align: right; }
+.na { color: var(--muted); font-style: italic; }
+.chk { list-style: none; margin-top: 10px; }
+.chk li { padding: 6px 0; border-bottom: 1px solid var(--card-line); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; }
+.chk code { font-size: 12px; color: var(--muted); word-break: break-word; }
+.yes { color: var(--good); font-weight: 700; } .no { color: var(--bad); font-weight: 700; }
+
 footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962; font: 600 13px var(--head); letter-spacing: .12em; text-transform: uppercase; border-top: 1px solid var(--card-line); }
 
 @media (max-width: 900px) {
@@ -268,6 +283,7 @@ const pages = [
   ["home", "Home"], ["briefing", "Briefing"], ["matches", "Matches"], ["maps", "Maps"],
   ["squad", "Squad"], ["progress", "Progress"], ["highlights", "Highlights"],
 ];
+if (D.leetify && D.leetify.enabled) pages.push(["leetify", "Leetify"]);
 
 function pageWrap(id, seed, opts, body) {
   return `<section class="page ${id === "home" ? "on" : ""}" id="${id}">
@@ -372,6 +388,57 @@ const highlightsPage = `
   <div class="cards c2">${D.shots.length ? D.shots.map(x => `<div class="card shot"><img src="${x.src}" alt=""><p>${esc(x.caption)}</p></div>`).join("")
     : `<div class="card"><p class="empty">No screenshots yet. Send them to Claude and they'll appear here!</p></div>`}</div>`;
 
+
+/* ---------- Leetify page: values exactly as Leetify returns them ---------- */
+const L = D.leetify;
+const raw = v => (v === null || v === undefined || v === "") ? `<span class="na">Not available from Leetify</span>` : esc(typeof v === "object" ? JSON.stringify(v) : v);
+const title = k => esc(String(k).replace(/_/g, " ").replace(/^./, c => c.toUpperCase()));
+const yn = v => v === true ? `<span class="yes">Yes</span>` : v === false ? `<span class="no">No</span>` : `<span class="na">Not checked</span>`;
+function leetifyPage() {
+  if (!L) return "";
+  const c = L.check || {}, pr = L.profile;
+  const badge = (big) => L.badge_small ? `<a class="lt-badge ${big ? "large" : ""}" href="https://leetify.com/" target="_blank" rel="noopener"><img src="${big ? L.badge_large : L.badge_small}" alt="Data Provided by Leetify"></a>` : "";
+  const view = `<p style="margin-top:14px"><a class="lt-link" href="${esc(L.profile_url)}" target="_blank" rel="noopener">View on Leetify</a></p>`;
+  const checkCard = `<div class="card"><h4>Data check</h4><ul class="chk">
+      <li>Status <b>${esc(L.message || L.status)}</b></li>
+      <li>Steam ID found <b>${L.steam_id ? `${esc(L.steam_id)} <span class="na">(${esc(L.steam_id_from)})</span>` : `<span class="no">No</span>`}</b></li>
+      <li>API key set ${yn(c.key_set)}</li>
+      <li>API key accepted ${yn(c.key_valid)}</li>
+      <li>Profile found ${yn(c.profile_found)}</li>
+      <li>Premier rank returned ${yn(c.premier_found)}</li>
+      <li>Competitive map ranks returned <b>${c.competitive_ranks ?? 0}</b></li>
+      <li>Matches returned <b>${c.matches ?? 0}</b></li>
+      <li>Profile fields <code>${esc((c.profile_fields || []).join(", ") || "none")}</code></li>
+      <li>Rank fields <code>${esc((c.rank_fields || []).join(", ") || "none")}</code></li>
+      <li>Match fields <code>${esc((c.match_fields || []).join(", ") || "none")}</code></li>
+    </ul>${L.matches_message ? `<p class="na" style="margin-top:10px">${esc(L.matches_message)}</p>` : ""}</div>`;
+  if (!pr) return `<h1>Leetify</h1><p class="lead">${esc(L.message)}</p>
+    <div class="cards c2">${checkCard}<div class="card">${badge(true)}${view}</div></div>`;
+  const r = pr.ranks || {};
+  const premierCard = `<div class="card"><h4>Premier</h4><div class="kv"><span>Premier</span><b>${raw(r.premier)}</b></div>${view}</div>`;
+  const otherRanks = Object.keys(r).filter(k => k !== "premier");
+  const ranksCard = `<div class="card"><h4>Other ranks</h4><div class="kv">${otherRanks.map(k => `<span>${title(k)}</span><b>${raw(r[k])}</b>`).join("") || `<span class="na">None returned</span><b></b>`}</div>${view}</div>`;
+  const compCard = `<div class="card"><h4>Competitive ranks per map</h4><div class="kv">${pr.competitive.length ? pr.competitive.map(m =>
+      m && m.map_name !== undefined ? `<span>${esc(m.map_name)}</span><b>${raw(m.rank)}</b>` : `<span>Rank</span><b>${raw(m)}</b>`).join("")
+      : `<span class="na">Not available from Leetify</span><b></b>`}</div>${view}</div>`;
+  const ratingCard = `<div class="card"><h4>Rating</h4><div class="kv">${Object.keys(pr.rating).map(k => `<span>${title(k)}</span><b>${raw(pr.rating[k])}</b>`).join("") || `<span class="na">Not available from Leetify</span><b></b>`}</div>${view}</div>`;
+  const overview = `<div class="card"><h4>Profile</h4><div class="kv">
+      <span>Name</span><b>${raw(pr.name)}</b><span>Total matches</span><b>${raw(pr.total_matches)}</b>
+      <span>Winrate</span><b>${raw(pr.winrate)}</b><span>First match date</span><b>${raw(pr.first_match_date)}</b>
+      <span>Privacy mode</span><b>${raw(pr.privacy_mode)}</b></div>${view}</div>`;
+  const rows = (L.matches || []).map(m => `<tr><td>${raw(m.finished_at)}</td><td>${raw(m.map_name)}</td><td>${raw(m.data_source)}</td>
+      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td><td>${raw(m.leetify_rating)}</td></tr>`).join("");
+  const matchCard = `<div class="card" style="overflow-x:auto"><h4>Recent matches</h4>
+      ${rows ? `<table><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>K/D ratio</th><th>Leetify rating</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}${view}</div>`;
+  return `<h1>Leetify</h1>
+    <p class="lead">Premier and matchmaking data, shown exactly as Leetify returns it. Separate from FACEIT.</p>
+    ${badge(true)}
+    <div class="cards c3">${premierCard}${compCard}${ranksCard}</div>
+    <div class="cards c2">${overview}${ratingCard}</div>
+    <div class="cards">${matchCard}</div>
+    <div class="cards c2">${checkCard}<div class="card"><p>Leetify data is fetched fresh on every visit and is not stored by this app.</p>${badge(false)}</div></div>`;
+}
+
 $("#app").innerHTML = `
   <div class="top">
     <div class="logo">CS<span>/</span>SC</div>
@@ -385,7 +452,8 @@ $("#app").innerHTML = `
   ${pageWrap("squad", 23, { light: .65, lx: 75 }, squadPage)}
   ${pageWrap("progress", 5, { light: .5, lx: 85, cool: true }, progressPage)}
   ${pageWrap("highlights", 29, { light: .7, lx: 65 }, highlightsPage)}
-  <footer>CS Stats Coach · data from the FACEIT Data API · loaded ${esc(D.loaded)} · made by ${esc(p.nickname)}</footer>`;
+  ${L ? pageWrap("leetify", 37, { light: .5, lx: 40, cool: true }, leetifyPage()) : ""}
+  <footer>CS Stats Coach · data from the FACEIT Data API${L ? " · Leetify section: Data Provided by Leetify" : ""} · loaded ${esc(D.loaded)} · made by ${esc(p.nickname)}</footer>`;
 
 /* heatmap */
 (function () {
