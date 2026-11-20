@@ -20,3 +20,11 @@
 - **How I felt:** _[YOUR WORDS: how did it feel to see your own numbers for the first time? Surprised? Proud?]_
 
 ![Version 1 of the app](images/v1-live-app.png)
+
+## 2026-11-20: Iteration 2 – "Do I play worse late at night?"
+- **Question:** Does the time I play change how well I play?
+- **What I built:** A new tab **"When I play"** with my win rate per time of day (morning, afternoon, evening, late night), per day of the week, and my average K/D for every hour.
+- **How:** FACEIT gives the time each match finished. I changed it to Dutch time and put every match in a "time bucket".
+- **Also fixed:** The two lines in the K/D chart had almost the same colour, so the 10-match average is now a thick orange line.
+- **Be careful:** if a bar has only 1 or 2 games, it doesn't really mean anything yet. The labels show how many games each bar is based on.
+- **What my data says:** _[YOUR WORDS: look at the tab. Do you win less late at night? Is that what you expected?]_
