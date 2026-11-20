@@ -1,8 +1,8 @@
-# "Tactical HUD" theme: dark background, orange + khaki accents.
+# v5 "analyst's console" theme: deep charcoal, violet primary (see docs/design-system.md).
 [theme]
 base = "dark"
-primaryColor = "#F2A33A"
-backgroundColor = "#0D0F12"
-secondaryBackgroundColor = "#1A1E24"
-textColor = "#E8E2D0"
+primaryColor = "#8B5CF6"
+backgroundColor = "#0E0D12"
+secondaryBackgroundColor = "#17151E"
+textColor = "#F4F2F8"
 font = "sans serif"

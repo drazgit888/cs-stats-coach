@@ -17,6 +17,8 @@ I have played around 210 hours of CS2. Every match leaves numbers behind (kills,
 | `docs/` | Everything for the portfolio (data sources, methods, experiments) |
 | `sources.py` | Leetify connection (separate from FACEIT, fresh data, nothing stored) |
 | `assets/leetify/` | Official "Data Provided by Leetify" badges, unchanged |
+| `tests/` | Automatic checks (run with `pytest`): data the page needs, no keys in the page, Leetify numbers unchanged |
+| `docs/design-system.md` | Colours, fonts and layout rules of the v5 design |
 | `.streamlit/secrets.toml.example` | Example of where the secret FACEIT key goes (the real one is never uploaded) |
 
 ## How to run it
@@ -42,7 +44,7 @@ streamlit run app.py
 ```
 
 ## What the app shows
-- **Player card:** level badge, Elo bar to the next level, animated stats, last 10 games
+- **Profile (start page):** avatar, FACEIT level + Elo, Premier rating and Leetify rating (when Leetify is on), Steam status, key FACEIT stats, a switchable trend chart, Leetify Aim/Positioning/Utility radar, recent matches vs my own average and the top 3 coach tips
 - **🧠 Briefing:** coach tips in plain words, made from my numbers
 - **📈 Matches:** is my K/D going up? + scoreboard of my last 20 matches
 - **🗺️ Map pool:** map cards with win-rate rings, best and hardest map
@@ -55,6 +57,7 @@ streamlit run app.py
 ## Status
 ✅ Version 3 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
 Leetify page (Premier + matchmaking) added, off until switched on in Secrets.
+Version 5 design ("analyst's console": charcoal + violet, sidebar menu, Profile page) in progress; see `docs/design-system.md`.
 Next ideas: follow one coach tip for a week and measure the result.
 
 The portfolio is in [`docs/`](docs/README.md).

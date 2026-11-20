@@ -9,6 +9,7 @@
 | [methods.md](methods.md) | Tools, steps and analysis methods |
 | [experiments.md](experiments.md) | Experiments log: what I tried, what worked, what didn't |
 | [presentation-outline.md](presentation-outline.md) | Plan for my 15-minute video |
+| [design-system.md](design-system.md) | The v5 design system: colours, fonts, spacing, source colours |
 | [images/](images/) | Screenshots of each version |
 
 Spots marked _[YOUR WORDS]_ or _[FILL IN]_ are for me to complete.

@@ -343,13 +343,19 @@ def build_payload(player, cs2, matches, mates):
         friends = {"with": clean_num(w["won"].mean()), "without": clean_num(wo["won"].mean()),
                    "with_games": int(len(w)), "without_games": int(len(wo))}
 
+    # Public Steam ID as FACEIT reports it (used only for a "Steam profile" link)
+    steam_id64 = str(cs2.get("game_player_id") or player.get("steam_id_64") or "").strip()
+    steam_id64 = steam_id64 if steam_id64.isdigit() else ""
+
     recent = matches.sort_values("played_at", ascending=False).head(20).copy()
     recent["date"] = recent["played_at"].dt.tz_convert(LOCAL_TZ).dt.strftime("%d %b %H:%M")
 
     return {
         "player": {"nickname": player.get("nickname"), "avatar": player.get("avatar") or "",
                    "url": (player.get("faceit_url") or "").replace("{lang}", "en"),
-                   "level": level, "elo": elo, "progress": progress, "to_next": to_next},
+                   "level": level, "elo": elo, "progress": progress, "to_next": to_next,
+                   "country": (player.get("country") or "").upper(),
+                   "steam_id64": steam_id64},
         "summary": {"matches": int(len(matches)), "wins": wins, "losses": int(len(matches) - wins),
                     "win_rate": clean_num(matches["won"].mean()), "kd": clean_num(matches["kd"].mean()),
                     "hs": clean_num(matches["hs_pct"].mean()), "adr": clean_num(matches["adr"].mean()),
@@ -364,6 +370,7 @@ def build_payload(player, cs2, matches, mates):
         "heat": {"cols": [t.split(" (")[0] for t in TIME_ORDER], "rows": heat_rows},
         "squad": squad,
         "friends": friends,
+        "trend": records(matches, {"n": "match_nr", "kd": "kd", "adr": "adr", "hs": "hs_pct", "won": "won", "map": "map"}),
         "points": records(matches.dropna(subset=["hs_pct", "kd"]), {"hs": "hs_pct", "kd": "kd", "won": "won"}),
         "recent": records(recent, {"date": "date", "map": "map", "won": "won", "kills": "kills", "deaths": "deaths",
                                    "assists": "assists", "kd": "kd", "hs": "hs_pct", "adr": "adr"}),

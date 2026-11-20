@@ -1,0 +1,96 @@
+"""Test helpers: load app.py's functions without running the Streamlit page,
+and build clearly fake sample data. Nothing here touches the network."""
+import json
+import random
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+MARKER = "# ---------- The page ----------"
+
+
+def load_app():
+    """Run app.py up to the page section and return its functions."""
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    ns = {"__file__": str(ROOT / "app.py"), "__name__": "app_under_test"}
+    exec(compile(source.split(MARKER)[0], "app.py", "exec"), ns)
+    return ns
+
+
+def fake_faceit_matches(n=40, seed=7):
+    """Fake FACEIT /games/cs2/stats rows (TEST DATA, not real matches)."""
+    rnd = random.Random(seed)
+    maps = ["de_mirage", "de_inferno", "de_ancient", "de_nuke", "de_anubis"]
+    rows, t = [], 1_760_000_000
+    for i in range(n):
+        k, d = rnd.randint(8, 28), rnd.randint(10, 22)
+        t += rnd.randint(3_000, 90_000)
+        rows.append({"Match Id": f"test-{i}", "Map": rnd.choice(maps), "Result": str(rnd.randint(0, 1)),
+                     "Kills": str(k), "Deaths": str(d), "Assists": str(rnd.randint(1, 8)),
+                     "K/D Ratio": f"{k / d:.2f}", "Headshots %": str(rnd.randint(25, 60)),
+                     "ADR": f"{rnd.uniform(55, 110):.1f}", "Match Finished At": str(t * 1000)})
+    return rows
+
+
+FAKE_PLAYER = {"player_id": "test-player", "nickname": "busiks1", "avatar": "", "country": "nl",
+               "faceit_url": "https://www.faceit.com/{lang}/players/busiks1",
+               "games": {"cs2": {"skill_level": 3, "faceit_elo": 888, "game_player_id": "76561198000000001"}}}
+
+FAKE_LEETIFY_PROFILE = {
+    "name": "busiks1", "privacy_mode": "public", "total_matches": 140, "winrate": 0.52,
+    "first_match_date": "2024-01-02T10:00:00Z", "steam64_id": "76561198000000001",
+    "ranks": {"leetify": 1.23, "premier": 11234, "faceit": 3, "faceit_elo": 888, "wingman": None, "renown": None,
+              "competitive": [{"map_name": "de_mirage", "rank": 9}, {"map_name": "de_inferno", "rank": 7}]},
+    "rating": {"aim": 61.2, "positioning": 48, "utility": 40.5, "clutch": 0.11, "opening": -0.02},
+    "recent_matches": [],
+}
+FAKE_LEETIFY_MATCHES = [{"finished_at": "2026-11-19T20:00:00Z", "map_name": "de_mirage", "data_source": "matchmaking",
+                         "team_scores": [{"score": 13}, {"score": 9}],
+                         "stats": [{"steam64_id": "76561198000000001", "total_kills": 21, "total_deaths": 15,
+                                    "kd_ratio": 1.4, "leetify_rating": 0.05}]}]
+
+
+class FakeResponse:
+    def __init__(self, status, body):
+        self.status_code, self._body = status, body
+
+    def json(self):
+        return json.loads(json.dumps(self._body))
+
+
+class FakeLeetifySession:
+    """Answers like Leetify would, and remembers every request it got."""
+
+    def __init__(self, status=200):
+        self.status, self.calls = status, []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        self.calls.append({"url": url, "params": params, "headers": headers})
+        if self.status != 200:
+            return FakeResponse(self.status, {})
+        if url.endswith("/v3/profile"):
+            return FakeResponse(200, FAKE_LEETIFY_PROFILE)
+        if url.endswith("/v3/profile/matches"):
+            return FakeResponse(200, FAKE_LEETIFY_MATCHES)
+        return FakeResponse(200, {})
+
+
+def build_test_payload(with_leetify=True):
+    import pandas as pd
+    from sources import load_leetify
+
+    app = load_app()
+    matches = app["tidy_matches"](fake_faceit_matches())
+    rnd = random.Random(3)
+    rows = [{"match_id": m, "teammate": rnd.choice(["mate_a", "mate_b", "mate_c", "rando"])}
+            for m in matches["match_id"]]
+    mates = pd.DataFrame(rows).merge(matches[["match_id", "won", "kd"]], on="match_id")
+    payload = app["build_payload"](FAKE_PLAYER, FAKE_PLAYER["games"]["cs2"], matches, mates)
+    if with_leetify:
+        payload["leetify"] = load_leetify("76561198000000001", api_key="SECRET-TEST-KEY",
+                                          steam_id_from="Secrets", session=FakeLeetifySession())
+    return payload
+
+
+def render(payload):
+    html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
+    return html.replace("__DATA__", json.dumps(payload).replace("</", "<\\/"))

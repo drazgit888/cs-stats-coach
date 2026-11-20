@@ -103,3 +103,18 @@
 - **How I tested it:** 53 automatic checks with fake answers (good data, wrong key, no profile, rate limit, timeout, no internet). My FACEIT numbers were exactly the same before and after.
 - **Picture:** `images/leetify-page-test-data.png` (made with test data, not my real numbers)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-20: Version 5 – a real analytics product (Profile page first)
+- **Why:** v4 looked like a game poster. I wanted it to feel like a premium esports analytics platform (FACEIT, Leetify, HLTV style), with my own avatar colours: charcoal, violet and magenta.
+- **How I worked:** in phases. First an audit of the old design and a written proposal with colours (HEX codes), fonts and a profile layout. I approved it, then the Profile page and the design system were built. The other pages get the full treatment after my review.
+- **What changed:**
+  - A **sidebar menu** grouped into Player, Performance, Sources and Media, and a top bar that shows which sources are live
+  - A new **Profile** start page: avatar, FACEIT level and Elo, Premier and Leetify ratings, Steam status, my key stats, a trend chart I can switch (K/D, win rate, ADR, HS%), a Leetify radar (Aim, Positioning, Utility), recent matches compared with my own average, and my top 3 coach tips
+  - **Each source has its own colour** (FACEIT orange, Leetify pink, Steam blue, Premier cyan). Orange is now only for FACEIT.
+  - Wins are green and losses red; the drawn background scenes and the big italic font are gone
+  - New **Premier** and **Steam** pages that honestly say what is and isn't available
+- **Rules I kept:** no made-up numbers ("Not available" instead), Leetify numbers exactly as Leetify gives them with the official badge, no Elo history line because FACEIT doesn't give Elo per match, no API keys in the page.
+- **How I tested it:** 17 automatic checks (`tests/`), e.g. the page still gets all its data, no key ends up in the page, Leetify values are unchanged. Screenshots on laptop, tablet and phone width with test data.
+- **Pictures:** `images/v5-profile-test-data.png`, `images/v5-profile-mobile-test-data.png`, `images/v5-maps-test-data.png`, `images/v5-leetify-test-data.png`, `images/v5-profile-leetify-off-test-data.png` (made with test data, not my real numbers)
+- **Design system:** [design-system.md](design-system.md)
+- **What I think / what I learned:** _[YOUR WORDS]_
