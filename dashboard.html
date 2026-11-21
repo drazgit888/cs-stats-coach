@@ -386,7 +386,17 @@ const profilePage = `
       <div class="links">${p.country ? `<span>${esc(p.country)}</span>` : ""}${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT</a>` : ""}${steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam</a>` : ""}</div></div>
   </div>
   <div class="cards c2">${faceitBlock}${premierBlock}</div>
-  <div class="cards c3">${steamBlock}</div>`;
+  <div class="cards c3">${steamBlock}</div>
+  <div class="cards"><details class="card" id="datacheck"><summary>Data check</summary>
+    <p class="note">Field names only (no values, no keys). Send a screenshot of this box to plan the next pages.</p>
+    <ul class="chk">
+      <li>FACEIT matches downloaded <b>${D.faceit_check ? D.faceit_check.matches : "–"}</b></li>
+      <li>FACEIT match fields <code>${esc(((D.faceit_check || {}).match_fields || []).join(", ") || "none")}</code></li>
+      <li>Leetify matches <b>${L && L.check ? (L.check.matches ?? 0) : "Leetify off"}</b></li>
+      <li>Leetify data sources <code>${esc(((L && L.check || {}).data_sources || []).join(", ") || "none")}</code></li>
+      <li>Leetify fields per player <code>${esc(((L && L.check || {}).my_stat_fields || []).join(", ") || "none")}</code></li>
+      <li>Leetify match fields <code>${esc(((L && L.check || {}).match_fields || []).join(", ") || "none")}</code></li>
+    </ul></details></div>`;
 
 /* BRIEFING: concrete points from my own matches */
 const briefing = `

@@ -534,7 +534,10 @@ except requests.HTTPError as err:
 
 cs2 = player.get("games", {}).get(GAME, {})
 player_id = player["player_id"]
-matches = tidy_matches(load_matches(player_id, api_key))
+raw_matches = load_matches(player_id, api_key)
+# Data check: which per-match fields FACEIT sends (names only, no values)
+faceit_fields = sorted({k for row in raw_matches if isinstance(row, dict) for k in row})
+matches = tidy_matches(raw_matches)
 
 if matches.empty:
     st.info("No CS2 matches found on FACEIT for this player yet.")
@@ -578,6 +581,7 @@ if steam_key:
         payload["steam"] = load_steam(sid, api_key=steam_key, steam_id_from=sid_from)
     except Exception:  # last safety net; never show raw error text
         payload["steam"] = {"enabled": True, "status": "error", "message": "Steam part failed to load."}
+payload["faceit_check"] = {"match_fields": faceit_fields, "matches": len(raw_matches)}
 data_json = json.dumps(payload).replace("</", "<\\/")
 page = HERE.joinpath("dashboard.html").read_text(encoding="utf-8").replace("__DATA__", data_json)
 st.iframe(page, height="content")

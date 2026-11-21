@@ -119,7 +119,7 @@ def load_leetify(steam_id, api_key=None, steam_id_from="", session=None):
         "badge_large": _badge("Leetify Badge White Large.png"),
         "check": {"key_set": bool(api_key), "key_valid": None, "profile_found": False,
                   "premier_found": False, "competitive_ranks": 0, "matches": 0,
-                  "profile_fields": [], "rank_fields": [], "match_fields": []},
+                  "profile_fields": [], "rank_fields": [], "match_fields": [], "my_stat_fields": [], "data_sources": []},
         "profile": None,
         "matches": [],
         "matches_message": "",
@@ -173,6 +173,10 @@ def load_leetify(steam_id, api_key=None, steam_id_from="", session=None):
         if isinstance(matches, list):
             check["matches"] = len(matches)
             check["match_fields"] = _field_names(matches)
+            mine = next((p for m in matches if isinstance(m, dict) for p in (m.get("stats") or [])
+                         if isinstance(p, dict) and str(p.get("steam64_id")) == str(steam_id)), None)
+            check["my_stat_fields"] = sorted(mine.keys()) if mine else []
+            check["data_sources"] = sorted({str(m.get("data_source")) for m in matches if isinstance(m, dict)})
             out["matches"] = [_my_match_row(m, steam_id) for m in matches[:15] if isinstance(m, dict)]
     except LeetifyError as err:
         out["matches_message"] = str(err)

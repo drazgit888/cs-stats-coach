@@ -19,7 +19,7 @@ def payload():
 
 def test_payload_has_every_field_the_page_reads(payload):
     used = set(re.findall(r"\bD\.([a-z_]+)", (ROOT / "dashboard.html").read_text(encoding="utf-8")))
-    assert used - {"leetify", "steam"} <= set(payload), used - set(payload)
+    assert used - {"leetify", "steam", "faceit_check"} <= set(payload), used - set(payload)
     assert PAGE_FIELDS <= set(payload)
 
 
@@ -154,3 +154,13 @@ def test_insight_hardest_map_needs_three_games():
            [("de_mirage", True, 20, 10, 90, t + (i + 2) * 86_400) for i in range(6)]
     app, m, mates = _matches(rows)
     assert not any("Inferno" in i["title"] for i in app["coach_insights"](m, mates))  # only 2 Inferno games
+
+
+def test_data_check_lists_names_only():
+    from sources import load_leetify
+    from helpers import FakeLeetifySession
+    out = load_leetify("76561198000000001", api_key="k", session=FakeLeetifySession())
+    c = out["check"]
+    assert c["my_stat_fields"] == ["kd_ratio", "leetify_rating", "steam64_id", "total_deaths", "total_kills"]
+    assert c["data_sources"] == ["matchmaking"]
+    assert all(isinstance(x, str) for x in c["my_stat_fields"])
