@@ -445,6 +445,21 @@ if str(secret("LEETIFY_ENABLED", "false")).strip().lower() == "true":
     except Exception:  # last safety net; never show raw error text
         payload["leetify"] = {"enabled": True, "status": "error",
                               "message": "Leetify part failed to load.", "check": {}}
+# ---------- Steam (separate source, on when STEAM_API_KEY is in Secrets) ----------
+# Runs after FACEIT and can never stop the FACEIT page. The key stays on the server.
+steam_key = secret("STEAM_API_KEY") or None
+if steam_key:
+    from sources import load_steam
+
+    sid = str(secret("STEAM_ID", "") or "").strip()
+    sid_from = "Secrets" if sid else ""
+    if not sid:
+        sid = str(cs2.get("game_player_id") or player.get("steam_id_64") or "").strip()
+        sid_from = "FACEIT profile" if sid else ""
+    try:
+        payload["steam"] = load_steam(sid, api_key=steam_key, steam_id_from=sid_from)
+    except Exception:  # last safety net; never show raw error text
+        payload["steam"] = {"enabled": True, "status": "error", "message": "Steam part failed to load."}
 data_json = json.dumps(payload).replace("</", "<\\/")
 page = HERE.joinpath("dashboard.html").read_text(encoding="utf-8").replace("__DATA__", data_json)
 st.iframe(page, height="content")

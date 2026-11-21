@@ -269,6 +269,9 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const isNum = v => typeof v === "number" && isFinite(v);
 const p = D.player, s = D.summary, L = D.leetify;
 const LT_OK = !!(L && L.status === "ok" && L.profile);
+const ST = D.steam, ST_OK = !!(ST && ST.status === "ok" && ST.profile);
+const steamUrl = ST_OK ? ST.profile.url : (p.steam_id64 ? `https://steamcommunity.com/profiles/${p.steam_id64}` : "");
+const hrs = v => isNum(v) ? (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1)) + " h" : "–";
 const C = Object.fromEntries(["bg","s1","s2","s3","line","text","text2","muted","violet","violet-hi","violet-deep","magenta","win","loss","faceit","leetify","steam","premier"]
   .map(k => [k, getComputedStyle(document.documentElement).getPropertyValue("--" + k).trim()]));
 
@@ -327,14 +330,19 @@ function profilePage() {
   const leetifyTile = `<div class="tile">${srcTag("leetify", "Leetify")}
       ${LT_OK && ranks.leetify != null ? `<div class="v">${raw(ranks.leetify)}</div><div class="s">Leetify rating</div>`
         : `<div class="v off">${LT_OK ? "Not returned" : "Not available"}</div><div class="s">${LT_OK ? "No Leetify rating in the answer" : esc(ltOffText)}</div>`}</div>`;
-  const steamTile = `<div class="tile">${srcTag("steam", "Steam")}
-      <div class="v off">Not connected</div><div class="s">CS2 hours need a Steam key</div></div>`;
+  let stV, stS;
+  if (ST_OK && ST.cs2 && ST.cs2.found) { stV = `<div class="v">${hrs(ST.cs2.hours_total)}</div>`; stS = `CS2 playtime · ${hrs(ST.cs2.hours_2weeks)} last 2 weeks`; }
+  else if (ST_OK && ST.games_visible === false) { stV = `<div class="v off">Hours private</div>`; stS = "Set Game details to Public in Steam"; }
+  else if (ST_OK) { stV = `<div class="v off">No CS2 hours</div>`; stS = esc(ST.games_message || "Steam sent no CS2 playtime"); }
+  else if (ST) { stV = `<div class="v off">Unavailable</div>`; stS = esc(ST.message || "Steam not available"); }
+  else { stV = `<div class="v off">Not connected</div>`; stS = "CS2 hours need a Steam key"; }
+  const steamTile = `<div class="tile">${srcTag("steam", "Steam")}${stV}<div class="s">${stS}</div></div>`;
 
   const links = [
     p.country ? `<span>${esc(p.country)}</span>` : "",
     p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT profile ↗</a>` : "",
     LT_OK ? `<a href="${esc(L.profile_url)}" target="_blank" rel="noopener">Leetify ↗</a>` : "",
-    p.steam_id64 ? `<a href="https://steamcommunity.com/profiles/${esc(p.steam_id64)}" target="_blank" rel="noopener">Steam profile ↗</a>` : "",
+    steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam profile ↗</a>` : "",
   ].filter(Boolean).join("");
 
   const identity = `<div class="card idcard">
@@ -525,26 +533,53 @@ function premierPage() {
     </div>`;
 }
 
-/* ---------- Steam page: honest "not connected" until a Steam key exists ---------- */
-const steamPage = `${pageHead("Steam", "Steam profile and CS2 playtime.", srcTag("steam", "Steam"))}
-  <div class="cards c2">
+/* ---------- Steam page: only what Steam actually returns ---------- */
+function steamPage() {
+  const head = pageHead("Steam", "Steam profile and CS2 playtime, straight from the Steam Web API.", srcTag("steam", "Steam"));
+  const needs = `<div class="card"><h4>What is needed</h4><ul class="checks">
+      <li>A Steam Web API key saved as STEAM_API_KEY in the app's Secrets</li>
+      <li>"Game details" set to Public in Steam privacy settings</li>
+      <li>Optional: STEAM_ID in Secrets (otherwise the Steam ID from FACEIT is used)</li></ul></div>`;
+  if (!ST) return `${head}<div class="cards c2">
     <div class="card top-steam"><h4>Status</h4>
       <div class="kv"><span>Steam ID (from FACEIT)</span><b>${p.steam_id64 ? esc(p.steam_id64) : `<span class="na">Not available</span>`}</b>
         <span>Steam Web API</span><b><span class="na">Not connected</span></b><span>CS2 playtime</span><b><span class="na">Not available</span></b></div>
-      ${p.steam_id64 ? `<p style="margin-top:12px"><a class="btn ghost" href="https://steamcommunity.com/profiles/${esc(p.steam_id64)}" target="_blank" rel="noopener">Open Steam profile ↗</a></p>` : ""}</div>
-    <div class="card"><h4>What is needed</h4><ul class="checks">
-      <li>A Steam Web API key saved as STEAM_API_KEY in the app's Secrets</li>
-      <li>"Game details" set to Public in Steam privacy settings</li>
-      <li>Then CS2 hours and profile info can be added here</li></ul></div>
-  </div>`;
+      ${steamUrl ? `<p style="margin-top:12px"><a class="btn ghost" href="${esc(steamUrl)}" target="_blank" rel="noopener">Open Steam profile ↗</a></p>` : ""}</div>${needs}</div>`;
+  const details = `<details class="card"><summary>Connection details</summary><ul class="chk">
+      <li>Status <b>${esc(ST.message || ST.status)}</b></li>
+      <li>Steam ID <b>${ST.steam_id ? `${esc(ST.steam_id)} <span class="na">(${esc(ST.steam_id_from)})</span>` : `<span class="no">No</span>`}</b></li>
+      <li>Profile found ${yn(ST_OK)}</li>
+      <li>Game details public ${yn(ST.games_visible)}</li>
+      <li>CS2 in library ${yn(ST.cs2 ? ST.cs2.found : null)}</li>
+    </ul>${ST.games_message ? `<p class="na" style="margin-top:10px">${esc(ST.games_message)}</p>` : ""}</details>`;
+  if (!ST_OK) return `${head}<div class="cards c2"><div class="card top-steam"><h4>Status</h4><p>${esc(ST.message)}</p></div>${details}</div>${needs}`;
+  const pr = ST.profile, c = ST.cs2 || {};
+  const since = isNum(pr.created) ? new Date(pr.created * 1000).toLocaleDateString("en-GB", { year: "numeric", month: "short" }) : null;
+  const profileCard = `<div class="card top-steam"><h4>Profile ${srcTag("steam", "Steam")}</h4>
+      <div style="display:flex;gap:14px;align-items:center;margin-top:8px">
+        ${pr.avatar ? `<img src="${esc(pr.avatar)}" alt="" style="width:56px;height:56px;border-radius:12px">` : ""}
+        <div><div style="font:600 18px var(--f-head);color:var(--text)">${esc(pr.name || "–")}</div>
+          <a class="caption" href="${esc(pr.url)}" target="_blank" rel="noopener">Open Steam profile ↗</a></div></div>
+      <div class="kv"><span>Profile</span><b>${pr.public ? "Public" : "Private"}</b>
+        ${pr.country ? `<span>Country</span><b>${esc(pr.country)}</b>` : ""}
+        ${since ? `<span>Steam account since</span><b>${esc(since)}</b>` : ""}</div></div>`;
+  const playCard = `<div class="card top-steam"><h4>CS2 playtime ${srcTag("steam", "Steam")}</h4>
+      ${c.found ? `<div class="big-v">${hrs(c.hours_total)}</div><p class="caption">Total CS2 playtime</p>
+        <div class="kv"><span>Last 2 weeks</span><b>${hrs(c.hours_2weeks)}</b></div>
+        <p class="caption" style="margin-top:10px">Steam reports minutes (${esc(c.minutes_total)} total, ${esc(c.minutes_2weeks)} last 2 weeks); shown here in hours.</p>`
+        : `<p class="empty" style="margin-top:10px">${esc(ST.games_message || "Steam sent no CS2 playtime.")}</p>`}</div>`;
+  return `${head}<div class="cards c2">${profileCard}${playCard}</div>${details}`;
+}
 
 /* =================================================================
    RENDER
    ================================================================= */
 const ltChip = !L ? `<span class="chip off">${dot("muted")}Leetify off</span>`
   : LT_OK ? `<span class="chip">${dot("leetify")}Leetify live</span>` : `<span class="chip off">${dot("loss")}Leetify unavailable</span>`;
+const stChip = !ST ? `<span class="chip off">${dot("muted")}Steam not connected</span>`
+  : ST_OK ? `<span class="chip">${dot("steam")}Steam live</span>` : `<span class="chip off">${dot("loss")}Steam unavailable</span>`;
 const pagesHtml = { profile: profilePage(), briefing, matches: matchesPage, maps: mapsPage, progress: progressPage, squad: squadPage,
-  leetify: leetifyPage(), premier: premierPage(), steam: steamPage, highlights: highlightsPage };
+  leetify: leetifyPage(), premier: premierPage(), steam: steamPage(), highlights: highlightsPage };
 
 $("#app").innerHTML = `<div class="app">
   <aside class="side" aria-label="Main navigation">
@@ -555,9 +590,9 @@ $("#app").innerHTML = `<div class="app">
   </aside>
   <div class="main">
     <header class="topbar"><div class="crumb"><b id="pageTitle">Profile</b>updated ${esc(D.loaded)}</div>
-      <div class="chips"><span class="chip">${dot("faceit")}FACEIT live</span>${ltChip}<span class="chip off">${dot("muted")}Steam not connected</span></div></header>
+      <div class="chips"><span class="chip">${dot("faceit")}FACEIT live</span>${ltChip}${stChip}</div></header>
     ${Object.entries(pagesHtml).map(([id, html]) => `<section class="page ${id === "profile" ? "on" : ""}" id="${id}" aria-label="${TITLES[id]}">${html}</section>`).join("")}
-    <footer>CS Stats Coach · FACEIT data from the FACEIT Data API${L ? " · Leetify data: Data Provided by Leetify" : ""} · loaded ${esc(D.loaded)}</footer>
+    <footer>CS Stats Coach · FACEIT data from the FACEIT Data API${L ? " · Leetify data: Data Provided by Leetify" : ""}${ST ? " · Steam data from the Steam Web API" : ""} · loaded ${esc(D.loaded)}</footer>
   </div></div>`;
 
 /* heatmap */

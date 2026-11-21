@@ -118,3 +118,11 @@
 - **Pictures:** `images/v5-profile-test-data.png`, `images/v5-profile-mobile-test-data.png`, `images/v5-maps-test-data.png`, `images/v5-leetify-test-data.png`, `images/v5-profile-leetify-off-test-data.png` (made with test data, not my real numbers)
 - **Design system:** [design-system.md](design-system.md)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-21: Steam connected – my CS2 hours
+- **Why:** my profile showed "Steam: Not connected". I wanted my real CS2 playtime on the profile.
+- **What I did:** made a Steam Web API key, put it in the app's Secrets (`STEAM_API_KEY`, plus `STEAM_ID`) and set my Steam "Game details" to Public.
+- **What was built:** a Steam part in `sources.py`, separate from FACEIT and Leetify. The Profile now shows my total CS2 hours and hours in the last 2 weeks, and the Steam page shows my Steam profile and playtime. If Steam is down or private, the page says so and FACEIT keeps working.
+- **How I tested it:** 13 extra automatic checks with fake Steam answers (normal, private game details, CS2 not in library, wrong key, rate limit, no internet), including that the key never ends up in the page. Then I checked it live in my own app.
+- **Picture:** `images/v5-steam-test-data.png` (test data)
+- **What I think / what I learned:** _[YOUR WORDS]_

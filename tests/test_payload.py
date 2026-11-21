@@ -19,7 +19,7 @@ def payload():
 
 def test_payload_has_every_field_the_page_reads(payload):
     used = set(re.findall(r"\bD\.([a-z_]+)", (ROOT / "dashboard.html").read_text(encoding="utf-8")))
-    assert used - {"leetify"} <= set(payload), used - set(payload)
+    assert used - {"leetify", "steam"} <= set(payload), used - set(payload)
     assert PAGE_FIELDS <= set(payload)
 
 
@@ -107,8 +107,7 @@ def test_page_uses_design_tokens_and_no_old_theme():
     assert html.lower().count("#ff7a00") == 0  # old orange is gone
 
 
-def test_profile_never_shows_steam_numbers():
-    # Steam is not connected yet, so the page must not show playtime numbers
+def test_profile_without_steam_says_not_connected(payload):
+    assert "steam" not in payload  # no STEAM_API_KEY -> no Steam data at all
     html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
     assert "Not connected" in html
-    assert re.search(r"steam[^\n]*hours[^\n]*\d+\s*h", html, re.I) is None

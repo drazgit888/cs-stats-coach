@@ -53,3 +53,11 @@ Leetify reads my Valve matches (Premier and Competitive), which FACEIT cannot se
 - **Steam:** playtime (hours) via the Steam Web API. Not built yet.
 - **csstats.gg / my own demo files:** harder to get automatically.
 - _[YOUR IDEA?]_
+
+## Steam Web API (optional)
+- **What:** my Steam profile (name, avatar, public/private, country, account date) and my CS2 playtime (total and last 2 weeks).
+- **Endpoints:** `ISteamUser/GetPlayerSummaries/v2` and `IPlayerService/GetOwnedGames/v1` (filtered to CS2, app id 730).
+- **Access:** a Steam Web API key in Streamlit Secrets (`STEAM_API_KEY`). The key is only used on the server; it never goes into the page, messages or the repo.
+- **Privacy:** Steam only shares playtime when my "Game details" are Public. If not, the app says so instead of showing a number.
+- **Units:** Steam gives minutes; the app shows hours (minutes ÷ 60) and says so on the Steam page.
+- **Kept separate:** Steam hours are never mixed with FACEIT or Leetify numbers.

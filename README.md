@@ -15,7 +15,7 @@ I have played around 210 hours of CS2. Every match leaves numbers behind (kills,
 | `requirements.txt` | The list of Python tools the app needs |
 | `docs/diary.md` | My process diary: what I did each day and why |
 | `docs/` | Everything for the portfolio (data sources, methods, experiments) |
-| `sources.py` | Leetify connection (separate from FACEIT, fresh data, nothing stored) |
+| `sources.py` | Leetify and Steam connections (separate from FACEIT; keys stay on the server) |
 | `assets/leetify/` | Official "Data Provided by Leetify" badges, unchanged |
 | `tests/` | Automatic checks (run with `pytest`): data the page needs, no keys in the page, Leetify numbers unchanged |
 | `docs/design-system.md` | Colours, fonts and layout rules of the v5 design |
@@ -35,6 +35,8 @@ LEETIFY_ENABLED = "true"
 LEETIFY_API_KEY = "my-leetify-key"
 STEAM_ID = "my-17-digit-steam-id"   # optional, otherwise the Steam ID from FACEIT is used
 ```
+**Steam (optional):** add `STEAM_API_KEY` (and optionally `STEAM_ID`) to the same Secrets box, and set Steam "Game details" to Public, to show your Steam profile and CS2 hours.
+
 After saving, open the **Leetify** page and check the **Data check** box to see what Leetify returned.
 
 **On a computer:**

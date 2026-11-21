@@ -177,3 +177,124 @@ def load_leetify(steam_id, api_key=None, steam_id_from="", session=None):
     except LeetifyError as err:
         out["matches_message"] = str(err)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Steam
+# ---------------------------------------------------------------------------
+# Steam Web API (https://developer.valvesoftware.com/wiki/Steam_Web_API).
+# The key has to go in the URL (Steam's rule), so it is only ever used inside
+# _steam_get, and no URL, raw error text or key ever goes into the result.
+# Playtime is only returned when the player's "Game details" are Public.
+
+STEAM_BASE = "https://api.steampowered.com"
+CS2_APP_ID = 730
+
+STEAM_MESSAGES = {
+    "no_key": "No Steam key. Add STEAM_API_KEY in Secrets.",
+    "no_steam_id": "No Steam ID available. Add STEAM_ID in Secrets.",
+    401: "Steam rejected the API key. Check STEAM_API_KEY in Secrets.",
+    403: "Steam rejected the API key. Check STEAM_API_KEY in Secrets.",
+    429: "Steam rate limit reached. Try again later.",
+    "server": "Steam is unavailable right now. Try again later.",
+    "timeout": "Steam did not answer in time. Try again later.",
+    "network": "Could not reach Steam right now.",
+    "bad_json": "Steam sent an answer the app could not read.",
+    "not_found": "Steam has no profile for this Steam ID.",
+}
+
+
+class SteamError(Exception):
+    def __init__(self, kind):
+        self.kind = kind
+        super().__init__(STEAM_MESSAGES.get(kind, STEAM_MESSAGES["server"]))
+
+
+def _steam_get(path, params, api_key, session=None):
+    """One GET to the Steam Web API. No retries."""
+    http = session or requests
+    try:
+        resp = http.get(f"{STEAM_BASE}{path}", params={"key": api_key, **params},
+                        headers={"Accept": "application/json"}, timeout=TIMEOUT_SECONDS)
+    except requests.Timeout:
+        raise SteamError("timeout") from None
+    except requests.RequestException:
+        raise SteamError("network") from None
+    if resp.status_code in STEAM_MESSAGES:
+        raise SteamError(resp.status_code)
+    if resp.status_code >= 400:
+        raise SteamError("server")
+    try:
+        data = resp.json()
+    except ValueError:
+        raise SteamError("bad_json") from None
+    if not isinstance(data, dict):
+        raise SteamError("bad_json")
+    return data.get("response") or {}
+
+
+def _hours(minutes):
+    """Steam gives minutes; shown as hours with one decimal (labelled as converted)."""
+    return round(minutes / 60, 1) if isinstance(minutes, (int, float)) else None
+
+
+def load_steam(steam_id, api_key=None, steam_id_from="", session=None):
+    """Fetch Steam profile + CS2 playtime. Never raises, never returns the key."""
+    out = {
+        "enabled": True, "status": "error", "message": "",
+        "steam_id": str(steam_id or ""), "steam_id_from": steam_id_from,
+        "profile": None,
+        "cs2": {"found": False, "hours_total": None, "hours_2weeks": None,
+                "minutes_total": None, "minutes_2weeks": None},
+        "games_visible": None,
+        "games_message": "",
+    }
+    if not api_key:
+        out["message"] = STEAM_MESSAGES["no_key"]
+        return out
+    if not steam_id:
+        out["message"] = STEAM_MESSAGES["no_steam_id"]
+        return out
+
+    try:
+        summary = _steam_get("/ISteamUser/GetPlayerSummaries/v2/", {"steamids": steam_id}, api_key, session)
+    except SteamError as err:
+        out["message"] = str(err)
+        return out
+    players = summary.get("players") or []
+    if not players or not isinstance(players[0], dict):
+        out["message"] = STEAM_MESSAGES["not_found"]
+        return out
+    pl = players[0]
+    out["profile"] = {
+        "name": pl.get("personaname"),
+        "avatar": pl.get("avatarfull") or pl.get("avatarmedium") or "",
+        "url": pl.get("profileurl") or f"https://steamcommunity.com/profiles/{steam_id}",
+        "public": pl.get("communityvisibilitystate") == 3,
+        "country": pl.get("loccountrycode"),
+        "created": pl.get("timecreated"),
+    }
+    out["status"] = "ok"
+    out["message"] = "Connected"
+
+    try:
+        owned = _steam_get("/IPlayerService/GetOwnedGames/v1/",
+                           {"steamid": steam_id, "include_appinfo": 1, "include_played_free_games": 1,
+                            "appids_filter[0]": CS2_APP_ID}, api_key, session)
+    except SteamError as err:
+        out["games_message"] = str(err)
+        return out
+    games = owned.get("games")
+    if games is None:  # Steam sends an empty answer when game details are private
+        out["games_visible"] = False
+        out["games_message"] = "Steam did not share playtime. Set Game details to Public in Steam privacy settings."
+        return out
+    out["games_visible"] = True
+    cs2 = next((g for g in games if isinstance(g, dict) and g.get("appid") == CS2_APP_ID), None)
+    if cs2 is None:
+        out["games_message"] = "CS2 was not found in this Steam library."
+        return out
+    total, recent = cs2.get("playtime_forever"), cs2.get("playtime_2weeks", 0)
+    out["cs2"] = {"found": True, "minutes_total": total, "minutes_2weeks": recent,
+                  "hours_total": _hours(total), "hours_2weeks": _hours(recent)}
+    return out

@@ -74,7 +74,33 @@ class FakeLeetifySession:
         return FakeResponse(200, {})
 
 
-def build_test_payload(with_leetify=True):
+FAKE_STEAM_SUMMARY = {"response": {"players": [{
+    "steamid": "76561198000000001", "personaname": "busiks1", "profileurl": "https://steamcommunity.com/id/test/",
+    "avatarfull": "", "communityvisibilitystate": 3, "loccountrycode": "NL", "timecreated": 1500000000}]}}
+FAKE_STEAM_GAMES = {"response": {"game_count": 1, "games": [
+    {"appid": 730, "name": "Counter-Strike 2", "playtime_forever": 12645, "playtime_2weeks": 754}]}}
+
+
+class FakeSteamSession:
+    """Answers like the Steam Web API would. games=None means game details are private."""
+
+    def __init__(self, status=200, games=FAKE_STEAM_GAMES, players=FAKE_STEAM_SUMMARY, raise_exc=None):
+        self.status, self.games, self.players, self.raise_exc, self.calls = status, games, players, raise_exc, []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        self.calls.append({"url": url, "params": params, "headers": headers})
+        if self.raise_exc:
+            raise self.raise_exc
+        if self.status != 200:
+            return FakeResponse(self.status, {})
+        if "GetPlayerSummaries" in url:
+            return FakeResponse(200, self.players)
+        if "GetOwnedGames" in url:
+            return FakeResponse(200, self.games if self.games is not None else {"response": {}})
+        return FakeResponse(200, {})
+
+
+def build_test_payload(with_leetify=True, with_steam=False, steam_session=None):
     import pandas as pd
     from sources import load_leetify
 
@@ -88,6 +114,10 @@ def build_test_payload(with_leetify=True):
     if with_leetify:
         payload["leetify"] = load_leetify("76561198000000001", api_key="SECRET-TEST-KEY",
                                           steam_id_from="Secrets", session=FakeLeetifySession())
+    if with_steam:
+        from sources import load_steam
+        payload["steam"] = load_steam("76561198000000001", api_key="STEAM-SECRET-KEY", steam_id_from="Secrets",
+                                      session=steam_session or FakeSteamSession())
     return payload
 
 
