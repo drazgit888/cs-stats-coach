@@ -126,3 +126,15 @@
 - **How I tested it:** 13 extra automatic checks with fake Steam answers (normal, private game details, CS2 not in library, wrong key, rate limit, no internet), including that the key never ends up in the page. Then I checked it live in my own app.
 - **Picture:** `images/v5-steam-test-data.png` (test data)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-21: Version 6 – back to the poster, now in pink
+- **What happened:** I looked at v5 in my test app and didn't like it: it felt too mixed together and less like a game. I also found the coach tips too general.
+- **My decisions:**
+  - Go back to the v4 poster design (top menu, big italic titles, icon cards, drawn backgrounds), but in the colours of my avatar: charcoal and hot pink, with violet as second colour. Orange is only for FACEIT now.
+  - Only **two main numbers matter: FACEIT and Premier.** Leetify was only connected to get my Premier data, so Leetify's own scores (aim, positioning, utility) are not shown anymore.
+  - One topic per page. Profile = me + one separate block for FACEIT, Premier and Steam.
+- **Concrete coach points:** the Briefing now says things like "you win 25% on Ancient (4 games) against 48% overall, your ADR there is 73 (usually 84)" with one "Do this" action and how many games it is based on. New checks: hardest/best map, do I lose by dying more or killing less, after 23:00, long sessions, tilt after two losses, last 10 games vs before, best teammate. A point only appears with 3+ games.
+- **What I learned:** trying a design and rejecting it is also a result. v5 was more "professional" but v4's style fits me and my project better. Asking myself "what are my 2 main numbers?" made the site simpler.
+- **Tests:** 34 automatic checks pass (also: no Leetify scores on the page, the Leetify badge stays next to Premier, coach points always have numbers and 3+ games).
+- **Pictures:** `images/v6-home-test-data.png`, `images/v6-profile-test-data.png`, `images/v6-briefing-test-data.png`, `images/v6-premier-test-data.png`, `images/v6-maps-test-data.png`, `images/v6-profile-mobile-test-data.png` (test data)
+- **What I think / what friends think:** _[YOUR WORDS]_

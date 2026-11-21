@@ -1,4 +1,29 @@
-# Design system (v5, "analyst's console")
+# Design system (v6, "pink poster")
+
+**Current version: v6.** v5 ("analyst's console", sidebar, quiet surfaces) was tried and rejected: it felt too mixed and less fun. v6 brings back the v4 poster layout (top menu, big bold italic titles, icon cards, drawn background scenes) in the colours of my avatar.
+
+## v6 colours
+| Token | HEX | Used for |
+|---|---|---|
+| `--bg` | `#0E0B11` | Background (charcoal with a plum tint) |
+| `--pink` | `#FF4FA3` | Main accent: titles, buttons, wins, bars, charts |
+| `--pink-2` | `#FF86C4` | Hover, light pink |
+| `--violet` | `#A35CFF` | Second accent: night scenes, lower bars |
+| `--text` / `--muted` | `#F7EEF4` / `#A898A8` | Text |
+| `--faceit` | `#FF5500` | FACEIT only (level, Elo, FACEIT block) |
+| `--premier` | `#4FD1E8` | CS2 Premier only |
+| `--steam` | `#8FB3D9` | Steam only |
+
+## v6 rules
+- Two main sources: **FACEIT** and **CS2 Premier**. Each has its own block and colour; they are never mixed or compared.
+- Premier comes through Leetify, so every place with Premier data shows the official "Data Provided by Leetify" badge. Leetify's own metrics (aim, positioning, utility, Leetify rating) are not shown.
+- One topic per page: Home, Profile, Briefing, Matches, Maps, Squad, Progress, Premier, Steam, Highlights.
+- Coach points are concrete: real numbers, how many games they are based on (3+), and one "Do this" action.
+- Font: Barlow Condensed (titles) + Barlow (text), from Google Fonts.
+
+---
+
+# Earlier: v5 design system (rejected)
 
 The goal: a premium esports analytics look, somewhere between FACEIT, Leetify and HLTV, built from the colours of my own avatar (charcoal, violet, magenta). Quiet surfaces, colour only where it means something.
 

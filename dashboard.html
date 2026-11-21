@@ -4,255 +4,231 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-/* CS Stats Coach v5 – "analyst's console" design system.
-   Quiet surfaces, colour only where it means something. Tokens are documented in docs/design-system.md.
-   Source colours (FACEIT, Leetify, Steam, Premier) are only used for that source's data. */
+/* CS Stats Coach v6 – the v4 "tactical poster" layout in the colours of my avatar
+   (charcoal, hot pink, magenta, violet). Orange only for FACEIT, cyan only for Premier.
+   All backgrounds are drawn with code (SVG shapes, gradients, noise). No game art, logos or fonts. */
 :root {
-  /* surfaces */
-  --bg: #0E0D12; --s1: #17151E; --s2: #1F1C28; --s3: #29253A; --line: #2D2A3A;
-  /* text */
-  --text: #F4F2F8; --text2: #C4C1CF; --muted: #8E8A9C;
-  /* brand */
-  --violet: #8B5CF6; --violet-hi: #A78BFA; --violet-deep: #5B3BB8; --magenta: #E055C8;
-  /* results */
-  --win: #3DD68C; --loss: #F0606A;
-  /* data sources */
-  --faceit: #FF5500; --leetify: #F84982; --steam: #8FB3D9; --premier: #4FD1E8;
-  /* type */
-  --f-head: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
-  --f-body: Inter, "Segoe UI", system-ui, sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
-  /* shape */
-  --r-sm: 8px; --r-tile: 10px; --r-card: 14px;
-  color-scheme: dark;
+  --bg: #0E0B11;
+  --card: rgba(26, 19, 30, 0.84);
+  --card-line: rgba(255, 255, 255, 0.08);
+  --text: #F7EEF4;
+  --muted: #A898A8;
+  --pink: #FF4FA3;      /* main accent (avatar pink) */
+  --pink-2: #FF86C4;    /* hover / light pink */
+  --violet: #A35CFF;    /* second accent */
+  --win: #FF4FA3;
+  --loss: #6A5D6A;
+  --good: #52d18a;
+  --bad: #ff5b6b;
+  --faceit: #FF5500;    /* FACEIT only */
+  --premier: #4FD1E8;   /* Premier only */
+  --steam: #8FB3D9;     /* Steam only */
+  --head: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: var(--bg); color: var(--text2); font: 14px/1.55 var(--f-body); }
+html, body { background: var(--bg); color: var(--text); font-family: Barlow, system-ui, sans-serif; }
+body { min-height: 100vh; }
 a { color: inherit; text-decoration: none; }
-button { font: inherit; color: inherit; }
-b, strong { color: var(--text); font-weight: 600; }
-:focus-visible { outline: 2px solid var(--violet-hi); outline-offset: 2px; border-radius: 4px; }
-.num { font-variant-numeric: tabular-nums; }
 
-/* ---------- shell: sidebar + main ---------- */
-.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
-.side { background: var(--s1); padding: 18px 12px; display: flex; flex-direction: column; gap: 2px; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 2px 10px 16px; font: 700 16px var(--f-head); color: var(--text); letter-spacing: -.01em; }
-.brand .mk { width: 26px; height: 26px; border-radius: 7px; background: var(--violet); display: grid; place-items: center; }
-.brand em { font-style: normal; color: var(--violet-hi); }
-.grp { font: 500 10px var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .09em; padding: 14px 10px 4px; }
-.nav { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; cursor: pointer; text-align: left;
-  font-size: 13.5px; padding: 8px 10px; border-radius: var(--r-sm); color: var(--text2); transition: background .15s, color .15s; }
-.nav:hover { background: var(--s2); color: var(--text); }
-.nav.on { background: var(--s3); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
-.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--muted); }
-.nav.on .dot.plain { background: var(--violet); }
-.side .foot { margin-top: auto; padding: 18px 10px 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
-
-.main { min-width: 0; padding: 18px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.crumb { font-size: 13px; color: var(--muted); }
-.crumb b { font: 600 15px var(--f-head); color: var(--text); margin-right: 6px; }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 7px; background: var(--s1); border-radius: 999px; padding: 4px 11px; font-size: 12px; color: var(--text2); white-space: nowrap; }
-.chip.off { color: var(--muted); }
+/* ---------- top bar ---------- */
+.top {
+  position: relative; z-index: 10; display: flex; align-items: center; gap: 34px;
+  padding: 18px 40px; background: linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,0));
+}
+.logo { font: italic 900 30px/1 var(--head); letter-spacing: -.02em; display: flex; align-items: center; gap: 2px; }
+.logo span { color: var(--pink); }
+.links { display: flex; gap: 26px; flex-wrap: wrap; flex: 1; }
+.links button {
+  background: none; border: 0; color: #d9d3ca; cursor: pointer; padding: 6px 0; position: relative;
+  font: 700 15px var(--head); letter-spacing: .08em; text-transform: uppercase; transition: color .2s;
+}
+.links button::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--pink);
+  transform: scaleX(0); transition: transform .25s; }
+.links button:hover { color: #fff; }
+.links button.on { color: #fff; }
+.links button.on::after { transform: scaleX(1); }
+.btn-out { border: 1.5px solid rgba(255,255,255,.7); padding: 7px 14px; border-radius: 3px;
+  font: 700 13px var(--head); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; transition: all .2s; }
+.btn-out:hover { background: #fff; color: #000; }
 
 /* ---------- pages ---------- */
-.page { display: none; flex-direction: column; gap: 16px; }
-.page.on { display: flex; animation: fade .25s ease both; }
-@keyframes fade { from { opacity: 0; transform: translateY(4px); } }
-.ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-h1 { font: 600 24px/1.2 var(--f-head); color: var(--text); letter-spacing: -.01em; text-wrap: balance; }
-.lead { color: var(--text2); max-width: 70ch; margin-top: 4px; }
-.src { display: inline-flex; align-items: center; gap: 6px; font: 500 10.5px var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); white-space: nowrap; }
+.page { display: none; position: relative; min-height: 760px; overflow: hidden; }
+.page.on { display: block; animation: fade .5s ease both; }
+@keyframes fade { from { opacity: 0; } }
+.scene { position: absolute; inset: 0; z-index: 0; }
+.scene svg { width: 100%; height: 100%; display: block; }
+.shade { position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(90deg, rgba(14,11,17,.92) 0%, rgba(14,11,17,.55) 45%, rgba(14,11,17,.15) 100%),
+              linear-gradient(0deg, rgba(14,11,17,1) 0%, rgba(14,11,17,0) 45%); }
+.inner { position: relative; z-index: 2; padding: 46px 40px 60px; max-width: 1240px; }
+
+h1 { font: italic 900 clamp(48px, 7.4vw, 92px)/0.9 var(--head); text-transform: uppercase; letter-spacing: -.01em;
+  text-shadow: 0 6px 30px rgba(0,0,0,.6); animation: slide .7s cubic-bezier(.2,.8,.2,1) both; }
+h1 .o { color: var(--pink); }
+@keyframes slide { from { opacity: 0; transform: translateX(-30px); } }
+.lead { font-size: 19px; line-height: 1.45; max-width: 520px; margin: 18px 0 26px; color: #e6e0d7; animation: slide .7s .1s both; }
+.cta { display: inline-flex; align-items: center; gap: 12px; background: var(--pink); color: #fff; cursor: pointer; border: 0;
+  padding: 14px 24px; border-radius: 3px; font: 700 18px var(--head); letter-spacing: .06em; text-transform: uppercase;
+  box-shadow: 0 10px 30px -10px var(--pink); transition: transform .2s, background .2s; animation: slide .7s .2s both; }
+.cta:hover { background: var(--pink-2); transform: translateY(-2px); }
+
+/* feature row under hero */
+.features { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 90px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 22px; }
+.feat { display: flex; gap: 14px; align-items: center; padding: 0 18px; border-left: 1px solid rgba(255,255,255,.12); }
+.feat:first-child { border-left: 0; padding-left: 0; }
+.feat svg { width: 34px; height: 34px; flex: none; }
+.feat .t { font: 700 15px var(--head); letter-spacing: .06em; text-transform: uppercase; }
+.feat .v { font: italic 800 30px/1 var(--head); color: var(--pink); }
+.feat .s { font-size: 13px; color: var(--muted); }
 
 /* ---------- cards ---------- */
-.cards { display: grid; gap: 16px; }
-.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.card { position: relative; background: var(--s1); border-radius: var(--r-card); padding: 16px; min-width: 0; transition: background .15s; }
-.card h3 { font: 600 18px var(--f-head); color: var(--text); margin-bottom: 6px; }
-.card h4 { font: 600 14px var(--f-head); color: var(--text); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.card p { font-size: 13.5px; }
-.card .ico { width: 26px; height: 26px; margin-bottom: 12px; color: var(--violet-hi); }
-.empty, .na { color: var(--muted); }
-.na { font-style: italic; }
-.card.top-faceit { box-shadow: inset 0 2px 0 var(--faceit); }
-.card.top-leetify { box-shadow: inset 0 2px 0 var(--leetify); }
-.card.top-premier { box-shadow: inset 0 2px 0 var(--premier); }
-.card.top-steam { box-shadow: inset 0 2px 0 var(--steam); }
+.cards { display: grid; gap: 18px; margin-top: 34px; }
+.c3 { grid-template-columns: repeat(3, 1fr); }
+.c4 { grid-template-columns: repeat(4, 1fr); }
+.c2 { grid-template-columns: repeat(2, 1fr); }
+.card {
+  position: relative; background: var(--card); border: 1px solid var(--card-line); border-radius: 6px; padding: 24px;
+  backdrop-filter: blur(4px); overflow: hidden; transition: transform .25s, border-color .25s, box-shadow .25s;
+  animation: up .55s cubic-bezier(.2,.8,.2,1) both;
+}
+.card:hover { transform: translateY(-4px); border-color: rgba(255,79,163,.45); box-shadow: 0 20px 40px -20px rgba(255,79,163,.4); }
+@keyframes up { from { opacity: 0; transform: translateY(18px); } }
+.card .ico { width: 44px; height: 44px; margin-bottom: 26px; }
+.card h3 { font: italic 800 30px/1 var(--head); text-transform: uppercase; margin-bottom: 8px; }
+.card h4 { font: italic 800 22px/1 var(--head); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 4px; }
+.card h4::after { content: ""; display: block; width: 46px; height: 2px; background: var(--pink); margin-top: 8px; }
+.card p { color: #cfc8be; font-size: 15px; line-height: 1.45; }
+.card p b { color: var(--pink-2); font-weight: 600; }
+.card .bg-art { position: absolute; inset: 0; opacity: .32; z-index: -1; }
+.prog { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.prog .bar { flex: 1; height: 7px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
+.prog .bar i { display: block; height: 100%; width: 0; background: var(--pink); transition: width 1.3s cubic-bezier(.2,.8,.2,1); }
+.prog .n { font: 600 14px var(--head); color: var(--muted); letter-spacing: .05em; min-width: 46px; text-align: right; }
+.arrow { position: absolute; right: 22px; bottom: 18px; color: var(--pink); font: 700 22px var(--head); }
+.tag { display: inline-block; font: 700 12px var(--head); letter-spacing: .12em; padding: 3px 8px; border-radius: 2px; margin-bottom: 10px; }
+.tag.best { background: var(--pink); color: #fff; }
+.tag.worst { border: 1px solid var(--bad); color: var(--bad); }
 
-/* ---------- profile ---------- */
-.idcard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 18px; align-items: center; }
-.avatar { width: 76px; height: 76px; border-radius: 18px; object-fit: cover; background: var(--s3);
-  box-shadow: 0 0 0 2px var(--s1), 0 0 0 4px var(--violet); display: grid; place-items: center; font: 700 30px var(--f-head); color: var(--violet-hi); }
-.who h2 { font: 700 26px/1.1 var(--f-head); color: var(--text); letter-spacing: -.01em; }
-.who .links { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
-.who .links a { color: var(--text2); border-bottom: 1px solid transparent; transition: color .15s, border-color .15s; }
-.who .links a:hover { color: var(--text); border-color: var(--violet-hi); }
-.who .tagline { margin-top: 6px; font-size: 13px; color: var(--muted); }
-.tiles { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.tile { background: var(--s2); border-radius: var(--r-tile); padding: 11px 13px; min-width: 0; }
-.tile .v { font: 600 24px/1.25 var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; margin-top: 2px; overflow-wrap: anywhere; }
-.tile .v.off { font: 500 15px/1.6 var(--f-body); color: var(--muted); padding: 3px 0 2px; }
-.tile .s { font-size: 11.5px; color: var(--muted); }
-.lvl { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--faceit); color: var(--faceit);
-  font: 700 12px var(--f-head); margin-right: 8px; vertical-align: 3px; }
-.meter { height: 4px; background: var(--s3); border-radius: 4px; margin-top: 7px; overflow: hidden; }
-.meter i { display: block; height: 100%; width: 0; background: var(--faceit); transition: width 1s cubic-bezier(.2,.8,.2,1); }
+.minis { display: flex; gap: 24px; margin-top: 16px; }
+.minis div { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.minis b { display: block; font: italic 800 24px var(--head); color: var(--text); letter-spacing: 0; }
 
-.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--s1); border-radius: var(--r-card); padding: 14px 4px; }
-.kpis > div { padding: 0 16px; border-left: 1px solid var(--line); min-width: 0; }
-.kpis > div:first-child { border-left: 0; }
-.kpis .l { font-size: 12px; color: var(--muted); }
-.kpis .v { font: 600 22px/1.3 var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
-.kpis .s { font-size: 11.5px; color: var(--muted); }
-.form { display: flex; gap: 3px; margin: 8px 0 4px; }
-.form i { width: 10px; height: 16px; border-radius: 2px; }
-.w-bg { background: var(--win); } .l-bg { background: var(--loss); }
-
-.split { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 16px; }
-.split.even { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
-.seg { display: inline-flex; gap: 2px; background: var(--s2); border-radius: var(--r-sm); padding: 3px; margin: 6px 0 4px; flex-wrap: wrap; }
-.seg button { border: 0; background: none; cursor: pointer; font-size: 12px; padding: 4px 10px; border-radius: 6px; color: var(--muted); transition: background .15s, color .15s; }
-.seg button:hover { color: var(--text); }
-.seg button.on { background: var(--s3); color: var(--text); }
-.caption { font-size: 12px; color: var(--muted); margin-top: 6px; }
-.chart { position: relative; height: 240px; margin-top: 8px; }
-.chart.tall { height: 300px; }
-.chart.radar { height: 230px; }
-
-.mlist { margin-top: 6px; }
-.mrow { display: grid; grid-template-columns: 4px 96px minmax(70px, 1fr) 64px 66px 60px; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-.mrow:last-child { border-bottom: 0; }
-.mrow .rb { height: 30px; border-radius: 2px; grid-row: span 2; align-self: start; margin-top: 2px; }
-.mrow .d { font-size: 11px; color: var(--muted); line-height: 1.3; white-space: nowrap; }
-.mrow .m { color: var(--text); font-weight: 500; }
-.mrow .kda { font-variant-numeric: tabular-nums; color: var(--text2); }
-.mrow .n { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.mrow .dl { grid-column: 3 / -1; font: 11px var(--f-mono); color: var(--muted); }
-.up { color: var(--win); } .dn { color: var(--loss); }
-
-.insights { display: grid; gap: 10px; margin-top: 8px; }
-.ins { background: var(--s2); border-radius: var(--r-tile); padding: 11px 13px; display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; font-size: 13px; }
-.ins svg { width: 20px; height: 20px; color: var(--violet-hi); margin-top: 1px; }
-.ins b { color: var(--text); }
-.btn { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; border-radius: var(--r-sm); padding: 7px 13px; font-size: 13px; font-weight: 500; transition: background .15s, color .15s; }
-.btn.ghost { background: var(--s2); color: var(--text2); }
-.btn.ghost:hover { background: var(--s3); color: var(--text); }
-.btn.primary { background: var(--violet); color: #fff; }
-.btn.primary:hover { background: var(--violet-hi); color: var(--bg); }
-
-/* ---------- shared bits used on other pages ---------- */
-.prog { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-.prog .bar { flex: 1; height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden; }
-.prog .bar i { display: block; height: 100%; width: 0; background: var(--violet); transition: width 1s cubic-bezier(.2,.8,.2,1); }
-.prog .n { font: 500 12px var(--f-mono); color: var(--muted); min-width: 46px; text-align: right; }
-.tag { display: inline-block; font: 500 10.5px var(--f-mono); letter-spacing: .06em; padding: 2px 8px; border-radius: 6px; margin-bottom: 8px; }
-.tag.best { background: rgba(224, 85, 200, .16); color: var(--magenta); }
-.tag.worst { background: rgba(240, 96, 106, .14); color: var(--loss); }
-.minis { display: flex; gap: 22px; margin-top: 10px; }
-.minis div { font-size: 11.5px; color: var(--muted); }
-.minis b { display: block; font: 600 19px var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
+/* ring + streak + recent wins */
 .center { text-align: center; }
-.ring { position: relative; width: 150px; height: 150px; margin: 12px auto 8px; }
+.ring { position: relative; width: 170px; height: 170px; margin: 18px auto 10px; }
 .ring svg { transform: rotate(-90deg); }
-.ring .rv { position: absolute; inset: 0; display: grid; place-items: center; font: 600 34px var(--f-head); color: var(--text); }
-.ring circle.fg { transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
-.streak { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 28px 0 22px; }
-.streak .flame { width: 46px; height: 54px; }
-.streak .sv { font: 600 32px var(--f-head); color: var(--text); }
-.hr { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); }
-.checks { list-style: none; margin-top: 6px; }
-.checks li { display: flex; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.ring .rv { position: absolute; inset: 0; display: grid; place-items: center; font: 800 46px var(--head); }
+.ring circle.fg { transition: stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1); }
+.streak { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 42px 0 30px; }
+.streak .flame { width: 70px; height: 80px; animation: flick 1.4s ease-in-out infinite alternate; transform-origin: bottom; }
+@keyframes flick { to { transform: scaleY(1.06) scaleX(.96); filter: brightness(1.2); } }
+.streak .sv { font: 700 46px var(--head); }
+.hr { border-top: 1px solid var(--card-line); padding-top: 16px; color: var(--muted); }
+.checks { list-style: none; margin-top: 10px; }
+.checks li { display: flex; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--card-line); font-size: 15px; }
 .checks li:last-child { border: 0; }
-.checks svg { width: 16px; height: 16px; flex: none; }
-.checks small { color: var(--muted); margin-left: auto; font-size: 11.5px; white-space: nowrap; }
-.heat { display: grid; grid-template-columns: 52px repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 12px; }
-.heat .h { font: 500 10.5px var(--f-mono); color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: .05em; }
-.heat .d { font: 500 11px var(--f-mono); color: var(--muted); align-self: center; text-transform: uppercase; }
-.cell { height: 42px; border-radius: 6px; display: grid; place-items: center; align-content: center; font: 600 14px var(--f-head); font-variant-numeric: tabular-nums; }
-.cell small { display: block; font: 400 10px var(--f-body); opacity: .75; }
-.tbl { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-th { text-align: left; font: 500 10.5px var(--f-mono); letter-spacing: .07em; color: var(--muted); padding: 8px 8px; border-bottom: 1px solid var(--line); text-transform: uppercase; white-space: nowrap; }
-td { padding: 8px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-tr:last-child td { border-bottom: 0; }
-tbody tr:hover td { background: var(--s2); }
-.res { font: 500 11px var(--f-mono); letter-spacing: .05em; padding: 2px 8px; border-radius: 6px; }
-.res.w { background: rgba(61, 214, 140, .14); color: var(--win); }
-.res.l { background: rgba(240, 96, 106, .14); color: var(--loss); }
-.sq-av { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 12px;
-  font: 700 18px var(--f-head); color: var(--violet-hi); background: var(--s3); }
-.rank { position: absolute; right: 16px; top: 14px; font: 600 13px var(--f-mono); color: var(--muted); }
-.vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; gap: 12px; }
-.vs .big { font: 600 44px/1.1 var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; }
-.vs .big.hi { color: var(--violet-hi); }
-.vs .x { font: 500 12px var(--f-mono); color: var(--muted); }
-.vs .lab { font-size: 12px; color: var(--muted); }
-.shot { padding: 0; overflow: hidden; }
-.shot img { width: 100%; display: block; transition: transform .4s; }
-.shot:hover img { transform: scale(1.02); }
-.shot p { padding: 12px 16px; color: var(--text); font-weight: 500; }
+.checks svg { width: 18px; height: 18px; flex: none; }
+.checks small { color: var(--muted); margin-left: auto; font-size: 12px; }
 
-/* ---------- Leetify (official badge shown unmodified, never animated or recoloured) ---------- */
-#leetify.page.on { animation: none; }
+/* heatmap */
+.heat { display: grid; grid-template-columns: 70px repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+.heat .h { font: 700 13px var(--head); letter-spacing: .1em; color: var(--muted); text-align: center; text-transform: uppercase; }
+.heat .d { font: 700 14px var(--head); color: var(--muted); align-self: center; text-transform: uppercase; }
+.cell { height: 44px; border-radius: 3px; display: grid; place-items: center; font: 700 16px var(--head); }
+.cell small { display: block; font: 500 10px Barlow; opacity: .75; margin-top: -4px; }
+
+.chart { position: relative; height: 300px; margin-top: 12px; }
+
+/* table */
+table { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 12px; }
+th { text-align: left; font: 700 13px var(--head); letter-spacing: .12em; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--card-line); text-transform: uppercase; }
+td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.04); font-variant-numeric: tabular-nums; }
+tr:hover td { background: rgba(255,79,163,.07); }
+.res { font: 700 13px var(--head); letter-spacing: .1em; padding: 3px 9px; border-radius: 2px; }
+.res.w { background: var(--pink); color: #fff; }
+.res.l { border: 1px solid #5e5852; color: #a9a29a; }
+
+/* squad */
+.av { width: 54px; height: 54px; border-radius: 4px; display: grid; place-items: center; margin-bottom: 20px;
+  font: italic 900 28px var(--head); color: #fff; background: linear-gradient(135deg, var(--pink), var(--violet)); }
+.rank { position: absolute; right: 22px; top: 18px; font: italic 900 42px var(--head); color: rgba(255,255,255,.08); }
+.vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; }
+.vs .big { font: italic 900 70px/1 var(--head); }
+.vs .x { font: italic 900 28px var(--head); color: var(--muted); }
+.vs .lab { font: 700 14px var(--head); letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+
+/* highlights */
+.shot { padding: 0; }
+.shot img { width: 100%; display: block; transition: transform .5s; }
+.shot:hover img { transform: scale(1.04); }
+.shot p { padding: 14px 18px; font: italic 800 20px var(--head); text-transform: uppercase; color: var(--text); }
+.empty { color: var(--muted); }
+
+/* ---------- Leetify (official badge shown unmodified, never animated) ---------- */
+#premier.page.on, #premier .card { animation: none !important; }
 .lt-badge { display: inline-block; line-height: 0; }
-.lt-badge img { height: 40px; width: auto; display: block; }
-.lt-badge.large img { height: 72px; }
-.lt-link { color: var(--leetify); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
-.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 16px; margin-top: 10px; font-size: 13.5px; }
+.lt-badge img { height: 46px; width: auto; display: block; }
+.lt-badge.large img { height: 86px; }
+.lt-link { color: #F84982; font-weight: 700; text-decoration: underline; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 8px 18px; margin-top: 14px; font-size: 15px; }
 .kv span { color: var(--muted); }
-.kv b { font: 600 15px var(--f-head); text-align: right; font-variant-numeric: tabular-nums; }
-.chk { list-style: none; margin-top: 8px; }
-.chk li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; display: flex; justify-content: space-between; gap: 12px; }
-.chk code { font: 11.5px var(--f-mono); color: var(--muted); word-break: break-word; text-align: right; }
-.yes { color: var(--win); font-weight: 600; } .no { color: var(--loss); font-weight: 600; }
-details.card summary { cursor: pointer; font: 600 14px var(--f-head); color: var(--text); list-style: none; display: flex; justify-content: space-between; }
-details.card summary::after { content: "Show"; font: 500 12px var(--f-body); color: var(--muted); }
-details.card[open] summary::after { content: "Hide"; }
-.big-v { font: 600 34px/1.2 var(--f-head); color: var(--text); font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+.kv b { font: 700 18px var(--head); text-align: right; }
+.na { color: var(--muted); font-style: italic; }
+.chk { list-style: none; margin-top: 10px; }
+.chk li { padding: 6px 0; border-bottom: 1px solid var(--card-line); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; }
+.chk code { font-size: 12px; color: var(--muted); word-break: break-word; }
+.yes { color: var(--good); font-weight: 700; } .no { color: var(--bad); font-weight: 700; }
 
-footer { padding: 16px 0 4px; color: var(--muted); font-size: 11.5px; border-top: 1px solid var(--line); margin-top: 8px; }
+/* source tags + source blocks (each source keeps its own colour) */
+.srcline { display: inline-flex; align-items: center; gap: 8px; font: 700 13px var(--head); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 14px; }
+.srcline i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.card.faceit { border-top: 3px solid var(--faceit); }
+.card.premier { border-top: 3px solid var(--premier); }
+.card.steam { border-top: 3px solid var(--steam); }
+.card.faceit:hover { border-color: rgba(255,85,0,.5); box-shadow: 0 20px 40px -20px rgba(255,85,0,.35); border-top-color: var(--faceit); }
+.card.premier:hover { border-color: rgba(79,209,232,.45); box-shadow: 0 20px 40px -20px rgba(79,209,232,.3); border-top-color: var(--premier); }
+.card.steam:hover { border-color: rgba(143,179,217,.45); box-shadow: 0 20px 40px -20px rgba(143,179,217,.3); border-top-color: var(--steam); }
+.bigv { font: italic 900 64px/1 var(--head); letter-spacing: -.01em; }
+.lvl { display: inline-grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; border: 4px solid var(--faceit);
+  font: italic 900 28px var(--head); color: var(--faceit); margin-right: 14px; vertical-align: middle; }
+.me { display: flex; align-items: center; gap: 26px; margin-top: 10px; }
+.me .pic { width: 118px; height: 118px; border-radius: 50%; object-fit: cover; flex: none; background: #2a1d2c;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--pink), 0 0 40px -6px var(--pink); display: grid; place-items: center;
+  font: italic 900 54px var(--head); color: var(--pink); }
+.me h1 { font-size: clamp(44px, 6vw, 76px); }
+.me .links { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 15px; color: var(--muted); }
+.me .links a { color: var(--text); border-bottom: 1.5px solid var(--pink); }
+.statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px; margin-top: 20px; }
+.statgrid div { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.statgrid b { display: block; font: italic 800 28px var(--head); color: var(--text); letter-spacing: 0; }
+.bar.f i { background: var(--faceit) !important; }
+.note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+/* concrete coach cards */
+.tip h3 { font-size: 26px; }
+.tip .do { margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--pink); background: rgba(255,79,163,.08); color: var(--text); font-size: 14px; }
+.tip .do b { color: var(--pink-2); }
+.tip .ev { margin-top: 12px; font: 700 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+details.card summary { cursor: pointer; font: italic 800 22px/1 var(--head); text-transform: uppercase; list-style: none; }
+details.card summary::after { content: " +"; color: var(--muted); }
+details.card[open] summary::after { content: " −"; }
 
-/* ---------- responsive ---------- */
-@media (max-width: 1180px) {
-  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
-  .kpis > div:nth-child(4) { border-left: 0; }
-  .c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962; font: 600 13px var(--head); letter-spacing: .12em; text-transform: uppercase; border-top: 1px solid var(--card-line); }
+
+@media (max-width: 900px) {
+  .top { padding: 14px 18px; gap: 14px; flex-wrap: wrap; }
+  .logo { flex: 1; }
+  .links { order: 3; flex: 1 1 100%; gap: 16px; }
+  .inner { padding: 30px 18px 40px; }
+  .features, .c3, .c4, .c2 { grid-template-columns: 1fr 1fr; }
+  .features { gap: 18px; margin-top: 50px; }
+  .feat { border: 0; padding: 0; }
+  .shade { background: linear-gradient(0deg, rgba(14,11,17,1) 10%, rgba(14,11,17,.55) 100%); }
 }
-@media (max-width: 980px) {
-  .split, .split.even, .c3 { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 860px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
-  .side { flex-direction: row; align-items: center; overflow-x: auto; gap: 4px; padding: 10px 12px; position: sticky; top: 0; z-index: 5; }
-  .side .grp, .side .foot { display: none; }
-  .brand { padding: 0 8px 0 2px; }
-  .brand span:last-child { display: none; }
-  .nav { width: auto; white-space: nowrap; padding: 7px 11px; }
-  .nav.on { box-shadow: inset 0 -2px 0 var(--violet); }
-  .main { padding: 14px 16px 20px; }
-  .c2 { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 560px) {
-  .c4 { grid-template-columns: minmax(0, 1fr); }
-  .idcard { grid-template-columns: minmax(0, 1fr); }
-  .avatar { width: 64px; height: 64px; }
-  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .kpis > div { border-left: 0; }
-  .mrow { grid-template-columns: 4px 84px minmax(0, 1fr) 60px; }
-  .mrow .hide { display: none; }
-  .vs .big { font-size: 34px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
+@media (max-width: 560px) { .features, .c3, .c4, .c2 { grid-template-columns: 1fr; } .me { flex-direction: column; align-items: flex-start; } .statgrid { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -262,338 +238,316 @@ footer { padding: 16px 0 4px; color: var(--muted); font-size: 11.5px; border-top
 const D = __DATA__;
 const $ = (s, el = document) => el.querySelector(s);
 const pct = x => (x == null || isNaN(x)) ? "–" : Math.round(x * 100) + "%";
-const f2 = x => (x == null || isNaN(x)) ? "–" : Number(x).toFixed(2);
-const f1 = x => (x == null || isNaN(x)) ? "–" : Number(x).toFixed(1);
+const f2 = x => (x == null || isNaN(x)) ? "–" : x.toFixed(2);
 const f0 = x => (x == null || isNaN(x)) ? "–" : Math.round(x);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const isNum = v => typeof v === "number" && isFinite(v);
-const p = D.player, s = D.summary, L = D.leetify;
-const LT_OK = !!(L && L.status === "ok" && L.profile);
-const ST = D.steam, ST_OK = !!(ST && ST.status === "ok" && ST.profile);
-const steamUrl = ST_OK ? ST.profile.url : (p.steam_id64 ? `https://steamcommunity.com/profiles/${p.steam_id64}` : "");
-const hrs = v => isNum(v) ? (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1)) + " h" : "–";
-const C = Object.fromEntries(["bg","s1","s2","s3","line","text","text2","muted","violet","violet-hi","violet-deep","magenta","win","loss","faceit","leetify","steam","premier"]
-  .map(k => [k, getComputedStyle(document.documentElement).getPropertyValue("--" + k).trim()]));
+const p = D.player, s = D.summary;
 
 /* ---------- line icons (drawn by me) ---------- */
 const I = {
-  cross: `<circle cx="24" cy="24" r="13"/><path d="M24 4v10M24 34v10M4 24h10M34 24h10"/>`,
+  cross: `<circle cx="24" cy="24" r="13"/><path d="M24 4v10M24 34v10M4 24h10M34 24h10"/><circle cx="24" cy="24" r="1.5" fill="currentColor"/>`,
+  bars: `<path d="M8 40V30M18 40V22M28 40V14M38 40V6"/>`,
+  laurel: `<path d="M14 40c-8-6-9-18-3-28M34 40c8-6 9-18 3-28"/><path d="M11 30l-5 1M10 22l-5-1M12 15l-4-3M37 30l5 1M38 22l5-1M36 15l4-3"/><path d="M24 14l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/>`,
   star: `<path d="M24 5l5.6 12 13 1.4-9.7 8.8 2.8 12.8L24 33.4 12.3 40l2.8-12.8L5.4 18.4l13-1.4z"/>`,
   map: `<path d="M5 10l12-4 14 5 12-4v31l-12 4-14-5-12 4z"/><path d="M17 6v31M31 11v31"/>`,
   users: `<circle cx="24" cy="16" r="6"/><circle cx="11" cy="20" r="4.5"/><circle cx="37" cy="20" r="4.5"/><path d="M13 40c0-7 5-12 11-12s11 5 11 12M3 38c0-5 3-9 8-9M45 38c0-5-3-9-8-9"/>`,
   clock: `<circle cx="24" cy="24" r="18"/><path d="M24 12v12l8 5"/>`,
   shield: `<path d="M24 4l16 6v12c0 10-7 18-16 22C15 40 8 32 8 22V10z"/><path d="M17 24l5 5 9-10"/>`,
   chart: `<path d="M5 40h38"/><path d="M8 32l10-10 8 6 14-16"/><path d="M34 12h6v6"/>`,
+  cal: `<rect x="6" y="9" width="36" height="32" rx="2"/><path d="M6 18h36M15 4v9M33 4v9"/>`,
+  cam: `<rect x="5" y="13" width="38" height="27" rx="3"/><circle cx="24" cy="26" r="8"/><path d="M17 13l3-6h8l3 6"/>`,
   brain: `<path d="M18 8a6 6 0 0 0-6 6 6 6 0 0 0-4 10 6 6 0 0 0 4 10 6 6 0 0 0 10 4V8zM30 8a6 6 0 0 1 6 6 6 6 0 0 1 4 10 6 6 0 0 1-4 10 6 6 0 0 1-10 4V8z"/>`,
 };
-const icon = (n, cls = "ico") => `<svg class="${cls}" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || I.star}</svg>`;
-const check = `<svg viewBox="0 0 20 20" fill="none" stroke="${C.win}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5l4.5 4.5L17 5"/></svg>`;
-const tipIcons = { "🗺️": "map", "🚫": "shield", "🕒": "clock", "📈": "chart", "📉": "chart", "😤": "brain", "🧊": "brain", "🤝": "users", "🎯": "cross" };
+const icon = (n, cls = "ico") => `<svg class="${cls}" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text)">${I[n]}</svg>`;
+const check = `<svg viewBox="0 0 20 20" fill="none" stroke="#FF4FA3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l4.5 4.5L17 5"/></svg>`;
 
-/* ---------- small components ---------- */
-const dot = src => `<span class="dot" style="background:var(--${src})"></span>`;
-const srcTag = (src, text) => `<span class="src" style="color:var(--${src === "plain" ? "muted" : src})">${src === "plain" ? "" : dot(src)}${esc(text)}</span>`;
-const pageHead = (title, lead, tag = "") => `<div class="ph"><div><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ""}</div>${tag}</div>`;
-function bar(frac, label) {
-  return `<div class="prog"><div class="bar"><i data-w="${Math.max(0, Math.min(1, frac || 0))}"></i></div><div class="n">${label}</div></div>`;
+/* ---------- original atmospheric scenes (SVG) ----------
+   Abstract desert-town shapes: walls, arches, windows, crates and warm light. Made from scratch. */
+function scene(seed, opts = {}) {
+  const light = opts.light ?? 0.7, lx = opts.lx ?? 72, cool = opts.cool ?? false;
+  let r = seed * 9301 + 49297; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const id = "s" + seed;
+  const wall = cool ? "#1d1830" : "#2a1a2a", wall2 = cool ? "#141024" : "#1a1019";
+  let shapes = "";
+  // back buildings
+  for (let i = 0; i < 7; i++) {
+    const x = 30 + i * 15 + rnd() * 6, w = 10 + rnd() * 10, h = 25 + rnd() * 35;
+    shapes += `<rect x="${x}%" y="${100 - h - 18}%" width="${w}%" height="${h + 18}%" fill="${wall2}" opacity="${0.6 + rnd() * 0.3}"/>`;
+    if (rnd() > 0.4) shapes += `<rect x="${x + w * 0.35}%" y="${100 - h - 6}%" width="${w * 0.22}%" height="9%" fill="${cool ? "#5b4a9a" : "#ff4fa3"}" opacity="${cool ? 0.35 : 0.18 + rnd() * 0.3}"/>`;
+  }
+  // big wall with arch
+  const ax = opts.ax ?? (58 + rnd() * 10);
+  shapes += `<path d="M ${ax - 14}% 100% V 30% H ${ax + 40}% V 100%" fill="url(#${id}w)"/>`;
+  shapes += `<rect x="${ax - 14}%" y="30%" width="54%" height="70%" fill="url(#${id}w)" filter="url(#${id}n)"/>`;
+  for (let y = 36; y < 100; y += 5.5) shapes += `<path d="M ${ax - 14}% ${y}% H ${ax + 40}%" stroke="#000" stroke-opacity=".22" stroke-width=".35"/>`;
+  for (let y = 36, k = 0; y < 100; y += 5.5, k++) for (let x = ax - 14 + (k % 2) * 4; x < ax + 40; x += 8)
+    shapes += `<path d="M ${x}% ${y}% V ${y + 5.5}%" stroke="#000" stroke-opacity=".15" stroke-width=".3"/>`;
+  shapes += `<rect x="${ax - 15}%" y="28.5%" width="56%" height="2.2%" fill="#0c080d"/>`;
+  shapes += `<rect x="${ax + 24}%" y="40%" width="7%" height="11%" fill="#050505"/><rect x="${ax + 24.6}%" y="40.8%" width="5.8%" height="9.4%" fill="${cool ? "#7a5cd6" : "#ff6fb6"}" opacity="${cool ? .35 : .55}"/>`;
+  shapes += `<path d="M ${ax}% 100% V 62% A 6 7 0 0 1 ${ax + 12}% 62% V 100% Z" fill="#070707"/>`;
+  shapes += `<rect x="0" y="96%" width="100%" height="4%" fill="#0a070b"/>`;
+  // crates
+  for (let i = 0; i < 2; i++) {
+    const cx = ax + 18 + i * 9, sz = 8 + rnd() * 3;
+    shapes += `<g opacity=".95"><rect x="${cx}%" y="${100 - sz * 1.4 - 4}%" width="${sz}%" height="${sz * 1.4}%" fill="#120c12" stroke="#3a2338" stroke-width="2"/>
+      <path d="M ${cx}% ${100 - sz * 1.4 - 4}% L ${cx + sz}% ${96}%" stroke="#3a2338" stroke-width="2"/></g>`;
+  }
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="${id}g" cx="${lx}%" cy="35%" r="70%">
+        <stop offset="0" stop-color="${cool ? "#5a3fb0" : "#ff4fa3"}" stop-opacity="${light}"/>
+        <stop offset=".45" stop-color="${cool ? "#1e1638" : "#4a1238"}" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#0E0B11" stop-opacity="1"/>
+      </radialGradient>
+      <linearGradient id="${id}w" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="${wall}"/><stop offset=".6" stop-color="${cool ? "#2e2450" : "#5e1f4c"}" stop-opacity=".9"/><stop offset="1" stop-color="${wall2}"/>
+      </linearGradient>
+      <filter id="${id}n" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9 .35" numOctaves="3" seed="${seed}"/>
+        <feColorMatrix values="0 0 0 0 .36  0 0 0 0 .18  0 0 0 0 .32  0 0 0 .5 0"/>
+        <feComposite in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="${id}grain"><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="2"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/></filter>
+    </defs>
+    <rect width="100" height="100" fill="url(#${id}g)"/>
+    <g transform="scale(1)">${shapes.replace(/(\d+(\.\d+)?)%/g, "$1")}</g>
+    <polygon points="${lx - 20},0 ${lx + 4},0 ${lx + 30},100 ${lx - 6},100" fill="${cool ? "#a98cff" : "#ff9fd0"}" opacity=".06"/>
+    ${Array.from({ length: 18 }, () => `<circle cx="${rnd() * 100}" cy="${rnd() * 100}" r=".18" fill="#ffc6e4" opacity="${.2 + rnd() * .5}">
+      <animate attributeName="cy" values="${rnd() * 100};${rnd() * 100}" dur="${14 + rnd() * 10}s" repeatCount="indefinite" /></circle>`).join("")}
+    <rect width="100" height="100" filter="url(#${id}grain)"/>
+  </svg>`;
 }
-const raw = v => (v === null || v === undefined || v === "") ? `<span class="na">Not available from Leetify</span>` : esc(typeof v === "object" ? JSON.stringify(v) : v);
-const title = k => esc(String(k).replace(/_/g, " ").replace(/^./, c => c.toUpperCase()));
+
+/* ---------- data sources (kept apart: FACEIT, Premier via Leetify, Steam) ---------- */
+const L = D.leetify, LT_OK = !!(L && L.status === "ok" && L.profile);
+const PREM = LT_OK ? (L.profile.ranks || {}).premier : null;
+const ST = D.steam, ST_OK = !!(ST && ST.status === "ok" && ST.profile);
+const isNum = v => typeof v === "number" && isFinite(v);
+const raw = v => (v === null || v === undefined || v === "") ? `<span class="na">Not available</span>` : esc(typeof v === "object" ? JSON.stringify(v) : v);
 const yn = v => v === true ? `<span class="yes">Yes</span>` : v === false ? `<span class="no">No</span>` : `<span class="na">Not checked</span>`;
-const ltBadge = (big) => L && L.badge_small ? `<a class="lt-badge ${big ? "large" : ""}" href="https://leetify.com/" target="_blank" rel="noopener"><img src="${big ? L.badge_large : L.badge_small}" alt="Data Provided by Leetify"></a>` : "";
+const hrs = v => isNum(v) ? (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1)) + " h" : "–";
+const srcline = (name, color) => `<div class="srcline" style="color:${color}"><i style="background:${color}"></i>${name}</div>`;
+const ltBadge = big => L && L.badge_small ? `<a class="lt-badge ${big ? "large" : ""}" href="https://leetify.com/" target="_blank" rel="noopener"><img src="${big ? L.badge_large : L.badge_small}" alt="Data Provided by Leetify"></a>` : "";
 const ltView = () => L ? `<a class="lt-link" href="${esc(L.profile_url)}" target="_blank" rel="noopener">View on Leetify</a>` : "";
-const fsum = `last ${s.matches} matches`;
+const steamUrl = ST_OK ? ST.profile.url : (p.steam_id64 ? `https://steamcommunity.com/profiles/${p.steam_id64}` : "");
+const premierOff = !L ? "Premier comes through Leetify, which is turned off (LEETIFY_ENABLED)." : (L.message || "Leetify not available.");
 
-/* ---------- navigation model ---------- */
-const NAV = [
-  ["Player", [["profile", "Profile", "plain"], ["briefing", "Coach briefing", "plain"]]],
-  ["Performance", [["matches", "Matches", "plain"], ["maps", "Maps", "plain"], ["progress", "Progress", "plain"], ["squad", "Squad", "plain"]]],
-  ["Sources", [["leetify", "Leetify", "leetify"], ["premier", "Premier", "premier"], ["steam", "Steam", "steam"]]],
-  ["Media", [["highlights", "Highlights", "plain"]]],
+/* ---------- pages ---------- */
+const pages = [
+  ["home", "Home"], ["profile", "Profile"], ["briefing", "Briefing"], ["matches", "Matches"], ["maps", "Maps"],
+  ["squad", "Squad"], ["progress", "Progress"], ["premier", "Premier"], ["steam", "Steam"], ["highlights", "Highlights"],
 ];
-const TITLES = Object.fromEntries(NAV.flatMap(g => g[1].map(([id, t]) => [id, t])));
 
-/* =================================================================
-   PROFILE
-   ================================================================= */
-function profilePage() {
-  const ranks = LT_OK ? (L.profile.ranks || {}) : {};
-  const ltOffText = !L ? "Leetify is turned off" : (L.message || "Leetify not available");
-
-  const faceitTile = `<div class="tile">${srcTag("faceit", "FACEIT")}
-      <div class="v"><span class="lvl" title="FACEIT level">${p.level ?? "?"}</span><span data-count="${p.elo ?? ""}" data-dec="0">${p.elo ?? "–"}</span></div>
-      <div class="s">Elo · ${p.to_next != null ? `${p.to_next} to level ${p.level + 1}` : "max level"}</div>
-      <div class="meter"><i data-w="${p.progress || 0}"></i></div></div>`;
-  const premierTile = `<div class="tile">${srcTag("premier", "Premier")}
-      ${LT_OK && ranks.premier != null ? `<div class="v">${raw(ranks.premier)}</div><div class="s">rating · via Leetify</div>`
-        : `<div class="v off">${LT_OK ? "Not returned" : "Not available"}</div><div class="s">${LT_OK ? "Leetify sent no Premier rating" : esc(ltOffText)}</div>`}</div>`;
-  const leetifyTile = `<div class="tile">${srcTag("leetify", "Leetify")}
-      ${LT_OK && ranks.leetify != null ? `<div class="v">${raw(ranks.leetify)}</div><div class="s">Leetify rating</div>`
-        : `<div class="v off">${LT_OK ? "Not returned" : "Not available"}</div><div class="s">${LT_OK ? "No Leetify rating in the answer" : esc(ltOffText)}</div>`}</div>`;
-  let stV, stS;
-  if (ST_OK && ST.cs2 && ST.cs2.found) { stV = `<div class="v">${hrs(ST.cs2.hours_total)}</div>`; stS = `CS2 playtime · ${hrs(ST.cs2.hours_2weeks)} last 2 weeks`; }
-  else if (ST_OK && ST.games_visible === false) { stV = `<div class="v off">Hours private</div>`; stS = "Set Game details to Public in Steam"; }
-  else if (ST_OK) { stV = `<div class="v off">No CS2 hours</div>`; stS = esc(ST.games_message || "Steam sent no CS2 playtime"); }
-  else if (ST) { stV = `<div class="v off">Unavailable</div>`; stS = esc(ST.message || "Steam not available"); }
-  else { stV = `<div class="v off">Not connected</div>`; stS = "CS2 hours need a Steam key"; }
-  const steamTile = `<div class="tile">${srcTag("steam", "Steam")}${stV}<div class="s">${stS}</div></div>`;
-
-  const links = [
-    p.country ? `<span>${esc(p.country)}</span>` : "",
-    p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT profile ↗</a>` : "",
-    LT_OK ? `<a href="${esc(L.profile_url)}" target="_blank" rel="noopener">Leetify ↗</a>` : "",
-    steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam profile ↗</a>` : "",
-  ].filter(Boolean).join("");
-
-  const identity = `<div class="card idcard">
-      ${p.avatar ? `<img class="avatar" src="${esc(p.avatar)}" alt="${esc(p.nickname)} avatar">` : `<div class="avatar">${esc((p.nickname || "?").slice(0, 1).toUpperCase())}</div>`}
-      <div class="who"><h2>${esc(p.nickname)}</h2><div class="links">${links}</div>
-        <p class="tagline">Your CS2 stats, your own progression. A personal coach built from your last ${s.matches} FACEIT matches.</p></div>
-      <div class="tiles">${faceitTile}${premierTile}${leetifyTile}${steamTile}</div></div>`;
-
-  const form = D.form.map(w => `<i class="${w ? "w-bg" : "l-bg"}" title="${w ? "Win" : "Loss"}"></i>`).join("");
-  const kpis = `<div class="kpis" aria-label="FACEIT stats">
-      <div><div class="l">FACEIT matches</div><div class="v">${s.matches}</div><div class="s">${s.wins}W · ${s.losses}L</div></div>
-      <div><div class="l">Win rate</div><div class="v" data-count="${isNum(s.win_rate) ? s.win_rate * 100 : ""}" data-dec="0" data-unit="%">${pct(s.win_rate)}</div><div class="s">${fsum}</div></div>
-      <div><div class="l">K/D</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2">${f2(s.kd)}</div><div class="s">average per match</div></div>
-      <div><div class="l">ADR</div><div class="v" data-count="${s.adr ?? ""}" data-dec="1">${f1(s.adr)}</div><div class="s">damage per round</div></div>
-      <div><div class="l">HS%</div><div class="v" data-count="${s.hs ?? ""}" data-dec="0" data-unit="%">${f0(s.hs)}%</div><div class="s">headshot kills</div></div>
-      <div><div class="l">Last ${D.form.length}</div><div class="form">${form}</div><div class="s">${s.streak} ${s.streak_win ? (s.streak > 1 ? "wins" : "win") : (s.streak > 1 ? "losses" : "loss")} in a row</div></div>
-    </div>`;
-
-  const trend = `<div class="card"><h4>Performance trend ${srcTag("faceit", "FACEIT")}</h4>
-      <div class="seg" role="tablist" id="trendSeg">${[["kd", "K/D"], ["wr", "Win rate"], ["adr", "ADR"], ["hs", "HS%"]].map(([k, t], i) =>
-        `<button role="tab" data-m="${k}" class="${i ? "" : "on"}" aria-selected="${!i}">${t}</button>`).join("")}</div>
-      <div class="chart"><canvas id="trendChart" aria-label="Performance trend chart"></canvas></div>
-      <p class="caption" id="trendCap"></p></div>`;
-
-  const rt = LT_OK ? (L.profile.rating || {}) : {};
-  const radarOk = ["aim", "positioning", "utility"].every(k => isNum(rt[k]));
-  const radar = `<div class="card top-leetify"><h4>Leetify ratings ${srcTag("leetify", "Leetify")}</h4>
-      ${radarOk ? `<div class="chart radar"><canvas id="radarChart" aria-label="Aim, Positioning and Utility as returned by Leetify"></canvas></div>
-        <p class="caption">Aim ${esc(rt.aim)} · Positioning ${esc(rt.positioning)} · Utility ${esc(rt.utility)}, exactly as Leetify returns them.</p>`
-        : `<p class="empty" style="margin:18px 0">${LT_OK ? "Leetify did not return Aim, Positioning and Utility." : esc(ltOffText) + ". Turn it on with LEETIFY_ENABLED in Secrets."}</p>`}
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div>`;
-
-  // Recent matches compared with my own FACEIT averages (same source, so the comparison is fair)
-  const delta = (v, avg, lim, fmt, name) => {
-    if (!isNum(v) || !isNum(avg) || Math.abs(v - avg) < lim) return "";
-    const up = v > avg; return `<span class="${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${name} ${up ? "+" : "−"}${fmt(Math.abs(v - avg))}</span>`;
-  };
-  const rows = D.recent.slice(0, 6).map(r => {
-    const ds = [delta(r.kd, s.kd, 0.25, f2, "K/D"), delta(r.adr, s.adr, 12, f0, "ADR"), delta(r.hs, s.hs, 10, f0, "HS%")].filter(Boolean);
-    return `<div class="mrow"><i class="rb ${r.won ? "w-bg" : "l-bg"}" title="${r.won ? "Win" : "Loss"}"></i>
-      <div><div class="m">${esc(r.map)}</div><div class="d">${esc(r.date)}</div></div>
-      <span class="kda">${f0(r.kills)} / ${f0(r.deaths)} / ${f0(r.assists)}</span>
-      <span class="n">K/D ${f2(r.kd)}</span><span class="n hide">ADR ${f0(r.adr)}</span><span class="n hide">HS ${f0(r.hs)}%</span>
-      <div class="dl">${ds.length ? ds.join(" · ") : "close to your average"}</div></div>`;
-  }).join("");
-  const recent = `<div class="card"><h4>Recent matches ${srcTag("faceit", "FACEIT · vs your average")}</h4>
-      <div class="mlist">${rows || `<p class="empty">No matches yet.</p>`}</div>
-      <div style="margin-top:10px"><button class="btn ghost" data-go="matches">All matches ›</button></div></div>`;
-
-  const tips = D.tips.slice(0, 3);
-  const focus = `<div class="card"><h4>Coach focus ${srcTag("plain", "rules need " + D.min_games + "+ games")}</h4>
-      <div class="insights">${tips.length ? tips.map(t => `<div class="ins">${icon(tipIcons[t.icon], "")}<div>${t.html}</div></div>`).join("")
-        : `<p class="empty">Play a few more games so the coach has enough to go on.</p>`}</div>
-      <div style="margin-top:10px"><button class="btn ghost" data-go="briefing">Full briefing ›</button></div></div>`;
-
-  return `${identity}${kpis}<div class="split">${trend}${radar}</div><div class="split even">${recent}${focus}</div>`;
+function pageWrap(id, seed, opts, body) {
+  return `<section class="page ${id === "home" ? "on" : ""}" id="${id}">
+    <div class="scene">${scene(seed, opts)}</div><div class="shade"></div>
+    <div class="inner">${body}</div></section>`;
+}
+function bar(frac, label, cls = "") {
+  return `<div class="prog"><div class="bar ${cls}"><i data-w="${Math.max(0, Math.min(1, frac || 0))}"></i></div><div class="n">${label}</div></div>`;
 }
 
-/* =================================================================
-   OTHER PAGES (same content as v4, new design system)
-   ================================================================= */
-const briefing = `${pageHead("Coach briefing", `What your coach learned. Only groups with ${D.min_games}+ games count, so it isn't just luck.`, srcTag("faceit", "FACEIT · " + fsum))}
-  <div class="cards c3">${D.tips.length ? D.tips.map(t => `
-    <div class="card">${icon(tipIcons[t.icon])}<p>${t.html}</p></div>`).join("")
+/* HOME: the two main numbers are FACEIT and Premier */
+const home = `
+  <h1>Your CS2 stats.<br><span class="o">Your own<br>progression.</span></h1>
+  <p class="lead">A personal coach built from ${esc(p.nickname)}'s last ${s.matches} FACEIT matches${LT_OK ? " and Premier" : ""}. See what works, fix what doesn't, and level up.</p>
+  <button class="cta" data-go="briefing">See your briefing <span>›</span></button>
+  <div class="features">
+    <div class="feat">${icon("cross", "")}<div><div class="t" style="color:var(--faceit)">FACEIT · Level ${p.level ?? "?"}</div><div class="v" style="color:var(--faceit)" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
+    <div class="feat">${icon("star", "")}<div><div class="t" style="color:var(--premier)">Premier</div>${PREM != null ? `<div class="v" style="color:var(--premier)">${raw(PREM)}</div><div class="s">rating · via Leetify</div>` : `<div class="v" style="color:var(--muted);font-size:20px">Not available</div><div class="s">${LT_OK ? "no rating returned" : "Leetify is off"}</div>`}</div></div>
+    <div class="feat">${icon("bars", "")}<div><div class="t">FACEIT win rate</div><div class="v" data-count="${s.win_rate * 100}" data-dec="0" data-unit="%"></div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
+    <div class="feat">${icon("laurel", "")}<div><div class="t">FACEIT K/D</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2"></div><div class="s">kills per death</div></div></div>
+  </div>`;
+
+/* PROFILE: me + one separate block per source */
+const faceitBlock = `<div class="card faceit">${srcline("FACEIT", "var(--faceit)")}
+    <div style="display:flex;align-items:center"><span class="lvl">${p.level ?? "?"}</span><div><div class="bigv" style="color:var(--faceit)">${p.elo ?? "–"}</div><div class="note" style="margin-top:4px">Elo · ${p.to_next != null ? p.to_next + " to level " + (p.level + 1) : "max level"}</div></div></div>
+    ${bar(p.progress, Math.round((p.progress || 0) * 100) + "%", "f")}
+    <div class="statgrid">
+      <div><b>${s.matches}</b>matches</div><div><b>${pct(s.win_rate)}</b>win rate</div><div><b>${f2(s.kd)}</b>K/D</div>
+      <div><b>${f0(s.hs)}%</b>headshots</div><div><b>${f0(s.adr)}</b>ADR</div><div><b>${s.streak}${s.streak_win ? "W" : "L"}</b>streak</div>
+    </div>
+    <p class="note">Last ${s.matches} FACEIT matches.${p.url ? ` <a class="lt-link" style="color:var(--faceit)" href="${esc(p.url)}" target="_blank" rel="noopener">Open FACEIT profile</a>` : ""}</p></div>`;
+const premierBlock = `<div class="card premier">${srcline("CS2 Premier", "var(--premier)")}
+    ${PREM != null ? `<div class="bigv" style="color:var(--premier)">${raw(PREM)}</div><div class="note" style="margin-top:4px">Premier rating, as returned by Leetify</div>`
+      : `<div class="bigv" style="color:var(--muted);font-size:40px">Not available</div><p class="note">${LT_OK ? "Leetify did not return a Premier rating." : esc(premierOff)}</p>`}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div>
+    <p class="note">Premier is separate from FACEIT. The two ratings use different scales and are not compared.</p></div>`;
+let steamV;
+if (ST_OK && ST.cs2 && ST.cs2.found) steamV = `<div class="bigv" style="color:var(--steam);font-size:48px">${hrs(ST.cs2.hours_total)}</div><div class="note" style="margin-top:4px">CS2 playtime · ${hrs(ST.cs2.hours_2weeks)} in the last 2 weeks</div>`;
+else if (ST_OK && ST.games_visible === false) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Hours private</div><p class="note">Set "Game details" to Public in Steam privacy settings.</p>`;
+else if (ST) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Unavailable</div><p class="note">${esc(ST.games_message || ST.message || "Steam not available")}</p>`;
+else steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Not connected</div><p class="note">Add STEAM_API_KEY in Secrets to show CS2 hours.</p>`;
+const steamBlock = `<div class="card steam">${srcline("Steam", "var(--steam)")}${steamV}</div>`;
+const profilePage = `
+  <div class="me">
+    ${p.avatar ? `<img class="pic" src="${esc(p.avatar)}" alt="">` : `<div class="pic">${esc((p.nickname || "?").slice(0, 1).toUpperCase())}</div>`}
+    <div><h1>${esc(p.nickname)}</h1>
+      <div class="links">${p.country ? `<span>${esc(p.country)}</span>` : ""}${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT</a>` : ""}${steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam</a>` : ""}</div></div>
+  </div>
+  <div class="cards c2">${faceitBlock}${premierBlock}</div>
+  <div class="cards c3">${steamBlock}</div>`;
+
+/* BRIEFING: concrete points from my own matches */
+const briefing = `
+  <h1>Briefing</h1>
+  <p class="lead">What your last ${s.matches} FACEIT matches say, with the numbers behind it. A point only shows up when it is based on ${D.min_games}+ games.</p>
+  <div class="cards c2">${(D.insights || []).length ? D.insights.map(t => `
+    <div class="card tip">${icon(t.icon || "star")}<h3>${t.title}</h3><p>${t.html}</p>
+      <div class="do"><b>Do this:</b> ${t.action}</div>
+      <div class="ev">Based on ${t.games} games · FACEIT</div></div>`).join("")
     : `<div class="card"><p class="empty">Play a few more games so the coach has enough to go on!</p></div>`}</div>`;
 
-const matchesPage = `${pageHead("Matches", "Is my aim getting better? Every match from oldest to newest. The dashed line is the average of the last 10.", srcTag("faceit", "FACEIT · " + fsum))}
-  <div class="card"><h4>K/D over time</h4><div class="chart tall"><canvas id="kdChart"></canvas></div></div>
-  <div class="card tbl"><h4>Scoreboard · last ${D.recent.length}</h4><table>
-    <thead><tr><th>Date</th><th>Map</th><th>Result</th><th>K</th><th>D</th><th>A</th><th>K/D</th><th>HS%</th><th>ADR</th></tr></thead><tbody>
+const matchesPage = `
+  <h1>Matches</h1>
+  <p class="lead">Is my aim getting better? Every FACEIT match from oldest to newest. The pink line is the average of the last 10.</p>
+  <div class="cards"><div class="card"><h4>K/D over time</h4><div class="chart"><canvas id="kdChart"></canvas></div></div></div>
+  <div class="cards"><div class="card" style="overflow-x:auto"><h4>Scoreboard · last ${D.recent.length}</h4><table>
+    <tr><th>Date</th><th>Map</th><th>Result</th><th>K</th><th>D</th><th>A</th><th>K/D</th><th>HS%</th><th>ADR</th></tr>
     ${D.recent.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.map)}</td><td><span class="res ${r.won ? "w" : "l"}">${r.won ? "WIN" : "LOSS"}</span></td>
-      <td>${f0(r.kills)}</td><td>${f0(r.deaths)}</td><td>${f0(r.assists)}</td><td style="color:${r.kd >= 1 ? "var(--win)" : "var(--loss)"}">${f2(r.kd)}</td><td>${f0(r.hs)}%</td><td>${f0(r.adr)}</td></tr>`).join("")}
-  </tbody></table></div>`;
+      <td>${f0(r.kills)}</td><td>${f0(r.deaths)}</td><td>${f0(r.assists)}</td><td style="color:${r.kd >= 1 ? "var(--good)" : "var(--bad)"}">${f2(r.kd)}</td><td>${f0(r.hs)}%</td><td>${f0(r.adr)}</td></tr>`).join("")}
+  </table></div></div>`;
 
-const mapsPage = `${pageHead("Maps", "Which maps am I best on? The bar shows how many of my games I win there.", srcTag("faceit", "FACEIT · " + fsum))}
-  <div class="cards c4">${D.maps.map(m => `
-    <div class="card">
-      ${m.tag ? `<span class="tag ${m.tag}">${m.tag === "best" ? "BEST MAP" : "HARDEST MAP"}</span>` : `<span class="tag" style="padding-left:0">${m.games} games</span>`}
+const mapsPage = `
+  <h1>Maps</h1>
+  <p class="lead">Which maps am I best on? The bar shows how many of my FACEIT games I win there.</p>
+  <div class="cards c4">${D.maps.map((m, i) => `
+    <div class="card" style="animation-delay:${i * 70}ms"><div class="bg-art">${scene(40 + i, { light: .5, lx: 60 })}</div>
+      ${icon("map")}
+      ${m.tag ? `<span class="tag ${m.tag}">${m.tag === "best" ? "BEST MAP" : "HARDEST MAP"}</span>` : ""}
       <h3>${esc(m.map)}</h3>
       <div class="minis"><div><b>${f2(m.kd)}</b>K/D</div><div><b>${f0(m.hs)}%</b>HS</div><div><b>${f0(m.adr)}</b>ADR</div></div>
       ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
     </div>`).join("")}</div>
   <div class="cards c2">
-    <div class="card"><h4>Does good aim mean I win?</h4><p>Every dot is a match. Green = won, red = lost.</p><div class="chart"><canvas id="scatter"></canvas></div></div>
+    <div class="card"><h4>Does good aim mean I win?</h4><p>Every dot is a match. Pink = won, grey = lost.</p><div class="chart"><canvas id="scatter"></canvas></div></div>
     <div class="card"><h4>Headshot % per map</h4><p>My average is ${f0(s.hs)}%.</p><div class="chart"><canvas id="hsMap"></canvas></div></div>
   </div>`;
 
-const squadPage = `${pageHead("Squad", "Which teammates help me win? People who were on my team at least 2 times.", srcTag("faceit", "FACEIT · " + fsum))}
-  <div class="card vs">
-    <div><div class="lab">With a friend</div><div class="big hi">${pct(D.friends.with)}</div><div class="lab">${D.friends.with_games} games</div></div>
+const squadPage = `
+  <h1>Squad</h1>
+  <p class="lead">Which teammates help me win? People who were on my FACEIT team at least 2 times.</p>
+  <div class="cards"><div class="card vs">
+    <div><div class="lab">With a friend</div><div class="big" style="color:var(--pink)">${pct(D.friends.with)}</div><div class="lab">${D.friends.with_games} games</div></div>
     <div class="x">VS</div>
     <div><div class="lab">Only strangers</div><div class="big">${pct(D.friends.without)}</div><div class="lab">${D.friends.without_games} games</div></div>
-  </div>
+  </div></div>
   <div class="cards c3">${D.squad.length ? D.squad.map((m, i) => `
-    <div class="card"><div class="rank">#${i + 1}</div>
-      <div class="sq-av">${esc(m.name.slice(0, 1).toUpperCase())}</div>
+    <div class="card" style="animation-delay:${i * 70}ms"><div class="rank">#${i + 1}</div>
+      <div class="av">${esc(m.name.slice(0, 1).toUpperCase())}</div>
       <h3>${esc(m.name)}</h3><p>${m.games} games together · my K/D ${f2(m.kd)}</p>
       ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
     </div>`).join("") : `<div class="card"><p class="empty">No repeat teammates in these matches yet.</p></div>`}</div>`;
 
 const wins = D.recent.filter(r => r.won).slice(0, 5);
-const ringC = 2 * Math.PI * 62;
-const progressPage = `${pageHead("Progress", "Track your stats, see your growth, and keep the momentum.", srcTag("faceit", "FACEIT · " + fsum))}
+const ringC = 2 * Math.PI * 70;
+const progressPage = `
+  <h1>Progress</h1>
+  <p class="lead">Track your FACEIT stats, see your growth, and keep the momentum.</p>
   <div class="cards c3">
-    <div class="card center top-faceit"><h4>Level ${p.level ?? "?"} progress ${srcTag("faceit", "FACEIT")}</h4>
-      <div class="ring"><svg viewBox="0 0 150 150" width="150" height="150">
-        <circle cx="75" cy="75" r="62" fill="none" stroke="${C.s3}" stroke-width="12"/>
-        <circle class="fg" cx="75" cy="75" r="62" fill="none" stroke="${C.faceit}" stroke-width="12" stroke-linecap="round"
+    <div class="card center faceit"><h4 style="text-align:left">FACEIT level ${p.level ?? "?"}</h4>
+      <div class="ring"><svg viewBox="0 0 170 170" width="170" height="170">
+        <circle cx="85" cy="85" r="70" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="14"/>
+        <circle class="fg" cx="85" cy="85" r="70" fill="none" stroke="#FF5500" stroke-width="14" stroke-linecap="round"
           stroke-dasharray="${ringC}" stroke-dashoffset="${ringC}" data-off="${ringC * (1 - (p.progress || 0))}"/></svg>
         <div class="rv">${Math.round((p.progress || 0) * 100)}%</div></div>
-      <p>${p.to_next != null ? `<b>${p.to_next} Elo</b> to level ${p.level + 1}` : "Max level reached!"}</p></div>
-    <div class="card center"><h4>Current streak</h4>
+      <p>${p.to_next != null ? `<b style="color:var(--faceit)">${p.to_next} Elo</b> to level ${p.level + 1}` : "Max level reached!"}</p></div>
+    <div class="card center"><h4 style="text-align:left">Current streak</h4>
       <div class="streak">
-        <svg class="flame" viewBox="0 0 60 70" aria-hidden="true"><path d="M30 2c4 14 20 20 20 40a20 20 0 0 1-40 0c0-10 6-16 10-22 0 8 4 12 8 12 0-12-2-20 2-30z" fill="${s.streak_win ? C.violet : C.s3}"/>
-          <path d="M30 40c2 6 9 8 9 16a9 9 0 0 1-18 0c0-6 5-8 9-16z" fill="${s.streak_win ? C.magenta : C.muted}" opacity="${s.streak_win ? .9 : .35}"/></svg>
+        <svg class="flame" viewBox="0 0 60 70"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#A35CFF"/><stop offset="1" stop-color="#FF4FA3"/></linearGradient></defs>
+          <path d="M30 2c4 14 20 20 20 40a20 20 0 0 1-40 0c0-10 6-16 10-22 0 8 4 12 8 12 0-12-2-20 2-30z" fill="${s.streak_win ? "url(#fl)" : "#5a4d5a"}"/>
+          <path d="M30 40c2 6 9 8 9 16a9 9 0 0 1-18 0c0-6 5-8 9-16z" fill="#ffd1e8" opacity="${s.streak_win ? .9 : .25}"/></svg>
         <div class="sv">${s.streak} ${s.streak_win ? (s.streak > 1 ? "wins" : "win") : (s.streak > 1 ? "losses" : "loss")}</div>
       </div>
       <div class="hr">${s.streak_win ? "Keep it up!" : "Take a short break, then go again."}</div></div>
     <div class="card"><h4>Recent wins</h4><ul class="checks">${wins.length ? wins.map(w => `<li>${check}Won on ${esc(w.map)} · ${f0(w.kills)} kills<small>${esc(w.date)}</small></li>`).join("") : "<li>No wins in the last 20 games yet.</li>"}</ul></div>
   </div>
   <div class="cards c2">
-    <div class="card"><h4>When do I win?</h4><p>Dutch time. Brighter violet = I win more. The small number is how many games.</p><div class="heat" id="heat"></div></div>
+    <div class="card"><h4>When do I win?</h4><p>Dutch time. Brighter pink = I win more. The small number is how many games.</p><div class="heat" id="heat"></div></div>
     <div class="card"><h4>K/D by hour</h4><p>Do I play worse late at night?</p><div class="chart"><canvas id="hourChart"></canvas></div></div>
   </div>`;
 
-const highlightsPage = `${pageHead("Highlights", "My own moments from the game.")}
-  <div class="cards c2">${D.shots.length ? D.shots.map(x => `<div class="card shot"><img src="${x.src}" alt=""><p>${esc(x.caption)}</p></div>`).join("")
-    : `<div class="card"><p class="empty">No screenshots yet. Send them to Claude and they'll appear here!</p></div>`}</div>`;
-
-/* ---------- Leetify page: values exactly as Leetify returns them ---------- */
-function leetifyPage() {
-  const head = pageHead("Leetify", "Premier and matchmaking data, shown exactly as Leetify returns it. Separate from FACEIT.", srcTag("leetify", "Data provided by Leetify"));
-  if (!L) return `${head}<div class="card top-leetify"><p class="empty">Leetify is turned off. Set <b>LEETIFY_ENABLED = "true"</b> in the app's Secrets to show it.</p></div>`;
-  const c = L.check || {}, pr = L.profile;
-  const checkCard = `<details class="card"><summary>Connection details</summary><ul class="chk">
+/* PREMIER: from Leetify, shown exactly as returned, with the Leetify badge */
+function premierPage() {
+  const intro = `<h1>Premier</h1><p class="lead">My CS2 Premier rating and matches. Separate from FACEIT. Premier data comes from Leetify, exactly as Leetify returns it.</p>`;
+  if (!L) return `${intro}<div class="cards c2"><div class="card premier"><p>${esc(premierOff)}</p><p class="note">There is no official Premier API, so this page needs Leetify. Set LEETIFY_ENABLED = "true" in Secrets.</p></div></div>`;
+  const c = L.check || {};
+  const details = `<details class="card"><summary>Connection details</summary><ul class="chk">
       <li>Status <b>${esc(L.message || L.status)}</b></li>
-      <li>Steam ID found <b>${L.steam_id ? `${esc(L.steam_id)} <span class="na">(${esc(L.steam_id_from)})</span>` : `<span class="no">No</span>`}</b></li>
-      <li>API key set ${yn(c.key_set)}</li>
-      <li>API key accepted ${yn(c.key_valid)}</li>
-      <li>Profile found ${yn(c.profile_found)}</li>
-      <li>Premier rank returned ${yn(c.premier_found)}</li>
-      <li>Competitive map ranks returned <b>${c.competitive_ranks ?? 0}</b></li>
+      <li>Steam ID <b>${L.steam_id ? `${esc(L.steam_id)} <span class="na">(${esc(L.steam_id_from)})</span>` : `<span class="no">No</span>`}</b></li>
+      <li>API key set ${yn(c.key_set)}</li><li>API key accepted ${yn(c.key_valid)}</li>
+      <li>Profile found ${yn(c.profile_found)}</li><li>Premier rating returned ${yn(c.premier_found)}</li>
       <li>Matches returned <b>${c.matches ?? 0}</b></li>
-      <li>Profile fields <code>${esc((c.profile_fields || []).join(", ") || "none")}</code></li>
-      <li>Rank fields <code>${esc((c.rank_fields || []).join(", ") || "none")}</code></li>
       <li>Match fields <code>${esc((c.match_fields || []).join(", ") || "none")}</code></li>
     </ul>${L.matches_message ? `<p class="na" style="margin-top:10px">${esc(L.matches_message)}</p>` : ""}</details>`;
-  if (!pr) return `${head}<div class="cards c2"><div class="card top-leetify"><p>${esc(L.message)}</p><div style="margin-top:12px">${ltBadge(true)}</div><p style="margin-top:12px">${ltView()}</p></div>${checkCard}</div>`;
-  const r = pr.ranks || {};
-  const otherRanks = Object.keys(r);  // includes Premier, as before
-  const ranksCard = `<div class="card top-leetify"><h4>Ranks</h4><div class="kv">${otherRanks.map(k => `<span>${title(k)}</span><b>${raw(r[k])}</b>`).join("") || `<span class="na">None returned</span><b></b>`}</div></div>`;
-  const compCard = `<div class="card top-leetify"><h4>Competitive ranks per map</h4><div class="kv">${pr.competitive.length ? pr.competitive.map(m =>
-      m && m.map_name !== undefined ? `<span>${esc(m.map_name)}</span><b>${raw(m.rank)}</b>` : `<span>Rank</span><b>${raw(m)}</b>`).join("")
-      : `<span class="na">Not available from Leetify</span><b></b>`}</div></div>`;
-  const ratingCard = `<div class="card top-leetify"><h4>Rating</h4><div class="kv">${Object.keys(pr.rating).map(k => `<span>${title(k)}</span><b>${raw(pr.rating[k])}</b>`).join("") || `<span class="na">Not available from Leetify</span><b></b>`}</div></div>`;
-  const overview = `<div class="card top-leetify"><h4>Profile</h4><div class="kv">
-      <span>Name</span><b>${raw(pr.name)}</b><span>Total matches</span><b>${raw(pr.total_matches)}</b>
-      <span>Winrate</span><b>${raw(pr.winrate)}</b><span>First match date</span><b>${raw(pr.first_match_date)}</b>
-      <span>Privacy mode</span><b>${raw(pr.privacy_mode)}</b></div></div>`;
+  if (!LT_OK) return `${intro}<div class="cards c2"><div class="card premier"><p>${esc(L.message)}</p><div style="margin-top:16px">${ltBadge(true)}</div></div>${details}</div>`;
   const rows = (L.matches || []).map(m => `<tr><td>${raw(m.finished_at)}</td><td>${raw(m.map_name)}</td><td>${raw(m.data_source)}</td>
-      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td><td>${raw(m.leetify_rating)}</td></tr>`).join("");
-  const matchCard = `<div class="card tbl top-leetify"><h4>Recent matches</h4>
-      ${rows ? `<table><thead><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>K/D ratio</th><th>Leetify rating</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}</div>`;
-  return `${head}
-    <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">${ltBadge(true)}
-      <p>Leetify data is fetched fresh on every visit and is not stored by this app. ${ltView()}</p></div>
-    <div class="cards c3">${overview}${ratingCard}${ranksCard}</div>
-    <div class="cards c2">${compCard}${checkCard}</div>
-    ${matchCard}`;
-}
-
-/* ---------- Premier page: Premier is kept apart from FACEIT and from Competitive ---------- */
-function premierPage() {
-  const head = pageHead("Premier", "CS2 Premier, kept separate from FACEIT and from Competitive map ranks.", srcTag("premier", "Premier · via Leetify"));
-  if (!LT_OK) return `${head}<div class="card top-premier"><p class="empty">${L ? esc(L.message || "Leetify not available") : "Premier data comes through Leetify, which is turned off."} There is no official Premier API, so this page needs Leetify.</p></div>`;
-  const prem = (L.profile.ranks || {}).premier;
-  const counts = {};
-  (L.matches || []).forEach(m => { const k = m.data_source ?? "not given"; counts[k] = (counts[k] || 0) + 1; });
-  const srcRows = Object.keys(counts).map(k => `<span>${esc(k)}</span><b>${counts[k]}</b>`).join("");
-  return `${head}
+      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td></tr>`).join("");
+  return `${intro}
     <div class="cards c2">
-      <div class="card top-premier"><h4>Premier rating ${srcTag("leetify", "Leetify")}</h4>
-        ${prem != null ? `<div class="big-v">${raw(prem)}</div><p class="caption">As returned by Leetify.</p>` : `<p class="empty" style="margin-top:10px">Leetify did not return a Premier rating for this profile.</p>`}
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div>
-      <div class="card top-premier"><h4>Premier matches</h4>
-        <p>Leetify labels each match with a data source. Premier match stats are only shown once Leetify marks matches as Premier. Until then, here is what it sent:</p>
-        <div class="kv">${srcRows || `<span class="na">No matches returned</span><b></b>`}</div></div>
-    </div>`;
+      <div class="card premier">${srcline("CS2 Premier rating", "var(--premier)")}
+        ${PREM != null ? `<div class="bigv" style="color:var(--premier);font-size:84px">${raw(PREM)}</div>` : `<p class="empty">Leetify did not return a Premier rating.</p>`}
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;flex-wrap:wrap">${ltBadge(true)}${ltView()}</div></div>
+      <div class="card premier">${srcline("Recent matches from Leetify", "var(--premier)")}
+        <p>Each match shows the data source exactly as Leetify labels it. Premier match stats will be split out once Leetify marks matches as Premier.</p>
+        <p class="note">Leetify data is fetched fresh on every visit and is not stored by this app.</p></div>
+    </div>
+    <div class="cards"><div class="card" style="overflow-x:auto"><h4>Matches</h4>
+      ${rows ? `<table><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>K/D ratio</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}
+      <div style="margin-top:16px">${ltBadge(false)}</div></div></div>
+    <div class="cards">${details}</div>`;
 }
 
-/* ---------- Steam page: only what Steam actually returns ---------- */
+/* STEAM: only what Steam returns */
 function steamPage() {
-  const head = pageHead("Steam", "Steam profile and CS2 playtime, straight from the Steam Web API.", srcTag("steam", "Steam"));
-  const needs = `<div class="card"><h4>What is needed</h4><ul class="checks">
-      <li>A Steam Web API key saved as STEAM_API_KEY in the app's Secrets</li>
-      <li>"Game details" set to Public in Steam privacy settings</li>
-      <li>Optional: STEAM_ID in Secrets (otherwise the Steam ID from FACEIT is used)</li></ul></div>`;
-  if (!ST) return `${head}<div class="cards c2">
-    <div class="card top-steam"><h4>Status</h4>
-      <div class="kv"><span>Steam ID (from FACEIT)</span><b>${p.steam_id64 ? esc(p.steam_id64) : `<span class="na">Not available</span>`}</b>
-        <span>Steam Web API</span><b><span class="na">Not connected</span></b><span>CS2 playtime</span><b><span class="na">Not available</span></b></div>
-      ${steamUrl ? `<p style="margin-top:12px"><a class="btn ghost" href="${esc(steamUrl)}" target="_blank" rel="noopener">Open Steam profile ↗</a></p>` : ""}</div>${needs}</div>`;
+  const intro = `<h1>Steam</h1><p class="lead">My Steam profile and CS2 playtime, straight from the Steam Web API.</p>`;
+  if (!ST) return `${intro}<div class="cards c2"><div class="card steam">${srcline("Steam", "var(--steam)")}<p>Not connected.</p>
+      <ul class="checks"><li>${check}Add STEAM_API_KEY in the app's Secrets</li><li>${check}Set "Game details" to Public in Steam</li><li>${check}Optional: STEAM_ID in Secrets</li></ul></div></div>`;
   const details = `<details class="card"><summary>Connection details</summary><ul class="chk">
       <li>Status <b>${esc(ST.message || ST.status)}</b></li>
       <li>Steam ID <b>${ST.steam_id ? `${esc(ST.steam_id)} <span class="na">(${esc(ST.steam_id_from)})</span>` : `<span class="no">No</span>`}</b></li>
-      <li>Profile found ${yn(ST_OK)}</li>
-      <li>Game details public ${yn(ST.games_visible)}</li>
-      <li>CS2 in library ${yn(ST.cs2 ? ST.cs2.found : null)}</li>
+      <li>Profile found ${yn(ST_OK)}</li><li>Game details public ${yn(ST.games_visible)}</li><li>CS2 in library ${yn(ST.cs2 ? ST.cs2.found : null)}</li>
     </ul>${ST.games_message ? `<p class="na" style="margin-top:10px">${esc(ST.games_message)}</p>` : ""}</details>`;
-  if (!ST_OK) return `${head}<div class="cards c2"><div class="card top-steam"><h4>Status</h4><p>${esc(ST.message)}</p></div>${details}</div>${needs}`;
+  if (!ST_OK) return `${intro}<div class="cards c2"><div class="card steam"><p>${esc(ST.message)}</p></div>${details}</div>`;
   const pr = ST.profile, c = ST.cs2 || {};
   const since = isNum(pr.created) ? new Date(pr.created * 1000).toLocaleDateString("en-GB", { year: "numeric", month: "short" }) : null;
-  const profileCard = `<div class="card top-steam"><h4>Profile ${srcTag("steam", "Steam")}</h4>
-      <div style="display:flex;gap:14px;align-items:center;margin-top:8px">
-        ${pr.avatar ? `<img src="${esc(pr.avatar)}" alt="" style="width:56px;height:56px;border-radius:12px">` : ""}
-        <div><div style="font:600 18px var(--f-head);color:var(--text)">${esc(pr.name || "–")}</div>
-          <a class="caption" href="${esc(pr.url)}" target="_blank" rel="noopener">Open Steam profile ↗</a></div></div>
-      <div class="kv"><span>Profile</span><b>${pr.public ? "Public" : "Private"}</b>
-        ${pr.country ? `<span>Country</span><b>${esc(pr.country)}</b>` : ""}
-        ${since ? `<span>Steam account since</span><b>${esc(since)}</b>` : ""}</div></div>`;
-  const playCard = `<div class="card top-steam"><h4>CS2 playtime ${srcTag("steam", "Steam")}</h4>
-      ${c.found ? `<div class="big-v">${hrs(c.hours_total)}</div><p class="caption">Total CS2 playtime</p>
-        <div class="kv"><span>Last 2 weeks</span><b>${hrs(c.hours_2weeks)}</b></div>
-        <p class="caption" style="margin-top:10px">Steam reports minutes (${esc(c.minutes_total)} total, ${esc(c.minutes_2weeks)} last 2 weeks); shown here in hours.</p>`
-        : `<p class="empty" style="margin-top:10px">${esc(ST.games_message || "Steam sent no CS2 playtime.")}</p>`}</div>`;
-  return `${head}<div class="cards c2">${profileCard}${playCard}</div>${details}`;
+  return `${intro}
+    <div class="cards c2">
+      <div class="card steam">${srcline("Steam profile", "var(--steam)")}
+        <div style="display:flex;gap:16px;align-items:center">${pr.avatar ? `<img src="${esc(pr.avatar)}" alt="" style="width:64px;height:64px;border-radius:8px">` : ""}
+          <div><h3 style="margin:0">${esc(pr.name || "–")}</h3><a class="lt-link" style="color:var(--steam)" href="${esc(pr.url)}" target="_blank" rel="noopener">Open Steam profile</a></div></div>
+        <div class="kv"><span>Profile</span><b>${pr.public ? "Public" : "Private"}</b>${pr.country ? `<span>Country</span><b>${esc(pr.country)}</b>` : ""}${since ? `<span>On Steam since</span><b>${esc(since)}</b>` : ""}</div></div>
+      <div class="card steam">${srcline("CS2 playtime", "var(--steam)")}
+        ${c.found ? `<div class="bigv" style="color:var(--steam)">${hrs(c.hours_total)}</div><div class="kv"><span>Last 2 weeks</span><b>${hrs(c.hours_2weeks)}</b></div>
+          <p class="note">Steam reports minutes (${esc(c.minutes_total)} total, ${esc(c.minutes_2weeks)} last 2 weeks); shown here in hours.</p>`
+          : `<p class="empty">${esc(ST.games_message || "Steam sent no CS2 playtime.")}</p>`}</div>
+    </div>
+    <div class="cards">${details}</div>`;
 }
 
-/* =================================================================
-   RENDER
-   ================================================================= */
-const ltChip = !L ? `<span class="chip off">${dot("muted")}Leetify off</span>`
-  : LT_OK ? `<span class="chip">${dot("leetify")}Leetify live</span>` : `<span class="chip off">${dot("loss")}Leetify unavailable</span>`;
-const stChip = !ST ? `<span class="chip off">${dot("muted")}Steam not connected</span>`
-  : ST_OK ? `<span class="chip">${dot("steam")}Steam live</span>` : `<span class="chip off">${dot("loss")}Steam unavailable</span>`;
-const pagesHtml = { profile: profilePage(), briefing, matches: matchesPage, maps: mapsPage, progress: progressPage, squad: squadPage,
-  leetify: leetifyPage(), premier: premierPage(), steam: steamPage(), highlights: highlightsPage };
+const highlightsPage = `
+  <h1>Highlights</h1>
+  <p class="lead">My own moments from the game.</p>
+  <div class="cards c2">${D.shots.length ? D.shots.map(x => `<div class="card shot"><img src="${x.src}" alt=""><p>${esc(x.caption)}</p></div>`).join("")
+    : `<div class="card"><p class="empty">No screenshots yet. Send them to Claude and they'll appear here!</p></div>`}</div>`;
 
-$("#app").innerHTML = `<div class="app">
-  <aside class="side" aria-label="Main navigation">
-    <div class="brand"><span class="mk">${icon("cross", "").replace('stroke="currentColor"', 'stroke="#fff"').replace("<svg ", '<svg width="16" height="16" ')}</span><span>CS Stats <em>Coach</em></span></div>
-    ${NAV.map(([g, items]) => `<div class="grp">${g}</div>` + items.map(([id, t, src]) =>
-      `<button class="nav ${id === "profile" ? "on" : ""}" data-go="${id}"><span class="dot ${src === "plain" ? "plain" : ""}" ${src === "plain" ? "" : `style="background:var(--${src})"`}></span>${t}</button>`).join("")).join("")}
-    <div class="foot">Made by ${esc(p.nickname)}</div>
-  </aside>
-  <div class="main">
-    <header class="topbar"><div class="crumb"><b id="pageTitle">Profile</b>updated ${esc(D.loaded)}</div>
-      <div class="chips"><span class="chip">${dot("faceit")}FACEIT live</span>${ltChip}${stChip}</div></header>
-    ${Object.entries(pagesHtml).map(([id, html]) => `<section class="page ${id === "profile" ? "on" : ""}" id="${id}" aria-label="${TITLES[id]}">${html}</section>`).join("")}
-    <footer>CS Stats Coach · FACEIT data from the FACEIT Data API${L ? " · Leetify data: Data Provided by Leetify" : ""}${ST ? " · Steam data from the Steam Web API" : ""} · loaded ${esc(D.loaded)}</footer>
-  </div></div>`;
+$("#app").innerHTML = `
+  <div class="top">
+    <div class="logo">CS<span>/</span>SC</div>
+    <div class="links">${pages.map(([id, t]) => `<button data-go="${id}" class="${id === "home" ? "on" : ""}">${t}</button>`).join("")}</div>
+    ${p.url ? `<a class="btn-out" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.nickname)} ↗</a>` : `<span class="btn-out">${esc(p.nickname)}</span>`}
+  </div>
+  ${pageWrap("home", 3, { light: .85, lx: 70 }, home)}
+  ${pageWrap("profile", 13, { light: .6, lx: 80, cool: true }, profilePage)}
+  ${pageWrap("briefing", 11, { light: .55, lx: 30, cool: true }, briefing)}
+  ${pageWrap("matches", 7, { light: .6, lx: 80 }, matchesPage)}
+  ${pageWrap("maps", 19, { light: .5, lx: 55, cool: true }, mapsPage)}
+  ${pageWrap("squad", 23, { light: .65, lx: 75 }, squadPage)}
+  ${pageWrap("progress", 5, { light: .5, lx: 85, cool: true }, progressPage)}
+  ${pageWrap("premier", 37, { light: .5, lx: 40, cool: true }, premierPage())}
+  ${pageWrap("steam", 41, { light: .5, lx: 60, cool: true }, steamPage())}
+  ${pageWrap("highlights", 29, { light: .7, lx: 65 }, highlightsPage)}
+  <footer>CS Stats Coach · FACEIT data from the FACEIT Data API${L ? " · Premier data: Data Provided by Leetify" : ""}${ST ? " · Steam data from the Steam Web API" : ""} · loaded ${esc(D.loaded)} · made by ${esc(p.nickname)}</footer>`;
 
 /* heatmap */
 (function () {
@@ -601,145 +555,79 @@ $("#app").innerHTML = `<div class="app">
   D.heat.rows.forEach(r => {
     h += `<div class="d">${r.day}</div>`;
     r.cells.forEach(c => {
-      if (!c.games) { h += `<div class="cell" style="background:${C.s2};color:${C.muted}">·</div>`; return; }
+      if (!c.games) { h += `<div class="cell" style="background:rgba(255,255,255,.03);color:#6A5D6A">·</div>`; return; }
       const a = 0.12 + 0.88 * c.win_rate;
-      h += `<div class="cell" style="background:rgba(139,92,246,${a});color:${C.text}">${Math.round(c.win_rate * 100)}%<small>${c.games} g</small></div>`;
+      h += `<div class="cell" style="background:rgba(255,79,163,${a});color:#F7EEF4">${Math.round(c.win_rate * 100)}%<small>${c.games} g</small></div>`;
     });
   });
   $("#heat").innerHTML = h;
 })();
 
-/* ---------- animations (skipped when reduced motion is on) ---------- */
-const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* ---------- animations ---------- */
 function animate(root) {
   root.querySelectorAll("[data-count]").forEach(el => {
     const target = parseFloat(el.dataset.count), dec = +el.dataset.dec, unit = el.dataset.unit || "";
-    if (isNaN(target)) return;
-    if (still) { el.textContent = target.toFixed(dec) + unit; return; }
+    if (isNaN(target)) { el.textContent = "–"; return; }
     const t0 = performance.now();
     (function tick(now) {
-      const k = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - k, 3);
+      const k = Math.min(1, (now - t0) / 1100), e = 1 - Math.pow(1 - k, 3);
       el.textContent = (target * e).toFixed(dec) + unit;
       if (k < 1) requestAnimationFrame(tick);
     })(t0);
   });
   setTimeout(() => {
-    root.querySelectorAll(".prog .bar i, .meter i").forEach(b => b.style.width = (b.dataset.w * 100) + "%");
+    root.querySelectorAll(".prog .bar i").forEach(b => b.style.width = (b.dataset.w * 100) + "%");
     root.querySelectorAll("circle.fg").forEach(c => c.style.strokeDashoffset = c.dataset.off);
-  }, 60);
+  }, 120);
 }
 
-/* ---------- charts: one shared theme ---------- */
-const grid = { color: "rgba(255,255,255,0.05)", drawTicks: false };
-const axis = extra => Object.assign({ grid, border: { display: false }, ticks: { padding: 8 } }, extra || {});
-function theme() {
-  Chart.defaults.color = C.muted;
-  Chart.defaults.font.family = "Inter, 'Segoe UI', system-ui, sans-serif";
-  Chart.defaults.font.size = 11;
-  Chart.defaults.plugins.legend.labels.boxWidth = 10;
-  Chart.defaults.plugins.legend.labels.boxHeight = 10;
-  Chart.defaults.plugins.tooltip.backgroundColor = C.s3;
-  Chart.defaults.plugins.tooltip.titleColor = C.text;
-  Chart.defaults.plugins.tooltip.bodyColor = C.text2;
-  Chart.defaults.plugins.tooltip.padding = 10;
-  Chart.defaults.plugins.tooltip.cornerRadius = 8;
-  Chart.defaults.animation.duration = still ? 0 : 500;
-}
-const rolling = (arr, n = 10, min = 1) => arr.map((_, i) => {
-  const w = arr.slice(Math.max(0, i - n + 1), i + 1).filter(isNum);
-  return w.length >= min ? w.reduce((a, b) => a + b, 0) / w.length : null;
-});
-
-let trendChart = null;
-const METRICS = {
-  kd: { label: "K/D", get: x => x.kd, fmt: f2, ref: 1, cap: "K/D per match (dots: green won, red lost) and the average of the last 10 matches. The faint line is K/D 1.0." },
-  wr: { label: "Win rate", get: x => x.won ? 100 : 0, fmt: v => f0(v) + "%", onlyAvg: true, ref: 50, cap: "Win rate over the last 10 matches at each point, starting from match 5 (calculated from your FACEIT results). The faint line is 50%." },
-  adr: { label: "ADR", get: x => x.adr, fmt: f0, cap: "Average damage per round per match, and the average of the last 10 matches." },
-  hs: { label: "HS%", get: x => x.hs, fmt: v => f0(v) + "%", cap: "Headshot % per match, and the average of the last 10 matches." },
-};
-function drawTrend(key) {
-  const m = METRICS[key], T = D.trend || [];
-  const vals = T.map(x => { const v = m.get(x); return isNum(v) ? v : null; });
-  const avg = rolling(vals, 10, m.onlyAvg ? 5 : 1);
-  const ds = [];
-  if (!m.onlyAvg) ds.push({ label: m.label + " per match", data: vals, borderColor: C["violet-deep"], borderWidth: 1.5, tension: .25, spanGaps: true,
-    pointRadius: 2.5, pointHoverRadius: 5, pointBackgroundColor: T.map(x => x.won ? C.win : C.loss), pointBorderWidth: 0 });
-  ds.push({ label: "Average of last 10", data: avg, borderColor: C["violet-hi"], borderWidth: 2.2, borderDash: m.onlyAvg ? [] : [6, 4], pointRadius: 0, tension: .35,
-    fill: m.onlyAvg, backgroundColor: "rgba(139,92,246,.12)" });
-  if (m.ref != null) ds.push({ label: "ref", data: T.map(() => m.ref), borderColor: "rgba(255,255,255,.18)", borderWidth: 1, pointRadius: 0, borderDash: [2, 4] });
-  if (trendChart) trendChart.destroy();
-  trendChart = new Chart($("#trendChart"), { type: "line", data: { labels: T.map(x => x.n), datasets: ds },
-    options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
-      plugins: { legend: { display: false }, tooltip: { filter: i => i.dataset.label !== "ref",
-        callbacks: { title: i => `Match ${T[i[0].dataIndex].n} · ${T[i[0].dataIndex].map} · ${T[i[0].dataIndex].won ? "won" : "lost"}`,
-          label: c => `${c.dataset.label}: ${c.raw == null ? "–" : m.fmt(c.raw)}` } } },
-      scales: { x: axis({ grid: { display: false }, ticks: { maxTicksLimit: 8, padding: 6 }, title: { display: true, text: "Match (oldest → newest)" } }),
-        y: axis({ ticks: { maxTicksLimit: 5, padding: 8 } }) } } });
-  $("#trendCap").textContent = m.cap;
-}
-
+/* ---------- charts ---------- */
 const made = {};
 function charts(id) {
   if (!window.Chart || made[id]) return;
   made[id] = true;
-  theme();
-  if (id === "profile") {
-    drawTrend("kd");
-    document.querySelectorAll("#trendSeg button").forEach(b => b.addEventListener("click", () => {
-      document.querySelectorAll("#trendSeg button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
-      drawTrend(b.dataset.m);
-    }));
-    if ($("#radarChart")) {
-      const rt = L.profile.rating;
-      new Chart($("#radarChart"), { type: "radar", data: { labels: ["Aim", "Positioning", "Utility"],
-        datasets: [{ label: "Leetify", data: [rt.aim, rt.positioning, rt.utility], borderColor: C.leetify, borderWidth: 2,
-          backgroundColor: "rgba(248,73,130,.16)", pointBackgroundColor: C.leetify, pointRadius: 3 }] },
-        options: { maintainAspectRatio: false, plugins: { legend: { display: false } },
-          scales: { r: { suggestedMin: 0, suggestedMax: 100, angleLines: { color: C.line }, grid: { color: C.line },
-            ticks: { display: false, stepSize: 25 }, pointLabels: { color: C.text2, font: { size: 12 } } } } } });
-    }
-  }
+  Chart.defaults.color = "#A898A8"; Chart.defaults.font.family = "Barlow";
+  const grid = { color: "rgba(255,255,255,0.06)" };
   if (id === "matches") {
-    new Chart($("#kdChart"), { type: "line", data: { labels: D.kd.map(x => x.n), datasets: [
-      { label: "K/D per match", data: D.kd.map(x => x.kd), borderColor: C["violet-deep"], borderWidth: 1.5, tension: .25,
-        pointRadius: 3, pointBackgroundColor: D.kd.map(x => x.won ? C.win : C.loss), pointBorderWidth: 0 },
-      { label: "Average of last 10", data: D.kd.map(x => x.avg10), borderColor: C["violet-hi"], borderWidth: 2.5, borderDash: [6, 4], pointRadius: 0, tension: .4 },
-      { label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.2)", borderDash: [2, 4], borderWidth: 1, pointRadius: 0 },
+    const ctx = $("#kdChart").getContext("2d");
+    const g = ctx.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, "rgba(255,79,163,.35)"); g.addColorStop(1, "rgba(255,79,163,0)");
+    new Chart(ctx, { type: "line", data: { labels: D.kd.map(x => x.n), datasets: [
+      { label: "K/D per match", data: D.kd.map(x => x.kd), borderColor: "rgba(247,238,244,.35)", borderWidth: 1.5, tension: .25,
+        pointRadius: 3, pointBackgroundColor: D.kd.map(x => x.won ? "#FF4FA3" : "#6A5D6A") },
+      { label: "Average of last 10", data: D.kd.map(x => x.avg10), borderColor: "#FF4FA3", borderWidth: 4, pointRadius: 0, fill: true, backgroundColor: g, tension: .4 },
+      { label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.3)", borderDash: [5, 5], borderWidth: 1, pointRadius: 0 },
     ]}, options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
       plugins: { tooltip: { callbacks: { title: i => `Match ${D.kd[i[0].dataIndex].n} · ${D.kd[i[0].dataIndex].map}` } } },
-      scales: { x: axis({ grid: { display: false }, ticks: { maxTicksLimit: 10 }, title: { display: true, text: "Match (oldest → newest)" } }), y: axis() } } });
+      scales: { x: { grid, title: { display: true, text: "Match (oldest → newest)" } }, y: { grid } } } });
   }
   if (id === "maps") {
     new Chart($("#scatter"), { type: "scatter", data: { datasets: [
-      { label: "Won", data: D.points.filter(x => x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: C.win, pointRadius: 4 },
-      { label: "Lost", data: D.points.filter(x => !x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: C.loss, pointRadius: 4 },
-    ]}, options: { maintainAspectRatio: false, scales: { x: axis({ title: { display: true, text: "Headshot %" } }), y: axis({ title: { display: true, text: "K/D" } }) } } });
+      { label: "Won", data: D.points.filter(x => x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "#FF4FA3", pointRadius: 5 },
+      { label: "Lost", data: D.points.filter(x => !x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "rgba(168,152,168,.6)", pointRadius: 5 },
+    ]}, options: { maintainAspectRatio: false, scales: { x: { grid, title: { display: true, text: "Headshot %" } }, y: { grid, title: { display: true, text: "K/D" } } } } });
     new Chart($("#hsMap"), { type: "bar", data: { labels: D.maps.map(m => m.map), datasets: [{ data: D.maps.map(m => m.hs),
-      backgroundColor: D.maps.map(m => m.hs >= s.hs ? C.violet : C["violet-deep"] + "88"), borderRadius: 4, barThickness: 14 }] },
-      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: axis(), y: axis({ grid: { display: false } }) } } });
+      backgroundColor: D.maps.map(m => m.hs >= s.hs ? "#FF4FA3" : "rgba(163,92,255,.45)"), borderRadius: 2 }] },
+      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid }, y: { grid: { display: false } } } } });
   }
   if (id === "progress") {
     new Chart($("#hourChart"), { type: "bar", data: { labels: D.hours.map(x => x.hour + ":00"), datasets: [{ data: D.hours.map(x => x.kd),
-      backgroundColor: D.hours.map(x => x.kd >= 1 ? C.violet : C["violet-deep"] + "88"), borderRadius: 4 }] },
+      backgroundColor: D.hours.map(x => x.kd >= 1 ? "#FF4FA3" : "rgba(163,92,255,.45)"), borderRadius: 2 }] },
       options: { maintainAspectRatio: false, plugins: { legend: { display: false },
         tooltip: { callbacks: { label: c => `K/D ${c.raw.toFixed(2)} · ${D.hours[c.dataIndex].games} games` } } },
-        scales: { y: axis(), x: axis({ grid: { display: false } }) } } });
+        scales: { y: { grid }, x: { grid: { display: false } } } } });
   }
 }
 
 /* ---------- navigation ---------- */
 function go(id) {
-  if (!document.getElementById(id)) return;
-  document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.go === id));
+  document.querySelectorAll(".links button").forEach(b => b.classList.toggle("on", b.dataset.go === id));
   document.querySelectorAll(".page").forEach(pg => pg.classList.toggle("on", pg.id === id));
-  $("#pageTitle").textContent = TITLES[id] || id;
   const pg = document.getElementById(id); charts(id); animate(pg);
+  window.scrollTo({ top: 0, behavior: "smooth" });
   if (window.Chart) pg.querySelectorAll("canvas").forEach(c => { const ch = Chart.getChart(c); if (ch) ch.resize(); });
-  window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
 }
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
-charts("profile");
-animate(document.getElementById("profile"));
+animate(document.getElementById("home"));
 </script>
 </body>
 </html>

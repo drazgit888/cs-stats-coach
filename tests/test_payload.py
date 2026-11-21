@@ -8,8 +8,8 @@ import pytest
 from helpers import ROOT, FAKE_LEETIFY_PROFILE, FakeLeetifySession, build_test_payload, render
 
 # Every top-level field dashboard.html reads (D.<name>)
-PAGE_FIELDS = {"player", "summary", "form", "tips", "kd", "maps", "tod", "hours", "heat", "squad",
-               "friends", "points", "recent", "shots", "min_games", "loaded", "trend"}
+PAGE_FIELDS = {"player", "summary", "kd", "insights", "maps", "tod", "hours", "heat", "squad",
+               "friends", "points", "recent", "shots", "min_games", "loaded"}
 
 
 @pytest.fixture(scope="module")
@@ -99,15 +99,58 @@ def test_no_caching_of_leetify():
     assert "cache" not in src.replace("no caching", "").replace("No caching", "").replace("caching or storing", "")
 
 
-def test_page_uses_design_tokens_and_no_old_theme():
+def test_page_uses_avatar_palette_and_orange_only_for_faceit():
     html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
-    for token in ("--bg: #0E0D12", "--violet: #8B5CF6", "--faceit: #FF5500", "--leetify: #F84982"):
+    for token in ("--bg: #0E0B11", "--pink: #FF4FA3", "--faceit: #FF5500", "--premier: #4FD1E8"):
         assert token in html
-    assert "Barlow" not in html and "function scene" not in html
-    assert html.lower().count("#ff7a00") == 0  # old orange is gone
+    assert "#ff7a00" not in html.lower() and "255,122,0" not in html  # old orange is gone
+    assert "--orange" not in html
+
+
+def test_no_leetify_metrics_shown():
+    # Leetify is only used for Premier: its own ratings are not displayed
+    html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
+    assert "profile.rating" not in html and "leetify_rating" not in html
+    assert "Data Provided by Leetify" in html  # badge stays wherever Premier data is shown
+
+
+def test_insights_are_concrete(payload):
+    assert payload["insights"], "test data should produce at least one insight"
+    for i in payload["insights"]:
+        assert set(i) >= {"icon", "title", "html", "action", "games"}
+        assert i["games"] >= 3 and any(ch.isdigit() for ch in i["html"])
 
 
 def test_profile_without_steam_says_not_connected(payload):
     assert "steam" not in payload  # no STEAM_API_KEY -> no Steam data at all
     html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
     assert "Not connected" in html
+
+
+def _matches(rows):
+    import pandas as pd
+    from helpers import load_app
+    app = load_app()
+    raw = [{"Match Id": f"m{i}", "Map": mp, "Result": "1" if won else "0", "Kills": str(k), "Deaths": str(d),
+            "Assists": "3", "K/D Ratio": f"{k / d:.2f}", "Headshots %": "40", "ADR": str(adr),
+            "Match Finished At": str(ts * 1000)} for i, (mp, won, k, d, adr, ts) in enumerate(rows)]
+    return app, app["tidy_matches"](raw), pd.DataFrame(columns=["match_id", "teammate", "won", "kd"])
+
+
+def test_insight_losses_from_dying_more():
+    rows = []
+    t = 1_760_000_000
+    for i in range(12):
+        won = i % 2 == 0
+        rows.append(("de_mirage", won, 18 if won else 17, 12 if won else 20, 80, t + i * 86_400))
+    app, m, mates = _matches(rows)
+    titles = [i["title"] for i in app["coach_insights"](m, mates)]
+    assert "Your losses come from dying more" in titles
+
+
+def test_insight_hardest_map_needs_three_games():
+    t = 1_760_000_000
+    rows = [("de_inferno", False, 10, 20, 50, t), ("de_inferno", False, 10, 20, 50, t + 86_400)] + \
+           [("de_mirage", True, 20, 10, 90, t + (i + 2) * 86_400) for i in range(6)]
+    app, m, mates = _matches(rows)
+    assert not any("Inferno" in i["title"] for i in app["coach_insights"](m, mates))  # only 2 Inferno games

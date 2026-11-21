@@ -239,6 +239,122 @@ def coach_tips(matches, mates):
     return tips
 
 
+def coach_insights(matches, mates):
+    """Concrete coaching points from my own FACEIT matches.
+
+    Every point uses only numbers FACEIT returns per match (result, kills,
+    deaths, K/D, HS%, ADR, map, time, teammates), needs MIN_GAMES+ games in
+    each group it compares, and says how many games it is based on.
+    Returns dicts: icon, title, html (with **bold**), action, games.
+    """
+    out = []
+    m = matches.dropna(subset=["played_at"]).sort_values("played_at").reset_index(drop=True)
+    if len(m) < MIN_GAMES:
+        return out
+    avg = {"kd": m["kd"].mean(), "adr": m["adr"].mean(), "hs": m["hs_pct"].mean(), "deaths": m["deaths"].mean(),
+           "kills": m["kills"].mean(), "wr": m["won"].mean()}
+
+    def add(icon, title, text, action, games):
+        out.append({"icon": icon, "title": title, "html": text, "action": action, "games": int(games)})
+
+    # 1. Hardest map, with what goes wrong there
+    per_map = m.groupby("map").agg(games=("won", "size"), wr=("won", "mean"), adr=("adr", "mean"),
+                                   deaths=("deaths", "mean"), kd=("kd", "mean")).reset_index()
+    per_map = per_map[per_map["games"] >= MIN_GAMES].sort_values(["wr", "games"])
+    if len(per_map) >= 2:
+        w = per_map.iloc[0]
+        if w["wr"] < avg["wr"] - 0.05:
+            parts = []
+            if w["adr"] < avg["adr"] - 5:
+                parts.append(f"your ADR there is **{w['adr']:.0f}** (usually **{avg['adr']:.0f}**)")
+            if w["deaths"] > avg["deaths"] + 1:
+                parts.append(f"you die **{w['deaths']:.1f}** times per game (usually **{avg['deaths']:.1f}**)")
+            why = (", and " + " and ".join(parts)) if parts else ""
+            add("map", f"{w['map']} is costing you games",
+                f"You win **{w['wr']:.0%}** on **{w['map']}** ({int(w['games'])} games) against **{avg['wr']:.0%}** overall{why}.",
+                f"Ban {w['map']} for now, or watch 2 of your own {w['map']} demos and note where you die first.", w["games"])
+        b = per_map.iloc[-1]
+        if b["wr"] > avg["wr"] + 0.05:
+            add("star", f"{b['map']} is your map",
+                f"You win **{b['wr']:.0%}** on **{b['map']}** ({int(b['games'])} games) with K/D **{b['kd']:.2f}**.",
+                f"Vote {b['map']} in the map veto whenever you can.", b["games"])
+
+    # 2. Why I lose: dying more or killing less?
+    wins, losses = m[m["won"]], m[~m["won"]]
+    if len(wins) >= MIN_GAMES and len(losses) >= MIN_GAMES:
+        dd = losses["deaths"].mean() - wins["deaths"].mean()
+        dk = wins["kills"].mean() - losses["kills"].mean()
+        if dd >= dk and dd >= 1:
+            add("shield", "Your losses come from dying more",
+                f"In losses you die **{losses['deaths'].mean():.1f}** times per game, in wins **{wins['deaths'].mean():.1f}**. "
+                f"Your kills change less (**{losses['kills'].mean():.1f}** vs **{wins['kills'].mean():.1f}**).",
+                "Play for trades: stay close to a teammate and don't take the first duel alone.", len(m))
+        elif dk > dd and dk >= 1:
+            add("cross", "Your losses come from fewer kills",
+                f"In losses you get **{losses['kills'].mean():.1f}** kills per game, in wins **{wins['kills'].mean():.1f}**. "
+                f"Your deaths change less (**{losses['deaths'].mean():.1f}** vs **{wins['deaths'].mean():.1f}**).",
+                "Warm up your aim for 10 minutes before the first game.", len(m))
+
+    # 3. Late night (Dutch time) vs earlier
+    late = m[(m["hour"] >= 23) | (m["hour"] < 6)]
+    early = m[(m["hour"] >= 6) & (m["hour"] < 23)]
+    if len(late) >= MIN_GAMES and len(early) >= MIN_GAMES:
+        if early["kd"].mean() - late["kd"].mean() >= 0.1 or early["won"].mean() - late["won"].mean() >= 0.10:
+            add("clock", "You play worse after 23:00",
+                f"After 23:00: K/D **{late['kd'].mean():.2f}**, win rate **{late['won'].mean():.0%}** ({len(late)} games). "
+                f"Before 23:00: K/D **{early['kd'].mean():.2f}**, win rate **{early['won'].mean():.0%}** ({len(early)} games).",
+                "Start your last FACEIT game before 23:00.", len(m))
+
+    # 4. Sessions: games within 2 hours of each other count as one session
+    gap = m["played_at"].diff()
+    session = (gap.isna() | (gap > pd.Timedelta(hours=2))).cumsum()
+    m = m.assign(session=session, game_in_session=m.groupby(session).cumcount() + 1)
+    first, later = m[m["game_in_session"] <= 3], m[m["game_in_session"] >= 4]
+    if len(later) >= MIN_GAMES and first["won"].mean() - later["won"].mean() >= 0.10:
+        add("brain", "Long sessions hurt you",
+            f"Games 1 to 3 of a session: **{first['won'].mean():.0%}** wins ({len(first)} games). "
+            f"Game 4 and later: **{later['won'].mean():.0%}** ({len(later)} games).",
+            "Stop after 3 games in a row, or take a 15-minute break first.", len(first) + len(later))
+
+    # 5. Tilt: the game after two losses in a row (same session)
+    prev2 = (~m["won"].shift(1).fillna(True).astype(bool)) & (~m["won"].shift(2).fillna(True).astype(bool))
+    same = m["session"] == m["session"].shift(2)
+    after = m[prev2 & same]
+    if len(after) >= MIN_GAMES and after["won"].mean() < avg["wr"] - 0.10:
+        add("brain", "Two losses in a row = tilt",
+            f"After two losses in a row you won **{int(after['won'].sum())} of {len(after)}** next games "
+            f"(**{after['won'].mean():.0%}**, overall **{avg['wr']:.0%}**).",
+            "After the second loss in a row, take a break before queueing again.", len(after))
+
+    # 6. Form: last 10 vs before, the metric that changed most
+    if len(m) >= 20:
+        last, before = m.tail(10), m.iloc[:-10]
+        changes = [("K/D", last["kd"].mean(), before["kd"].mean(), 0.15, "{:.2f}"),
+                   ("HS%", last["hs_pct"].mean(), before["hs_pct"].mean(), 4, "{:.0f}%"),
+                   ("ADR", last["adr"].mean(), before["adr"].mean(), 6, "{:.0f}")]
+        changes = [c for c in changes if abs(c[1] - c[2]) >= c[3]]
+        if changes:
+            name, now, was, lim, fmt = max(changes, key=lambda c: abs(c[1] - c[2]) / c[3])
+            up = now > was
+            add("chart", f"Your {name} is {'going up' if up else 'dropping'}",
+                f"Last 10 games: **{fmt.format(now)}**. The {len(before)} games before: **{fmt.format(was)}**.",
+                "Keep your current routine, it is working." if up else
+                ("10 minutes of aim training before you play." if name in ("HS%", "K/D") else
+                 "Play more with your team: use utility before peeking to deal more damage."), len(m))
+
+    # 7. Best teammate
+    if mates is not None and not mates.empty:
+        per = mates.groupby("teammate").agg(games=("won", "size"), wr=("won", "mean")).reset_index()
+        per = per[per["games"] >= MIN_GAMES].sort_values(["wr", "games"], ascending=False)
+        if not per.empty and per.iloc[0]["wr"] > avg["wr"] + 0.05:
+            t = per.iloc[0]
+            add("users", f"Queue with {t['teammate']}",
+                f"With **{t['teammate']}** you won **{int(round(t['wr'] * t['games']))} of {int(t['games'])}** games "
+                f"(**{t['wr']:.0%}**, overall **{avg['wr']:.0%}**).",
+                f"Invite {t['teammate']} when you want to climb.", t["games"])
+    return out
+
+
 def secret(name, default=None):
     """Read a value from Streamlit secrets without crashing if there are none."""
     try:
@@ -362,6 +478,8 @@ def build_payload(player, cs2, matches, mates):
                     "streak_text": streak_text, "streak": streak, "streak_win": bool(last)},
         "form": [bool(x) for x in matches["won"].tail(10)],
         "tips": [{"icon": e, "html": tip_html(t)} for e, t in coach_tips(matches, mates)],
+        "insights": [dict(i, html=tip_html(i["html"]), title=html.escape(i["title"]), action=html.escape(i["action"]))
+                     for i in coach_insights(matches, mates)],
         "kd": records(kd, {"n": "match_nr", "kd": "kd", "avg10": "avg10", "map": "map", "won": "won"}),
         "maps": records(maps, {"map": "map", "games": "games", "win_rate": "win_rate", "kd": "avg_kd",
                                "hs": "hs", "adr": "adr", "tag": "tag"}),

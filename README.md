@@ -46,8 +46,11 @@ streamlit run app.py
 ```
 
 ## What the app shows
-- **Profile (start page):** avatar, FACEIT level + Elo, Premier rating and Leetify rating (when Leetify is on), Steam status, key FACEIT stats, a switchable trend chart, Leetify Aim/Positioning/Utility radar, recent matches vs my own average and the top 3 coach tips
-- **🧠 Briefing:** coach tips in plain words, made from my numbers
+- **Home:** title, FACEIT level/Elo, Premier rating, FACEIT win rate and K/D
+- **Profile:** avatar and one separate block per source: FACEIT, CS2 Premier (via Leetify), Steam hours
+- **Premier:** Premier rating and Leetify match list, with the "Data Provided by Leetify" badge
+- **Steam:** Steam profile and CS2 playtime
+- **🧠 Briefing:** concrete coach points from my own matches: the numbers, how many games, and what to do
 - **📈 Matches:** is my K/D going up? + scoreboard of my last 20 matches
 - **🗺️ Map pool:** map cards with win-rate rings, best and hardest map
 - **🕒 Timing:** heatmap of weekday × time of day, win rate by time, K/D by hour
@@ -59,7 +62,7 @@ streamlit run app.py
 ## Status
 ✅ Version 3 is live: https://cs-stats-coach-fencmkvjwvvwbpmx4hwappv.streamlit.app/
 Leetify page (Premier + matchmaking) added, off until switched on in Secrets.
-Version 5 design ("analyst's console": charcoal + violet, sidebar menu, Profile page) in progress; see `docs/design-system.md`.
+Version 6 design (v4 poster layout in my avatar's pink, FACEIT + Premier as the two main sources) on a test branch; see `docs/design-system.md`.
 Next ideas: follow one coach tip for a week and measure the result.
 
 The portfolio is in [`docs/`](docs/README.md).
