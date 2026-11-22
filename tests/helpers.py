@@ -16,7 +16,7 @@ def load_app():
     return ns
 
 
-def fake_faceit_matches(n=40, seed=7):
+def fake_faceit_matches(n=40, seed=7, rich=False):
     """Fake FACEIT /games/cs2/stats rows (TEST DATA, not real matches)."""
     rnd = random.Random(seed)
     maps = ["de_mirage", "de_inferno", "de_ancient", "de_nuke", "de_anubis"]
@@ -27,7 +27,14 @@ def fake_faceit_matches(n=40, seed=7):
         rows.append({"Match Id": f"test-{i}", "Map": rnd.choice(maps), "Result": str(rnd.randint(0, 1)),
                      "Kills": str(k), "Deaths": str(d), "Assists": str(rnd.randint(1, 8)),
                      "K/D Ratio": f"{k / d:.2f}", "Headshots %": str(rnd.randint(25, 60)),
-                     "ADR": f"{rnd.uniform(55, 110):.1f}", "Match Finished At": str(t * 1000)})
+                     "ADR": f"{rnd.uniform(55, 110):.1f}", "Match Finished At": str(t * 1000),
+                     "Score": f"{13 if rnd.random() > .5 else rnd.randint(5, 12)} / {rnd.randint(5, 13)}"})
+        if rich:  # optional CS2 fields, only in the "rich" test set
+            ec = rnd.randint(1, 8)
+            rows[-1].update({"Entry Count": str(ec), "Entry Wins": str(rnd.randint(0, ec)), "1v1Count": str(rnd.randint(0, 2)),
+                             "1v1Wins": "0", "Triple Kills": str(rnd.randint(0, 2)), "Quadro Kills": "0", "Penta Kills": "0",
+                             "Utility Damage": str(rnd.randint(0, 60)), "Flash Count": str(rnd.randint(2, 10)),
+                             "Flash Successes": str(rnd.randint(0, 2))})
     return rows
 
 
@@ -100,15 +107,18 @@ class FakeSteamSession:
         return FakeResponse(200, {})
 
 
-def build_test_payload(with_leetify=True, with_steam=False, steam_session=None):
+def build_test_payload(with_leetify=True, with_steam=False, steam_session=None, rich=False):
     import pandas as pd
     from sources import load_leetify
 
     app = load_app()
-    matches = app["tidy_matches"](fake_faceit_matches())
+    matches = app["tidy_matches"](fake_faceit_matches(rich=rich))
     rnd = random.Random(3)
-    rows = [{"match_id": m, "teammate": rnd.choice(["mate_a", "mate_b", "mate_c", "rando"])}
-            for m in matches["match_id"]]
+    levels = {"mate_a": 4, "mate_b": 3, "mate_c": 5, "rando": 2}
+    rows = []
+    for m in matches["match_id"]:
+        name = rnd.choice(list(levels))
+        rows.append({"match_id": m, "teammate": name, "mate_id": f"id-{name}", "mate_level": levels[name]})
     mates = pd.DataFrame(rows).merge(matches[["match_id", "won", "kd"]], on="match_id")
     payload = app["build_payload"](FAKE_PLAYER, FAKE_PLAYER["games"]["cs2"], matches, mates)
     if with_leetify:

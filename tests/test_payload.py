@@ -8,8 +8,9 @@ import pytest
 from helpers import ROOT, FAKE_LEETIFY_PROFILE, FakeLeetifySession, build_test_payload, render
 
 # Every top-level field dashboard.html reads (D.<name>)
-PAGE_FIELDS = {"player", "summary", "kd", "insights", "maps", "tod", "hours", "heat", "squad",
-               "friends", "points", "recent", "shots", "min_games", "loaded"}
+PAGE_FIELDS = {"player", "summary", "kd", "insights", "maps", "hours", "heat",
+               "friends", "points", "recent", "shots", "min_games", "loaded",
+               "best_worst", "map_details", "partners", "tactics"}
 
 
 @pytest.fixture(scope="module")
@@ -107,11 +108,20 @@ def test_page_uses_avatar_palette_and_orange_only_for_faceit():
     assert "--orange" not in html
 
 
-def test_no_leetify_metrics_shown():
-    # Leetify is only used for Premier: its own ratings are not displayed
+def test_leetify_ratings_shown_as_returned_with_badge():
+    # Leetify ratings are shown on the site, but only through raw() (no rounding, rescaling or maths)
     html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
-    assert "profile.rating" not in html and "leetify_rating" not in html
-    assert "Data Provided by Leetify" in html  # badge stays wherever Premier data is shown
+    assert "raw(LR[k])" in html and "raw(m.leetify_rating)" in html
+    assert "Data Provided by Leetify" in html  # badge stays wherever Leetify data is shown
+    for bad in ("LR[k] *", "LR[k] /", "LR[k].toFixed", "leetify_rating *", "leetify_rating.toFixed"):
+        assert bad not in html
+
+
+def test_every_page_has_a_glossary_and_tooltips():
+    html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
+    assert "${glossary(id)}" in html and 'class="tt"' in html
+    for term in ("K/D", "ADR", "HS%", "Elo"):
+        assert f'["{term}",' in html
 
 
 def test_insights_are_concrete(payload):

@@ -76,10 +76,11 @@ def find_teammates(matches, player_id, api_key):
             if any(p.get("player_id") == player_id for p in roster):
                 for p in roster:
                     if p.get("player_id") != player_id:
-                        rows.append({"match_id": match_id, "teammate": p.get("nickname", "?")})
+                        rows.append({"match_id": match_id, "teammate": p.get("nickname", "?"),
+                                     "mate_id": p.get("player_id"), "mate_level": p.get("game_skill_level")})
         bar.progress((i + 1) / len(ids), text="Finding out who you played with...")
     bar.empty()
-    mates = pd.DataFrame(rows, columns=["match_id", "teammate"])
+    mates = pd.DataFrame(rows, columns=["match_id", "teammate", "mate_id", "mate_level"])
     return mates.merge(matches[["match_id", "won", "kd"]], on="match_id")
 
 
@@ -96,6 +97,16 @@ def time_of_day(hour):
         return "Evening (18-23)"
     return "Late night (23-6)"
 
+
+# (FACEIT field name, our name). Used only when the field is present.
+OPTIONAL_FIELDS = [
+    ("MVPs", "mvps"), ("Double Kills", "k2"), ("Triple Kills", "k3"), ("Quadro Kills", "k4"), ("Penta Kills", "k5"),
+    ("First Kills", "first_kills"), ("Entry Count", "entry_count"), ("Entry Wins", "entry_wins"),
+    ("Clutch Kills", "clutch_kills"), ("1v1Count", "c1v1"), ("1v1Wins", "w1v1"), ("1v2Count", "c1v2"), ("1v2Wins", "w1v2"),
+    ("Utility Damage", "util_dmg"), ("Utility Count", "util_count"), ("Flash Count", "flash_count"),
+    ("Flash Successes", "flash_success"), ("Enemies Flashed", "enemies_flashed"), ("Sniper Kills", "sniper_kills"),
+    ("Rounds", "rounds"),
+]
 
 TIME_ORDER = ["Morning (6-12)", "Afternoon (12-18)", "Evening (18-23)", "Late night (23-6)"]
 DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -121,6 +132,18 @@ def tidy_matches(raw):
         ("ADR", "adr"),
     ]:
         clean[name] = to_number(df[col]) if col in df else float("nan")
+
+    # Extra per-match fields FACEIT may send for CS2. Only the ones that really
+    # arrive are kept (see the Data check on the Profile page); nothing is guessed.
+    for col, name in OPTIONAL_FIELDS:
+        if col in df:
+            values = to_number(df[col])
+            if values.notna().any():
+                clean[name] = values
+    for col in ("Score", "Final Score"):
+        if col in df:
+            clean["score"] = df[col].astype(str).where(df[col].notna(), None)
+            break
 
     # When the match was played (FACEIT gives milliseconds or seconds)
     when = None
@@ -404,6 +427,126 @@ def screenshots():
     return shots
 
 
+def _num(x, digits=2):
+    return clean_num(x, digits)
+
+
+def match_card(row):
+    """One FACEIT match as plain values for the page."""
+    when = row.get("played_at")
+    date = when.tz_convert(LOCAL_TZ).strftime("%d %b %Y %H:%M") if isinstance(when, pd.Timestamp) and not pd.isna(when) else ""
+    out = {"date": date, "map": str(row.get("map")), "won": bool(row.get("won")),
+           "kills": _num(row.get("kills"), 0), "deaths": _num(row.get("deaths"), 0), "assists": _num(row.get("assists"), 0),
+           "kd": _num(row.get("kd")), "adr": _num(row.get("adr"), 1), "hs": _num(row.get("hs_pct"), 0),
+           "score": row.get("score") if isinstance(row.get("score"), str) else None}
+    for name in ("mvps", "k3", "k4", "k5", "entry_wins", "util_dmg", "enemies_flashed"):
+        if name in row:
+            out[name] = _num(row.get(name), 1)
+    return out
+
+
+def best_and_worst(matches):
+    """Best and worst FACEIT match by K/D (ties broken by ADR)."""
+    m = matches.dropna(subset=["kd"])
+    if len(m) < 2:
+        return None
+    ordered = m.sort_values(["kd", "adr"], ascending=[False, False])
+    best, worst = ordered.iloc[0].to_dict(), ordered.iloc[-1].to_dict()
+    return {"best": match_card(best), "worst": match_card(worst), "rule": "K/D, then ADR"}
+
+
+def map_details(matches):
+    """Everything the map detail panel shows, per map (FACEIT only)."""
+    out = {}
+    avg_adr, avg_deaths, avg_wr = matches["adr"].mean(), matches["deaths"].mean(), matches["won"].mean()
+    for name, g in matches.groupby("map"):
+        g = g.sort_values("played_at", ascending=False)
+        games, wins = len(g), int(g["won"].sum())
+        tip = None
+        if games >= MIN_GAMES:
+            if g["won"].mean() < avg_wr - 0.05 and g["adr"].mean() < avg_adr - 5:
+                tip = f"Your ADR here is {g['adr'].mean():.0f} against {avg_adr:.0f} overall. Play closer to teammates and use utility before peeking."
+            elif g["won"].mean() < avg_wr - 0.05 and g["deaths"].mean() > avg_deaths + 1:
+                tip = f"You die {g['deaths'].mean():.1f} times per game here against {avg_deaths:.1f} overall. Hold safer angles and wait for trades."
+            elif g["won"].mean() > avg_wr + 0.05:
+                tip = f"You win {g['won'].mean():.0%} here against {avg_wr:.0%} overall. Pick this map in the veto."
+            else:
+                tip = "Close to your overall results. No big strength or weakness here yet."
+        else:
+            tip = f"Only {games} game{'s' if games != 1 else ''} here, so no advice yet ({MIN_GAMES}+ needed)."
+        best = g.sort_values(["kd", "adr"], ascending=[False, False]).iloc[0].to_dict()
+        out[str(name)] = {
+            "games": games, "wins": wins, "losses": games - wins, "win_rate": _num(g["won"].mean()),
+            "kd": _num(g["kd"].mean()), "adr": _num(g["adr"].mean(), 1), "hs": _num(g["hs_pct"].mean(), 0),
+            "kills": _num(g["kills"].mean(), 1), "deaths": _num(g["deaths"].mean(), 1),
+            "recent": [match_card(r) for r in g.head(5).to_dict("records")],
+            "best": match_card(best), "tip": tip,
+        }
+    return out
+
+
+def partners(mates):
+    """Players from my own FACEIT matches I could invite again (2+ games together)."""
+    if mates is None or mates.empty:
+        return []
+    m = mates.copy()
+    if "mate_level" not in m:
+        m["mate_level"] = None
+    per = (m.groupby("teammate")
+           .agg(games=("won", "size"), wins=("won", "sum"), kd=("kd", "mean"),
+                level=("mate_level", lambda x: next((v for v in reversed(list(x)) if pd.notna(v)), None)))
+           .reset_index())
+    per = per[per["games"] >= 2]
+    per = per.assign(wr=per["wins"] / per["games"]).sort_values(["wr", "games"], ascending=False).head(12)
+    rows = []
+    for _, r in per.iterrows():
+        rows.append({"name": str(r["teammate"]), "games": int(r["games"]), "wins": int(r["wins"]),
+                     "win_rate": _num(r["wins"] / r["games"]), "my_kd": _num(r["kd"]),
+                     "level": int(r["level"]) if r["level"] is not None and not pd.isna(r["level"]) else None,
+                     "url": f"https://www.faceit.com/en/players/{r['teammate']}"})
+    return rows
+
+
+def tactics(matches):
+    """Play-style numbers from FACEIT fields that really arrived. Each item says how it is calculated."""
+    m, items = matches, []
+
+    def has(*cols):
+        return all(c in m and m[c].notna().any() for c in cols)
+
+    if has("entry_count", "entry_wins") and m["entry_count"].sum() > 0:
+        rate = m["entry_wins"].sum() / m["entry_count"].sum()
+        with_win = m[m["entry_wins"] > 0]["won"].mean() if (m["entry_wins"] > 0).sum() >= MIN_GAMES else None
+        no_win = m[m["entry_wins"] == 0]["won"].mean() if (m["entry_wins"] == 0).sum() >= MIN_GAMES else None
+        items.append({"key": "entry", "title": "Opening duels", "value": _num(rate), "fmt": "pct",
+                      "how": f"Entry duels won ÷ entry duels taken ({int(m['entry_wins'].sum())} of {int(m['entry_count'].sum())}).",
+                      "good": bool(rate >= 0.5), "extra": {"wr_with_entry": _num(with_win), "wr_without_entry": _num(no_win)}})
+    clutch_won = sum(m[c].sum() for c in ("w1v1", "w1v2") if c in m)
+    clutch_all = sum(m[c].sum() for c in ("c1v1", "c1v2") if c in m)
+    if clutch_all > 0:
+        rate = clutch_won / clutch_all
+        items.append({"key": "clutch", "title": "Clutches (1v1 and 1v2)", "value": _num(rate), "fmt": "pct",
+                      "how": f"Clutches won ÷ clutches played ({int(clutch_won)} of {int(clutch_all)}).", "good": bool(rate >= 0.4)})
+    if has("flash_count", "flash_success") and m["flash_count"].sum() > 0:
+        rate = m["flash_success"].sum() / m["flash_count"].sum()
+        items.append({"key": "flash", "title": "Flashes that blinded an enemy", "value": _num(rate), "fmt": "pct",
+                      "how": f"Successful flashes ÷ flashes thrown ({int(m['flash_success'].sum())} of {int(m['flash_count'].sum())}).",
+                      "good": bool(rate >= 0.4)})
+    if has("util_dmg"):
+        items.append({"key": "util", "title": "Utility damage per game", "value": _num(m["util_dmg"].mean(), 1), "fmt": "num",
+                      "how": "Average grenade damage per FACEIT match.", "good": None})
+    multi = [c for c in ("k3", "k4", "k5") if has(c)]
+    if multi:
+        per_game = m[multi].sum(axis=1).mean()
+        items.append({"key": "multi", "title": "Rounds with 3+ kills per game", "value": _num(per_game, 2), "fmt": "num",
+                      "how": "Average number of 3k, 4k and 5k rounds per match.", "good": None})
+    if has("sniper_kills") and m["kills"].sum() > 0:
+        share = m["sniper_kills"].sum() / m["kills"].sum()
+        items.append({"key": "awp", "title": "Kills with a sniper", "value": _num(share), "fmt": "pct",
+                      "how": "Sniper kills ÷ all kills.", "good": None})
+    return items
+
+
 def build_payload(player, cs2, matches, mates):
     level = cs2.get("skill_level")
     elo = cs2.get("faceit_elo")
@@ -494,6 +637,10 @@ def build_payload(player, cs2, matches, mates):
                                    "assists": "assists", "kd": "kd", "hs": "hs_pct", "adr": "adr"}),
         "shots": screenshots(),
         "min_games": MIN_GAMES,
+        "best_worst": best_and_worst(matches),
+        "map_details": map_details(matches),
+        "partners": partners(mates),
+        "tactics": tactics(matches),
         "loaded": f"{datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC",
     }
 

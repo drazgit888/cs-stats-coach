@@ -138,3 +138,18 @@
 - **Tests:** 34 automatic checks pass (also: no Leetify scores on the page, the Leetify badge stays next to Premier, coach points always have numbers and 3+ games).
 - **Pictures:** `images/v6-home-test-data.png`, `images/v6-profile-test-data.png`, `images/v6-briefing-test-data.png`, `images/v6-premier-test-data.png`, `images/v6-maps-test-data.png`, `images/v6-profile-mobile-test-data.png` (test data)
 - **What I think / what friends think:** _[YOUR WORDS]_
+
+## 2026-11-22: Version 7 – 7 things I changed after testing on my phone
+- **What happened:** I looked at the v6 test site on my phone and wrote down 7 things I didn't like. For each one I first asked what is possible with the data and what is not.
+- **The 7 changes:**
+  1. **Leetify on my own site.** Aim, Positioning, Utility, Clutch, Opening and the Leetify Rating per match are now shown on the site, exactly as Leetify sends them (not stored, not recalculated), with the official badge.
+  2. **Glossary.** Every page ends with "What do these words mean?" (K/D, ADR, HS%, Elo…). Short words also have a tooltip when you hover or tap them.
+  3. **Simpler chart.** The confusing line chart is now one bar per game: pink = win, grey = loss, a dashed line at K/D = 1, and one sentence explaining it.
+  4. **Best vs worst game.** Two cards side by side (picked by K/D, ADR breaks a tie) and a sentence comparing them.
+  5. **Find teammates.** I mostly play solo. FACEIT has no public player search in the data I use, so the page lists players who were on my team 2+ times, with their FACEIT level, wins together and a link to their profile.
+  6. **Clickable maps.** Tapping a map opens a panel: wins/losses, K/D, ADR, HS%, my last games there, my best game there and a tip.
+  7. **Tactics page.** Real tactics need demo files, so this page only uses play-style numbers FACEIT/Leetify really send (opening duels, clutches, flashes, utility damage, multi-kills) and says how each one is counted, what I do best, what is weakest and what to train. If a field is missing, it is not shown.
+- **What is not possible (and why):** a real social network or player search, Elo history per match, and real positioning/rotation analysis (needs demos).
+- **Tests:** 45 automatic checks pass (new: best/worst rule, map details match the raw games, teammates need 2+ games, tactics are counted from the real fields and disappear when FACEIT doesn't send them, Leetify values only shown "as returned").
+- **Pictures:** `images/v7-d-profile-test-data.png`, `images/v7-d-matches-test-data.png`, `images/v7-d-tactics-test-data.png`, `images/v7-d-squad-test-data.png`, `images/v7-m-maps-test-data.png`, `images/v7-p-tactics-test-data.png` (test data, not my real numbers)
+- **What I think / what I learned:** _[YOUR WORDS]_

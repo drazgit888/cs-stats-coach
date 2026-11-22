@@ -215,6 +215,53 @@ details.card summary { cursor: pointer; font: italic 800 22px/1 var(--head); tex
 details.card summary::after { content: " +"; color: var(--muted); }
 details.card[open] summary::after { content: " −"; }
 
+/* tooltips (one floating box, works on hover, focus and tap) */
+.tt { border-bottom: 1px dotted rgba(255,255,255,.45); cursor: help; outline: none; }
+.tt:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+#tipbox { position: fixed; z-index: 100; max-width: 260px; background: #1d1520; border: 1px solid rgba(255,79,163,.6); color: var(--text);
+  font: 500 13px/1.4 Barlow, sans-serif; letter-spacing: 0; text-transform: none; padding: 8px 11px; border-radius: 4px;
+  pointer-events: none; opacity: 0; transition: opacity .12s; box-shadow: 0 10px 30px -10px #000; }
+#tipbox.on { opacity: 1; }
+/* glossary at the bottom of each page */
+.gloss h4 { margin-bottom: 14px; }
+.gloss dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 26px; }
+.gloss dt { font: 700 15px var(--head); letter-spacing: .08em; text-transform: uppercase; color: var(--pink-2); }
+.gloss dd { color: #cfc8be; font-size: 14px; line-height: 1.4; margin-top: 2px; }
+/* chart legend + caption */
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend i.dash { height: 0; width: 18px; border-top: 2px dashed rgba(255,255,255,.6); border-radius: 0; vertical-align: 3px; }
+/* best / worst game */
+.bw .statgrid b { font-size: 24px; }
+.cmp { font-size: 16px; line-height: 1.5; color: var(--text); }
+.cmp b { color: var(--pink-2); }
+/* clickable maps + detail panel */
+.mapcard { cursor: pointer; }
+.mapcard.sel { border-color: var(--pink); box-shadow: 0 0 0 1px var(--pink), 0 20px 40px -20px rgba(255,79,163,.5); }
+.mapcard .open { margin-top: 14px; font: 700 12px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--pink-2); }
+.mp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.mp-close { background: none; border: 1px solid var(--card-line); color: var(--text); border-radius: 3px; padding: 6px 12px; cursor: pointer;
+  font: 700 13px var(--head); letter-spacing: .1em; text-transform: uppercase; }
+.mp-close:hover { border-color: var(--pink); }
+.do { margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--pink); background: rgba(255,79,163,.08); color: var(--text); font-size: 14px; }
+.do b { color: var(--pink-2); }
+/* teammates */
+.lvl.sm { width: 40px; height: 40px; border-width: 3px; font-size: 20px; margin: 0 0 18px; }
+.mate-link { display: inline-block; margin-top: 16px; color: var(--faceit); font-weight: 700; border-bottom: 1.5px solid var(--faceit); }
+/* tactics */
+.tag.str { background: var(--good); color: #0E0B11; }
+.tag.work { border: 1px solid var(--bad); color: var(--bad); }
+.tag.info { border: 1px solid var(--muted); color: var(--muted); }
+.tv { font: italic 900 52px/1 var(--head); margin: 6px 0 10px; }
+.how { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.card.leetify { border-top: 3px solid #F84982; }
+.card.leetify:hover { border-color: rgba(248,73,130,.45); border-top-color: #F84982; }
+.sum3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.sum3 .lab { font: 700 13px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sum3 .val { font: italic 800 26px/1.1 var(--head); text-transform: uppercase; margin-top: 6px; }
+.sum3 .val.plain { font: 600 17px/1.4 Barlow, system-ui, sans-serif; text-transform: none; }
+.srcline + .tag { margin-left: 10px; }
+
 footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962; font: 600 13px var(--head); letter-spacing: .12em; text-transform: uppercase; border-top: 1px solid var(--card-line); }
 
 @media (max-width: 900px) {
@@ -227,7 +274,7 @@ footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962
   .feat { border: 0; padding: 0; }
   .shade { background: linear-gradient(0deg, rgba(14,11,17,1) 10%, rgba(14,11,17,.55) 100%); }
 }
-@media (max-width: 560px) { .features, .c3, .c4, .c2 { grid-template-columns: 1fr; } .me { flex-direction: column; align-items: flex-start; } .statgrid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .features, .c3, .c4, .c2, .sum3 { grid-template-columns: 1fr; } .me { flex-direction: column; align-items: flex-start; } .statgrid { grid-template-columns: 1fr 1fr; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -332,16 +379,58 @@ const ltView = () => L ? `<a class="lt-link" href="${esc(L.profile_url)}" target
 const steamUrl = ST_OK ? ST.profile.url : (p.steam_id64 ? `https://steamcommunity.com/profiles/${p.steam_id64}` : "");
 const premierOff = !L ? "Premier comes through Leetify, which is turned off (LEETIFY_ENABLED)." : (L.message || "Leetify not available.");
 
+/* ---------- glossary: every short word explained (tooltips + bottom of each page) ---------- */
+const GL = {
+  kd: ["K/D", "Kills ÷ deaths. 1.00 means you kill as often as you die. Above 1 is good."],
+  kda: ["K · D · A", "Kills, Deaths and Assists. An assist means you did damage to an enemy a teammate then killed."],
+  adr: ["ADR", "Average Damage per Round: how much damage you do in one round on average. 100 damage is one full kill."],
+  hs: ["HS%", "Headshot percentage: how many of your kills were headshots."],
+  wr: ["Win rate", "Games won ÷ games played."],
+  elo: ["Elo", "FACEIT points. You get Elo for a win and lose Elo for a loss. More Elo means a higher level."],
+  level: ["Level", "FACEIT level from 1 to 10, set by your Elo."],
+  streak: ["Streak", "How many wins (W) or losses (L) in a row, counting back from your last game."],
+  score: ["Score", "Rounds won by each team, as FACEIT reports it."],
+  veto: ["Veto", "Choosing which map to play before a FACEIT match. Remove your weakest maps, keep your best."],
+  premier: ["Premier", "Valve's own ranked mode in CS2. Its rating has its own scale and is never compared with FACEIT."],
+  entry: ["Entry / opening duel", "The first fight of a round. Winning it gives your team a 5 against 4."],
+  clutch: ["Clutch", "A round where you are the last one alive against 1 or more enemies (1v1, 1v2)."],
+  util: ["Utility", "Grenades: flash, smoke, HE and molotov. Utility damage is damage done with grenades."],
+  flash: ["Flash success", "A flash that blinded at least one enemy."],
+  multi: ["3k · 4k · 5k", "A round where you got 3, 4 or 5 kills."],
+  awp: ["Sniper kills", "Kills with the AWP or another sniper rifle."],
+  mvp: ["MVP", "The star the game gives to the most valuable player of a round."],
+  lrating: ["Leetify Rating", "Leetify's own score for how much you helped your team win rounds. Shown exactly as Leetify returns it."],
+  lskills: ["Aim · Positioning · Utility", "Leetify's own skill scores. Shown exactly as Leetify returns them, not changed by this app."],
+  lclutch: ["Clutch · Opening (Leetify)", "Leetify's own clutch and opening-duel ratings. They use a different scale from Aim, so they are shown on their own."],
+  lside: ["CT / T Leetify", "Leetify Rating on the CT side and on the T side."],
+  hours: ["Playtime", "Hours Steam counted for CS2. Steam sends minutes; this page shows them as hours."],
+};
+const ab = (k, txt) => GL[k] ? `<span class="tt" tabindex="0" data-tip="${esc(GL[k][1])}">${txt ?? GL[k][0]}</span>` : (txt ?? k);
+const GLP = {
+  home: ["elo", "level", "wr", "kd", "premier"],
+  profile: ["elo", "level", "wr", "kd", "hs", "adr", "streak", "premier", "lskills", "lclutch", "lside", "hours"],
+  briefing: ["kd", "adr", "wr", "veto"],
+  matches: ["kd", "kda", "hs", "adr", "score", "mvp", "multi"],
+  maps: ["kd", "adr", "hs", "wr", "kda", "veto"],
+  tactics: ["entry", "clutch", "flash", "util", "multi", "awp", "lskills", "lclutch", "lside"],
+  squad: ["level", "wr", "kd"],
+  progress: ["elo", "level", "streak", "kd"],
+  premier: ["premier", "kd", "lrating"],
+  steam: ["hours"],
+};
+const glossary = id => (GLP[id] || []).length ? `<div class="cards"><div class="card gloss"><h4>What do these words mean?</h4><dl>
+  ${GLP[id].map(k => `<div><dt>${GL[k][0]}</dt><dd>${GL[k][1]}</dd></div>`).join("")}</dl></div></div>` : "";
+
 /* ---------- pages ---------- */
 const pages = [
-  ["home", "Home"], ["profile", "Profile"], ["briefing", "Briefing"], ["matches", "Matches"], ["maps", "Maps"],
-  ["squad", "Squad"], ["progress", "Progress"], ["premier", "Premier"], ["steam", "Steam"], ["highlights", "Highlights"],
+  ["home", "Home"], ["profile", "Profile"], ["briefing", "Briefing"], ["matches", "Matches"], ["maps", "Maps"], ["tactics", "Tactics"],
+  ["squad", "Teammates"], ["progress", "Progress"], ["premier", "Premier"], ["steam", "Steam"], ["highlights", "Highlights"],
 ];
 
 function pageWrap(id, seed, opts, body) {
   return `<section class="page ${id === "home" ? "on" : ""}" id="${id}">
     <div class="scene">${scene(seed, opts)}</div><div class="shade"></div>
-    <div class="inner">${body}</div></section>`;
+    <div class="inner">${body}${glossary(id)}</div></section>`;
 }
 function bar(frac, label, cls = "") {
   return `<div class="prog"><div class="bar ${cls}"><i data-w="${Math.max(0, Math.min(1, frac || 0))}"></i></div><div class="n">${label}</div></div>`;
@@ -353,19 +442,19 @@ const home = `
   <p class="lead">A personal coach built from ${esc(p.nickname)}'s last ${s.matches} FACEIT matches${LT_OK ? " and Premier" : ""}. See what works, fix what doesn't, and level up.</p>
   <button class="cta" data-go="briefing">See your briefing <span>›</span></button>
   <div class="features">
-    <div class="feat">${icon("cross", "")}<div><div class="t" style="color:var(--faceit)">FACEIT · Level ${p.level ?? "?"}</div><div class="v" style="color:var(--faceit)" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
+    <div class="feat">${icon("cross", "")}<div><div class="t" style="color:var(--faceit)">FACEIT · ${ab("level")} ${p.level ?? "?"}</div><div class="v" style="color:var(--faceit)" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
     <div class="feat">${icon("star", "")}<div><div class="t" style="color:var(--premier)">Premier</div>${PREM != null ? `<div class="v" style="color:var(--premier)">${raw(PREM)}</div><div class="s">rating · via Leetify</div>` : `<div class="v" style="color:var(--muted);font-size:20px">Not available</div><div class="s">${LT_OK ? "no rating returned" : "Leetify is off"}</div>`}</div></div>
-    <div class="feat">${icon("bars", "")}<div><div class="t">FACEIT win rate</div><div class="v" data-count="${s.win_rate * 100}" data-dec="0" data-unit="%"></div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
-    <div class="feat">${icon("laurel", "")}<div><div class="t">FACEIT K/D</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2"></div><div class="s">kills per death</div></div></div>
+    <div class="feat">${icon("bars", "")}<div><div class="t">FACEIT ${ab("wr", "win rate")}</div><div class="v" data-count="${s.win_rate * 100}" data-dec="0" data-unit="%"></div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
+    <div class="feat">${icon("laurel", "")}<div><div class="t">FACEIT ${ab("kd")}</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2"></div><div class="s">kills per death</div></div></div>
   </div>`;
 
 /* PROFILE: me + one separate block per source */
 const faceitBlock = `<div class="card faceit">${srcline("FACEIT", "var(--faceit)")}
-    <div style="display:flex;align-items:center"><span class="lvl">${p.level ?? "?"}</span><div><div class="bigv" style="color:var(--faceit)">${p.elo ?? "–"}</div><div class="note" style="margin-top:4px">Elo · ${p.to_next != null ? p.to_next + " to level " + (p.level + 1) : "max level"}</div></div></div>
+    <div style="display:flex;align-items:center"><span class="lvl">${p.level ?? "?"}</span><div><div class="bigv" style="color:var(--faceit)">${p.elo ?? "–"}</div><div class="note" style="margin-top:4px">${ab("elo")} · ${p.to_next != null ? p.to_next + " to level " + (p.level + 1) : "max level"}</div></div></div>
     ${bar(p.progress, Math.round((p.progress || 0) * 100) + "%", "f")}
     <div class="statgrid">
-      <div><b>${s.matches}</b>matches</div><div><b>${pct(s.win_rate)}</b>win rate</div><div><b>${f2(s.kd)}</b>K/D</div>
-      <div><b>${f0(s.hs)}%</b>headshots</div><div><b>${f0(s.adr)}</b>ADR</div><div><b>${s.streak}${s.streak_win ? "W" : "L"}</b>streak</div>
+      <div><b>${s.matches}</b>matches</div><div><b>${pct(s.win_rate)}</b>${ab("wr", "win rate")}</div><div><b>${f2(s.kd)}</b>${ab("kd")}</div>
+      <div><b>${f0(s.hs)}%</b>${ab("hs")}</div><div><b>${f0(s.adr)}</b>${ab("adr")}</div><div><b>${s.streak}${s.streak_win ? "W" : "L"}</b>${ab("streak")}</div>
     </div>
     <p class="note">Last ${s.matches} FACEIT matches.${p.url ? ` <a class="lt-link" style="color:var(--faceit)" href="${esc(p.url)}" target="_blank" rel="noopener">Open FACEIT profile</a>` : ""}</p></div>`;
 const premierBlock = `<div class="card premier">${srcline("CS2 Premier", "var(--premier)")}
@@ -378,6 +467,21 @@ if (ST_OK && ST.cs2 && ST.cs2.found) steamV = `<div class="bigv" style="color:va
 else if (ST_OK && ST.games_visible === false) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Hours private</div><p class="note">Set "Game details" to Public in Steam privacy settings.</p>`;
 else if (ST) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Unavailable</div><p class="note">${esc(ST.games_message || ST.message || "Steam not available")}</p>`;
 else steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Not connected</div><p class="note">Add STEAM_API_KEY in Secrets to show CS2 hours.</p>`;
+const LR = LT_OK ? (L.profile.rating || {}) : {};
+const LT_NAMES = { aim: ["Aim", "lskills"], positioning: ["Positioning", "lskills"], utility: ["Utility", "lskills"],
+  clutch: ["Clutch", "lclutch"], opening: ["Opening", "lclutch"], ct_leetify: ["CT Leetify", "lside"], t_leetify: ["T Leetify", "lside"] };
+const ltLabel = k => LT_NAMES[k] ? ab(LT_NAMES[k][1], LT_NAMES[k][0]) : esc(k);
+const ltRatings = () => Object.keys(LR).length
+  ? `<div class="kv">${Object.keys(LR).map(k => `<span>${ltLabel(k)}</span><b>${raw(LR[k])}</b>`).join("")}</div>`
+  : `<p class="na">Leetify returned no ratings for this profile.</p>`;
+let leetifyBlock;
+if (LT_OK) leetifyBlock = `<div class="card leetify">${srcline("Leetify ratings", "#F84982")}
+    ${ltRatings()}
+    <div class="kv" style="margin-top:10px">${L.profile.total_matches != null ? `<span>Matches on Leetify</span><b>${raw(L.profile.total_matches)}</b>` : ""}${L.profile.winrate != null ? `<span>Win rate (as returned)</span><b>${raw(L.profile.winrate)}</b>` : ""}</div>
+    <p class="note">Exactly as Leetify returns them: not stored, not recalculated. These are Leetify's own scores, separate from FACEIT and Premier.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div>`;
+else if (L) leetifyBlock = `<div class="card leetify">${srcline("Leetify", "#F84982")}<p class="note">${esc(L.message || "Leetify not available.")}</p><div style="margin-top:14px">${ltBadge(false)}</div></div>`;
+else leetifyBlock = "";
 const steamBlock = `<div class="card steam">${srcline("Steam", "var(--steam)")}${steamV}</div>`;
 const profilePage = `
   <div class="me">
@@ -386,7 +490,7 @@ const profilePage = `
       <div class="links">${p.country ? `<span>${esc(p.country)}</span>` : ""}${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT</a>` : ""}${steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam</a>` : ""}</div></div>
   </div>
   <div class="cards c2">${faceitBlock}${premierBlock}</div>
-  <div class="cards c3">${steamBlock}</div>
+  <div class="cards c2">${steamBlock}${leetifyBlock}</div>
   <div class="cards"><details class="card" id="datacheck"><summary>Data check</summary>
     <p class="note">Field names only (no values, no keys). Send a screenshot of this box to plan the next pages.</p>
     <ul class="chk">
@@ -408,46 +512,74 @@ const briefing = `
       <div class="ev">Based on ${t.games} games · FACEIT</div></div>`).join("")
     : `<div class="card"><p class="empty">Play a few more games so the coach has enough to go on!</p></div>`}</div>`;
 
+const BW = D.best_worst;
+const extras = c => [["mvps", "MVPs", "mvp"], ["k3", "3k rounds", "multi"], ["k4", "4k rounds", "multi"], ["k5", "5k rounds", "multi"],
+  ["entry_wins", "Entries won", "entry"], ["util_dmg", "Utility dmg", "util"], ["enemies_flashed", "Enemies flashed", "flash"]]
+  .filter(([k]) => isNum(c[k])).map(([k, t, g]) => `<div><b>${f0(c[k])}</b>${ab(g, t)}</div>`).join("");
+const gameCard = (c, kind) => `<div class="card bw"><span class="tag ${kind}">${kind === "best" ? "BEST GAME" : "WORST GAME"}</span>
+    <h3>${esc(c.map)}</h3><p>${esc(c.date)} · <span class="res ${c.won ? "w" : "l"}">${c.won ? "WIN" : "LOSS"}</span>${c.score ? ` · ${ab("score")} ${esc(c.score)}` : ""}</p>
+    <div class="statgrid"><div><b>${f0(c.kills)} · ${f0(c.deaths)} · ${f0(c.assists)}</b>${ab("kda")}</div><div><b style="color:${c.kd >= 1 ? "var(--good)" : "var(--bad)"}">${f2(c.kd)}</b>${ab("kd")}</div>
+      <div><b>${f0(c.adr)}</b>${ab("adr")}</div><div><b>${f0(c.hs)}%</b>${ab("hs")}</div>${extras(c)}</div></div>`;
+function compareText(b, w) {
+  const parts = [`In your best game you got <b>${f0(b.kills - w.kills)} more kills</b> and died <b>${f0(Math.abs(w.deaths - b.deaths))} ${w.deaths >= b.deaths ? "fewer" : "more"} times</b> than in your worst.`];
+  if (isNum(b.adr) && isNum(w.adr)) parts.push(`Your damage per round was <b>${f0(b.adr)}</b> against <b>${f0(w.adr)}</b>.`);
+  if (b.map === w.map) parts.push(`Both games were on ${esc(b.map)}, so the map was not the difference.`);
+  else parts.push(`Best on ${esc(b.map)}, worst on ${esc(w.map)}: open the Maps page to see if that is a pattern.`);
+  if (b.won !== w.won) parts.push(b.won ? "You won the best one and lost the worst one." : "Funny: you lost your best game and won your worst one, so the team mattered too.");
+  return parts.join(" ");
+}
 const matchesPage = `
   <h1>Matches</h1>
-  <p class="lead">Is my aim getting better? Every FACEIT match from oldest to newest. The pink line is the average of the last 10.</p>
-  <div class="cards"><div class="card"><h4>K/D over time</h4><div class="chart"><canvas id="kdChart"></canvas></div></div></div>
+  <p class="lead">Every FACEIT match, one bar each. Your best and worst game side by side, and the full scoreboard.</p>
+  <div class="cards"><div class="card"><h4>${ab("kd")} per game</h4>
+    <p>Each bar is one game, oldest on the left, newest on the right. A bar above the dashed line means you got more kills than deaths.</p>
+    <div class="legend"><span><i style="background:#FF4FA3"></i>Win</span><span><i style="background:#6A5D6A"></i>Loss</span><span><i class="dash"></i>K/D = 1</span></div>
+    <div class="chart"><canvas id="kdChart"></canvas></div></div></div>
+  ${BW ? `<div class="cards c2">${gameCard(BW.best, "best")}${gameCard(BW.worst, "worst")}</div>
+    <div class="cards"><div class="card"><h4>Best vs worst</h4><p class="cmp">${compareText(BW.best, BW.worst)}</p>
+      <p class="note">Picked by ${ab("kd")} (if two games have the same K/D, the higher ${ab("adr")} wins). From your last ${s.matches} FACEIT games.</p></div></div>` : ""}
   <div class="cards"><div class="card" style="overflow-x:auto"><h4>Scoreboard · last ${D.recent.length}</h4><table>
-    <tr><th>Date</th><th>Map</th><th>Result</th><th>K</th><th>D</th><th>A</th><th>K/D</th><th>HS%</th><th>ADR</th></tr>
+    <tr><th>Date</th><th>Map</th><th>Result</th><th>${ab("kda", "K")}</th><th>${ab("kda", "D")}</th><th>${ab("kda", "A")}</th><th>${ab("kd")}</th><th>${ab("hs")}</th><th>${ab("adr")}</th></tr>
     ${D.recent.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.map)}</td><td><span class="res ${r.won ? "w" : "l"}">${r.won ? "WIN" : "LOSS"}</span></td>
       <td>${f0(r.kills)}</td><td>${f0(r.deaths)}</td><td>${f0(r.assists)}</td><td style="color:${r.kd >= 1 ? "var(--good)" : "var(--bad)"}">${f2(r.kd)}</td><td>${f0(r.hs)}%</td><td>${f0(r.adr)}</td></tr>`).join("")}
   </table></div></div>`;
 
 const mapsPage = `
   <h1>Maps</h1>
-  <p class="lead">Which maps am I best on? The bar shows how many of my FACEIT games I win there.</p>
+  <p class="lead">Which maps am I best on? The bar shows how many of my FACEIT games I win there. Tap a map to open it.</p>
   <div class="cards c4">${D.maps.map((m, i) => `
-    <div class="card" style="animation-delay:${i * 70}ms"><div class="bg-art">${scene(40 + i, { light: .5, lx: 60 })}</div>
+    <div class="card mapcard" role="button" tabindex="0" data-map="${esc(m.map)}" style="animation-delay:${i * 70}ms"><div class="bg-art">${scene(40 + i, { light: .5, lx: 60 })}</div>
       ${icon("map")}
       ${m.tag ? `<span class="tag ${m.tag}">${m.tag === "best" ? "BEST MAP" : "HARDEST MAP"}</span>` : ""}
       <h3>${esc(m.map)}</h3>
-      <div class="minis"><div><b>${f2(m.kd)}</b>K/D</div><div><b>${f0(m.hs)}%</b>HS</div><div><b>${f0(m.adr)}</b>ADR</div></div>
+      <div class="minis"><div><b>${f2(m.kd)}</b>${ab("kd")}</div><div><b>${f0(m.hs)}%</b>${ab("hs")}</div><div><b>${f0(m.adr)}</b>${ab("adr")}</div></div>
       ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
+      <div class="open">Open details ›</div>
     </div>`).join("")}</div>
+  <div id="mapPanel"></div>
   <div class="cards c2">
     <div class="card"><h4>Does good aim mean I win?</h4><p>Every dot is a match. Pink = won, grey = lost.</p><div class="chart"><canvas id="scatter"></canvas></div></div>
     <div class="card"><h4>Headshot % per map</h4><p>My average is ${f0(s.hs)}%.</p><div class="chart"><canvas id="hsMap"></canvas></div></div>
   </div>`;
 
 const squadPage = `
-  <h1>Squad</h1>
-  <p class="lead">Which teammates help me win? People who were on my FACEIT team at least 2 times.</p>
+  <h1>Find teammates</h1>
+  <p class="lead">I mostly play solo. These are players from my own FACEIT matches that I win with, so I can invite them again.</p>
   <div class="cards"><div class="card vs">
     <div><div class="lab">With a friend</div><div class="big" style="color:var(--pink)">${pct(D.friends.with)}</div><div class="lab">${D.friends.with_games} games</div></div>
     <div class="x">VS</div>
     <div><div class="lab">Only strangers</div><div class="big">${pct(D.friends.without)}</div><div class="lab">${D.friends.without_games} games</div></div>
   </div></div>
-  <div class="cards c3">${D.squad.length ? D.squad.map((m, i) => `
+  <div class="cards"><div class="card"><h4>Players to queue with</h4>
+    <p>These players were on your team in your own FACEIT matches at least 2 times. Open their FACEIT profile and add them as a friend so you don't have to play solo.</p>
+    <p class="note">There is no public player search in the FACEIT data this app uses, so this list only comes from your own matches.</p></div></div>
+  <div class="cards c3">${(D.partners || []).length ? D.partners.map((m, i) => `
     <div class="card" style="animation-delay:${i * 70}ms"><div class="rank">#${i + 1}</div>
-      <div class="av">${esc(m.name.slice(0, 1).toUpperCase())}</div>
-      <h3>${esc(m.name)}</h3><p>${m.games} games together · my K/D ${f2(m.kd)}</p>
-      ${bar(m.win_rate, `${Math.round(m.win_rate * m.games)} / ${m.games}`)}
-    </div>`).join("") : `<div class="card"><p class="empty">No repeat teammates in these matches yet.</p></div>`}</div>`;
+      ${m.level != null ? `<span class="lvl sm" title="FACEIT level">${m.level}</span>` : `<div class="av">${esc(m.name.slice(0, 1).toUpperCase())}</div>`}
+      <h3>${esc(m.name)}</h3><p>${m.games} games together · ${m.wins} won · my ${ab("kd")} ${f2(m.my_kd)}</p>
+      ${bar(m.win_rate, `${m.wins} / ${m.games}`)}
+      <a class="mate-link" href="${esc(m.url)}" target="_blank" rel="noopener">Open FACEIT profile ↗</a>
+    </div>`).join("") : `<div class="card"><p class="empty">No player was on your team twice yet. Every new match can add one.</p></div>`}</div>`;
 
 const wins = D.recent.filter(r => r.won).slice(0, 5);
 const ringC = 2 * Math.PI * 70;
@@ -477,6 +609,55 @@ const progressPage = `
     <div class="card"><h4>K/D by hour</h4><p>Do I play worse late at night?</p><div class="chart"><canvas id="hourChart"></canvas></div></div>
   </div>`;
 
+/* TACTICS: play style from numbers FACEIT and Leetify really send. Nothing is guessed. */
+const TRAIN = {
+  entry: ["Take the first fight only with a flash from a teammate, or let your entry player go first and trade them.", "You win most opening fights. Ask your team for the entry spot."],
+  clutch: ["In a 1vX, check the clock, use sound, and fight one enemy at a time instead of peeking two.", "You stay calm when you are last alive. Keep playing for time and information."],
+  flash: ["Learn 2 pop-flashes for your favourite map in a private server and use them before every peek.", "Your flashes blind enemies. Throw them for your teammates before they peek."],
+};
+const LT_TRAIN = {
+  aim: "15 minutes of Deathmatch before you queue. Keep your crosshair at head height.",
+  positioning: "After each death ask: could a teammate trade me? Hold angles closer to your team.",
+  utility: "Learn 2 smokes and 2 flashes for the site you play most on your best map.",
+};
+function tacticsPage() {
+  const T = D.tactics || [];
+  const fmt = t => t.fmt === "pct" ? pct(t.value) : (isNum(t.value) ? t.value.toFixed(t.value < 10 ? 2 : 1) : "–");
+  const tagOf = t => t.good === true ? `<span class="tag str">STRENGTH</span>` : t.good === false ? `<span class="tag work">WORK ON THIS</span>` : `<span class="tag info">INFO</span>`;
+  const gk = { entry: "entry", clutch: "clutch", flash: "flash", util: "util", multi: "multi", awp: "awp" };
+  const strong = T.filter(t => t.good === true), weak = T.filter(t => t.good === false);
+  const sk = ["aim", "positioning", "utility"].filter(k => isNum(LR[k]));
+  const ltBest = sk.length === 3 ? sk.reduce((a, b) => LR[b] > LR[a] ? b : a) : null;
+  const ltWorst = sk.length === 3 ? sk.reduce((a, b) => LR[b] < LR[a] ? b : a) : null;
+  const bestName = strong.length ? strong[0].title : ltBest ? `${LT_NAMES[ltBest][0]} (Leetify)` : null;
+  const worstName = weak.length ? weak[0].title : ltWorst ? `${LT_NAMES[ltWorst][0]} (Leetify)` : null;
+  const trainTxt = weak.length && TRAIN[weak[0].key] ? TRAIN[weak[0].key][0] : ltWorst ? LT_TRAIN[ltWorst] : null;
+  const intro = `<h1>Tactics</h1><p class="lead">How do I play? Real tactics (positions, rotations) need demo files. This page only uses play-style numbers that FACEIT${LT_OK ? " and Leetify" : ""} really send, and says how each one is counted.</p>`;
+  if (!T.length && !sk.length) return `${intro}<div class="cards"><div class="card"><p class="empty">FACEIT did not send play-style numbers (opening duels, clutches, flashes) for these matches${L ? "" : ", and Leetify is off"}.</p>
+    <p class="note">Open Profile → Data check and send a screenshot, so I can see which fields exist.</p></div></div>`;
+  const summary = `<div class="cards"><div class="card"><div class="sum3">
+      <div><div class="lab">What you do best</div><div class="val" style="color:var(--good)">${esc(bestName || "Not enough data")}</div></div>
+      <div><div class="lab">Weakest</div><div class="val" style="color:var(--bad)">${esc(worstName || "Nothing below the mark")}</div></div>
+      <div><div class="lab">Train this week</div><div class="val plain">${esc(trainTxt || "Keep doing what works.")}</div></div>
+    </div></div></div>`;
+  const faceitCards = T.length ? `<div class="cards c3">${T.map((t, i) => `
+    <div class="card faceit tip" style="animation-delay:${i * 70}ms">${srcline("FACEIT", "var(--faceit)")}${tagOf(t)}
+      <h4>${ab(gk[t.key] || "", esc(t.title))}</h4><div class="tv">${fmt(t)}</div>
+      <p class="how">${esc(t.how)}</p>
+      ${t.extra && isNum(t.extra.wr_with_entry) && isNum(t.extra.wr_without_entry) ? `<p style="margin-top:10px">Win rate when you win at least one entry: <b>${pct(t.extra.wr_with_entry)}</b>. Without: <b>${pct(t.extra.wr_without_entry)}</b>.</p>` : ""}
+      ${TRAIN[t.key] && t.good != null ? `<div class="do"><b>${t.good ? "Keep it:" : "Train:"}</b> ${TRAIN[t.key][t.good ? 1 : 0]}</div>` : ""}
+    </div>`).join("")}</div>
+    <p class="note">Strength / Work on this uses simple marks: opening duels 50%, clutches and flashes 40%. Those marks are this app's choice, not FACEIT's.</p>`
+    : `<div class="cards"><div class="card faceit"><p class="empty">FACEIT did not send opening-duel, clutch or flash numbers for these matches.</p></div></div>`;
+  const ltPart = LT_OK && Object.keys(LR).length ? `<div class="cards c2"><div class="card leetify">${srcline("Leetify skill scores", "#F84982")}
+      ${ltRatings()}
+      ${ltBest ? `<p style="margin-top:14px">Highest of ${ab("lskills")}: <b>${LT_NAMES[ltBest][0]}</b> (${raw(LR[ltBest])}). Lowest: <b>${LT_NAMES[ltWorst][0]}</b> (${raw(LR[ltWorst])}).</p>
+        <div class="do"><b>Train:</b> ${LT_TRAIN[ltWorst]}</div>` : ""}
+      <p class="note">Values exactly as Leetify returns them. Only Aim, Positioning and Utility are compared with each other, because they share one scale.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div></div>` : "";
+  return intro + summary + faceitCards + ltPart;
+}
+
 /* PREMIER: from Leetify, shown exactly as returned, with the Leetify badge */
 function premierPage() {
   const intro = `<h1>Premier</h1><p class="lead">My CS2 Premier rating and matches. Separate from FACEIT. Premier data comes from Leetify, exactly as Leetify returns it.</p>`;
@@ -492,7 +673,7 @@ function premierPage() {
     </ul>${L.matches_message ? `<p class="na" style="margin-top:10px">${esc(L.matches_message)}</p>` : ""}</details>`;
   if (!LT_OK) return `${intro}<div class="cards c2"><div class="card premier"><p>${esc(L.message)}</p><div style="margin-top:16px">${ltBadge(true)}</div></div>${details}</div>`;
   const rows = (L.matches || []).map(m => `<tr><td>${raw(m.finished_at)}</td><td>${raw(m.map_name)}</td><td>${raw(m.data_source)}</td>
-      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td></tr>`).join("");
+      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td><td>${raw(m.leetify_rating)}</td></tr>`).join("");
   return `${intro}
     <div class="cards c2">
       <div class="card premier">${srcline("CS2 Premier rating", "var(--premier)")}
@@ -503,7 +684,7 @@ function premierPage() {
         <p class="note">Leetify data is fetched fresh on every visit and is not stored by this app.</p></div>
     </div>
     <div class="cards"><div class="card" style="overflow-x:auto"><h4>Matches</h4>
-      ${rows ? `<table><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>K/D ratio</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}
+      ${rows ? `<table><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>${ab("kd", "K/D ratio")}</th><th>${ab("lrating")}</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}
       <div style="margin-top:16px">${ltBadge(false)}</div></div></div>
     <div class="cards">${details}</div>`;
 }
@@ -552,6 +733,7 @@ $("#app").innerHTML = `
   ${pageWrap("briefing", 11, { light: .55, lx: 30, cool: true }, briefing)}
   ${pageWrap("matches", 7, { light: .6, lx: 80 }, matchesPage)}
   ${pageWrap("maps", 19, { light: .5, lx: 55, cool: true }, mapsPage)}
+  ${pageWrap("tactics", 31, { light: .55, lx: 50, cool: true }, tacticsPage())}
   ${pageWrap("squad", 23, { light: .65, lx: 75 }, squadPage)}
   ${pageWrap("progress", 5, { light: .5, lx: 85, cool: true }, progressPage)}
   ${pageWrap("premier", 37, { light: .5, lx: 40, cool: true }, premierPage())}
@@ -599,16 +781,15 @@ function charts(id) {
   Chart.defaults.color = "#A898A8"; Chart.defaults.font.family = "Barlow";
   const grid = { color: "rgba(255,255,255,0.06)" };
   if (id === "matches") {
-    const ctx = $("#kdChart").getContext("2d");
-    const g = ctx.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, "rgba(255,79,163,.35)"); g.addColorStop(1, "rgba(255,79,163,0)");
-    new Chart(ctx, { type: "line", data: { labels: D.kd.map(x => x.n), datasets: [
-      { label: "K/D per match", data: D.kd.map(x => x.kd), borderColor: "rgba(247,238,244,.35)", borderWidth: 1.5, tension: .25,
-        pointRadius: 3, pointBackgroundColor: D.kd.map(x => x.won ? "#FF4FA3" : "#6A5D6A") },
-      { label: "Average of last 10", data: D.kd.map(x => x.avg10), borderColor: "#FF4FA3", borderWidth: 4, pointRadius: 0, fill: true, backgroundColor: g, tension: .4 },
-      { label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.3)", borderDash: [5, 5], borderWidth: 1, pointRadius: 0 },
-    ]}, options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
-      plugins: { tooltip: { callbacks: { title: i => `Match ${D.kd[i[0].dataIndex].n} · ${D.kd[i[0].dataIndex].map}` } } },
-      scales: { x: { grid, title: { display: true, text: "Match (oldest → newest)" } }, y: { grid } } } });
+    new Chart($("#kdChart"), { data: { labels: D.kd.map(x => x.n), datasets: [
+      { type: "bar", label: "K/D", data: D.kd.map(x => x.kd), backgroundColor: D.kd.map(x => x.won ? "#FF4FA3" : "#6A5D6A"), borderRadius: 2, order: 2 },
+      { type: "line", label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.6)", borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0, order: 1 },
+    ]}, options: { maintainAspectRatio: false, plugins: { legend: { display: false },
+      tooltip: { filter: i => i.datasetIndex === 0, callbacks: {
+        title: i => `Game ${D.kd[i[0].dataIndex].n} · ${D.kd[i[0].dataIndex].map}`,
+        label: c => `K/D ${c.raw.toFixed(2)} · ${D.kd[c.dataIndex].won ? "Win" : "Loss"}` } } },
+      scales: { x: { grid: { display: false }, title: { display: true, text: "Game (oldest → newest)" }, ticks: { maxTicksLimit: 12 } },
+        y: { grid, beginAtZero: true, title: { display: true, text: "K/D" } } } } });
   }
   if (id === "maps") {
     new Chart($("#scatter"), { type: "scatter", data: { datasets: [
@@ -627,6 +808,52 @@ function charts(id) {
         scales: { y: { grid }, x: { grid: { display: false } } } } });
   }
 }
+
+/* ---------- map detail panel ---------- */
+function openMap(name) {
+  const m = (D.map_details || {})[name], box = $("#mapPanel");
+  document.querySelectorAll(".mapcard").forEach(c => c.classList.toggle("sel", c.dataset.map === name && !!m));
+  if (!m) { box.innerHTML = ""; return; }
+  const b = m.best;
+  box.innerHTML = `<div class="cards"><div class="card">
+    <div class="mp-head"><div><span class="tag best" style="background:var(--violet)">MAP DETAILS</span><h3>${esc(name)}</h3></div><button class="mp-close" type="button">Close ✕</button></div>
+    <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">
+      <div><b><span style="color:var(--pink)">${m.wins}W</span> · ${m.losses}L</b>${m.games} games</div><div><b>${pct(m.win_rate)}</b>${ab("wr", "win rate")}</div>
+      <div><b>${f2(m.kd)}</b>${ab("kd")}</div><div><b>${f0(m.adr)}</b>${ab("adr")}</div><div><b>${f0(m.hs)}%</b>${ab("hs")}</div>
+      <div><b>${m.kills} · ${m.deaths}</b>kills · deaths per game</div></div>
+    ${m.tip ? `<div class="do"><b>Tip:</b> ${esc(m.tip)}</div>` : ""}
+    <div class="cards c2" style="margin-top:22px">
+      <div><h4>Best game here</h4><p>${esc(b.date)} · <span class="res ${b.won ? "w" : "l"}">${b.won ? "WIN" : "LOSS"}</span>${b.score ? ` · ${esc(b.score)}` : ""}</p>
+        <div class="minis"><div><b>${f0(b.kills)}-${f0(b.deaths)}-${f0(b.assists)}</b>${ab("kda", "K-D-A")}</div><div><b>${f2(b.kd)}</b>${ab("kd")}</div><div><b>${f0(b.adr)}</b>${ab("adr")}</div></div></div>
+      <div style="overflow-x:auto"><h4>Last ${m.recent.length} games here</h4><table>
+        <tr><th>Date</th><th>Result</th><th>${ab("kd")}</th><th>${ab("adr")}</th></tr>
+        ${m.recent.map(r => `<tr><td>${esc(r.date)}</td><td><span class="res ${r.won ? "w" : "l"}">${r.won ? "WIN" : "LOSS"}</span></td>
+          <td style="color:${r.kd >= 1 ? "var(--good)" : "var(--bad)"}">${f2(r.kd)}</td><td>${f0(r.adr)}</td></tr>`).join("")}</table></div>
+    </div>
+    <p class="note">FACEIT matches only.</p></div></div>`;
+  $(".mp-close", box).addEventListener("click", () => openMap(null));
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.querySelectorAll(".mapcard").forEach(c => {
+  c.addEventListener("click", () => openMap(c.classList.contains("sel") ? null : c.dataset.map));
+  c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); c.click(); } });
+});
+
+/* ---------- tooltips ---------- */
+const tipbox = document.createElement("div"); tipbox.id = "tipbox"; document.body.appendChild(tipbox);
+function showTip(el) {
+  tipbox.textContent = el.dataset.tip; tipbox.classList.add("on");
+  const r = el.getBoundingClientRect(), w = tipbox.offsetWidth, h = tipbox.offsetHeight;
+  const x = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  const y = r.top - h - 8 < 4 ? r.bottom + 8 : r.top - h - 8;
+  tipbox.style.left = x + "px"; tipbox.style.top = y + "px";
+}
+const hideTip = () => tipbox.classList.remove("on");
+document.addEventListener("mouseover", e => { const t = e.target.closest(".tt"); t ? showTip(t) : hideTip(); });
+document.addEventListener("focusin", e => { const t = e.target.closest(".tt"); if (t) showTip(t); });
+document.addEventListener("focusout", hideTip);
+document.addEventListener("click", e => { const t = e.target.closest(".tt"); if (t) { e.stopPropagation(); showTip(t); } else hideTip(); }, true);
+window.addEventListener("scroll", hideTip, { passive: true });
 
 /* ---------- navigation ---------- */
 function go(id) {
