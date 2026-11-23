@@ -23,7 +23,7 @@ TODO (after the experiment): one sentence with the main result.
 | **What problem do I solve?** | Players have lots of match data but no clear advice. FACEIT shows lists, not answers to "where, when and with whom do I play best?" |
 | **Who benefits?** | (1) Me: I want to win more and climb FACEIT levels. (2) My friends I play with: they can type their own nickname in the app. (3) Any amateur FACEIT player who doesn't want to pay for a coaching tool. |
 | **What decision does the data support?** | Choices before and between matches: which map to pick or ban, what time to stop playing, whether to queue with a friend, when to take a break after a loss. |
-| **How do I know it works?** | A before/after experiment: follow one tip for 15 matches and compare with the 15 matches before (see [experiments.md](experiments.md#experiment-7-no-faceit-after-2300-beforeafter)). |
+| **How do I know it works?** | A before/after experiment: follow one tip for 10 matches and compare with the 10 matches before (see [experiments.md](experiments.md#experiment-7-no-faceit-after-2300-beforeafter)). |
 | **Value** | Free, personal, explained in normal words. Paid tools (for example Leetify Pro) exist, so there is a real need for this kind of help. |
 
 **Why this project:** it is about something I really care about (fun criterion), it uses my own real data, and it ends in a concrete decision, which is the point of the minor.
@@ -41,7 +41,7 @@ TODO (after the experiment): one sentence with the main result.
   5. Does good aim actually mean I win?
   6. Do I play worse right after a loss (tilt)?
 - **Success criterion (data mining):** the app gives at least one tip that is based on ≥ 3 games per group and that I can test.
-- **Success criterion (business):** after following one tip for 15 matches, my win rate or K/D is better than in the 15 matches before. TODO: was it?
+- **Success criterion (business):** after following one tip for 10 matches, my win rate or K/D is better than in the 10 matches before. TODO: was it?
 - **Inspiration from the videos:** the data storytelling video (question → evidence → conclusion → action) and the CS2 "aged like fine wine" analysis (a weighted score plus a trend over time). See [video-choice.md](video-choice.md).
 
 Details: [topic-analysis.md](topic-analysis.md).
@@ -91,7 +91,7 @@ I did not train a machine-learning model; with ~60–100 matches that would over
 - **Feedback from a real user:** TODO: show the app to a friend; what did they understand, what was confusing?
 - **Real decision test:** Experiment 7 in [experiments.md](experiments.md). TODO: fill in the results table and conclusion.
 - **Limits of my evaluation:**
-  - Small samples (15 vs 15 matches): a difference can be luck.
+  - Small samples (10 vs 10 matches): a difference can be luck.
   - Correlation is not causation: late-night games may also have other opponents.
   - Teammates and opponents change every match.
 

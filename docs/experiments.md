@@ -55,10 +55,10 @@ This is the **real data-driven decision** of my project: I follow one coach tip 
 ### 3. Design
 | | Before (baseline) | After (with the rule) |
 |---|---|---|
-| Matches | my **last 15** FACEIT matches before the start date | my **next 15** FACEIT matches after the start date |
+| Matches | my **last 10** FACEIT matches before the start date | my **next 10** FACEIT matches after the start date |
 | Where I get the numbers | Matches page in the app (or FACEIT match page) | same |
 
-15 vs 15 is small, but it's what I can play in about 1–2 weeks. If there's time, I go up to 20 vs 20.
+10 vs 10 is small, but it's what I can play in about one week. If there's time, I go up to 15 vs 15.
 
 ### 4. What I measure
 | Metric | What it means | Why |
@@ -69,7 +69,7 @@ This is the **real data-driven decision** of my project: I follow one coach tip 
 | **HS %** | % of kills that were headshots | aim quality |
 | **Elo change** | Elo at end − Elo at start | does it help me climb? |
 
-### 5. Data: before (last 15 matches)
+### 5. Data: before (last 10 matches)
 | # | Date | Start time | Map | Won? (W/L) | K/D | ADR | HS % |
 |---|---|---|---|---|---|---|---|
 | 1 | | | | | | | |
@@ -82,13 +82,8 @@ This is the **real data-driven decision** of my project: I follow one coach tip 
 | 8 | | | | | | | |
 | 9 | | | | | | | |
 | 10 | | | | | | | |
-| 11 | | | | | | | |
-| 12 | | | | | | | |
-| 13 | | | | | | | |
-| 14 | | | | | | | |
-| 15 | | | | | | | |
 
-### 6. Data: after (next 15 matches)
+### 6. Data: after (next 10 matches)
 | # | Date | Start time | Map | Won? (W/L) | K/D | ADR | HS % | Broke rule? |
 |---|---|---|---|---|---|---|---|---|
 | 1 | | | | | | | | |
@@ -101,11 +96,6 @@ This is the **real data-driven decision** of my project: I follow one coach tip 
 | 8 | | | | | | | | |
 | 9 | | | | | | | | |
 | 10 | | | | | | | | |
-| 11 | | | | | | | | |
-| 12 | | | | | | | | |
-| 13 | | | | | | | | |
-| 14 | | | | | | | | |
-| 15 | | | | | | | | |
 
 ### 7. Results
 | Metric | Before | After | Difference (after − before) |
@@ -116,11 +106,11 @@ This is the **real data-driven decision** of my project: I follow one coach tip 
 | Average HS % | | | |
 | Elo change | | | |
 
-How to calculate: win rate = wins ÷ 15 × 100; averages = sum of the column ÷ 15.
+How to calculate: win rate = wins ÷ 10 × 100; averages = sum of the column ÷ 10.
 
 ### 8. Conclusion
 - **Was my hypothesis right?** _[TODO]_
-- **Could it be luck?** With 15 matches, one or two lucky games change the win rate by 7–13 %. A difference of only a few % says almost nothing. _[TODO: is your difference big or small?]_
+- **Could it be luck?** With 10 matches, one lucky game changes the win rate by 10 %, two by 20 %. A difference of only a few % says almost nothing. _[TODO: is your difference big or small?]_
 - **Other things that changed:** _[TODO: new friends in the team, different maps, a new CS update, exams, work shifts…]_
 - **My decision:** _[TODO: keep the rule, drop it, or test longer?]_
 
