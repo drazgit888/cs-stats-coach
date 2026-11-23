@@ -14,6 +14,7 @@ Fill in the _[RESULT]_ parts by looking at the live app with your real data.
 - **Problem found:** In the first version, both lines had almost the same blue colour (see screenshot `images/v1-live-app.png`). → Made the average line thick and orange.
 - **Result:** _[RESULT: is the orange line going up, down or flat?]_
 - **Learned:** Raw data is noisy; an average shows the trend. Colour choices matter for the story.
+- **Later change:** in v6 the average line changed from orange to pink to match my new design (orange is now only for FACEIT). In v7 I replaced the line chart with one bar per game (pink = win, grey = loss) and a dashed K/D = 1 line, because on my phone the lines were still confusing.
 
 ## Experiment 3: Do I play worse late at night?
 - **Hypothesis:** _[YOUR GUESS before looking: e.g. "I think I play worse after 23:00 because I'm tired."]_

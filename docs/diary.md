@@ -103,3 +103,53 @@
 - **How I tested it:** 53 automatic checks with fake answers (good data, wrong key, no profile, rate limit, timeout, no internet). My FACEIT numbers were exactly the same before and after.
 - **Picture:** `images/leetify-page-test-data.png` (made with test data, not my real numbers)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-20: Version 5 – a real analytics product (Profile page first)
+- **Why:** v4 looked like a game poster. I wanted it to feel like a premium esports analytics platform (FACEIT, Leetify, HLTV style), with my own avatar colours: charcoal, violet and magenta.
+- **How I worked:** in phases. First an audit of the old design and a written proposal with colours (HEX codes), fonts and a profile layout. I approved it, then the Profile page and the design system were built. The other pages get the full treatment after my review.
+- **What changed:**
+  - A **sidebar menu** grouped into Player, Performance, Sources and Media, and a top bar that shows which sources are live
+  - A new **Profile** start page: avatar, FACEIT level and Elo, Premier and Leetify ratings, Steam status, my key stats, a trend chart I can switch (K/D, win rate, ADR, HS%), a Leetify radar (Aim, Positioning, Utility), recent matches compared with my own average, and my top 3 coach tips
+  - **Each source has its own colour** (FACEIT orange, Leetify pink, Steam blue, Premier cyan). Orange is now only for FACEIT.
+  - Wins are green and losses red; the drawn background scenes and the big italic font are gone
+  - New **Premier** and **Steam** pages that honestly say what is and isn't available
+- **Rules I kept:** no made-up numbers ("Not available" instead), Leetify numbers exactly as Leetify gives them with the official badge, no Elo history line because FACEIT doesn't give Elo per match, no API keys in the page.
+- **How I tested it:** 17 automatic checks (`tests/`), e.g. the page still gets all its data, no key ends up in the page, Leetify values are unchanged. Screenshots on laptop, tablet and phone width with test data.
+- **Pictures:** `images/v5-profile-test-data.png`, `images/v5-profile-mobile-test-data.png`, `images/v5-maps-test-data.png`, `images/v5-leetify-test-data.png`, `images/v5-profile-leetify-off-test-data.png` (made with test data, not my real numbers)
+- **Design system:** [design-system.md](design-system.md)
+- **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-21: Steam connected – my CS2 hours
+- **Why:** my profile showed "Steam: Not connected". I wanted my real CS2 playtime on the profile.
+- **What I did:** made a Steam Web API key, put it in the app's Secrets (`STEAM_API_KEY`, plus `STEAM_ID`) and set my Steam "Game details" to Public.
+- **What was built:** a Steam part in `sources.py`, separate from FACEIT and Leetify. The Profile now shows my total CS2 hours and hours in the last 2 weeks, and the Steam page shows my Steam profile and playtime. If Steam is down or private, the page says so and FACEIT keeps working.
+- **How I tested it:** 13 extra automatic checks with fake Steam answers (normal, private game details, CS2 not in library, wrong key, rate limit, no internet), including that the key never ends up in the page. Then I checked it live in my own app.
+- **Picture:** `images/v5-steam-test-data.png` (test data)
+- **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-21: Version 6 – back to the poster, now in pink
+- **What happened:** I looked at v5 in my test app and didn't like it: it felt too mixed together and less like a game. I also found the coach tips too general.
+- **My decisions:**
+  - Go back to the v4 poster design (top menu, big italic titles, icon cards, drawn backgrounds), but in the colours of my avatar: charcoal and hot pink, with violet as second colour. Orange is only for FACEIT now.
+  - Only **two main numbers matter: FACEIT and Premier.** Leetify was only connected to get my Premier data, so Leetify's own scores (aim, positioning, utility) are not shown anymore.
+  - One topic per page. Profile = me + one separate block for FACEIT, Premier and Steam.
+- **Concrete coach points:** the Briefing now says things like "you win 25% on Ancient (4 games) against 48% overall, your ADR there is 73 (usually 84)" with one "Do this" action and how many games it is based on. New checks: hardest/best map, do I lose by dying more or killing less, after 23:00, long sessions, tilt after two losses, last 10 games vs before, best teammate. A point only appears with 3+ games.
+- **What I learned:** trying a design and rejecting it is also a result. v5 was more "professional" but v4's style fits me and my project better. Asking myself "what are my 2 main numbers?" made the site simpler.
+- **Tests:** 34 automatic checks pass (also: no Leetify scores on the page, the Leetify badge stays next to Premier, coach points always have numbers and 3+ games).
+- **Pictures:** `images/v6-home-test-data.png`, `images/v6-profile-test-data.png`, `images/v6-briefing-test-data.png`, `images/v6-premier-test-data.png`, `images/v6-maps-test-data.png`, `images/v6-profile-mobile-test-data.png` (test data)
+- **What I think / what friends think:** _[YOUR WORDS]_
+
+## 2026-11-22: Version 7 – 7 things I changed after testing on my phone
+- **What happened:** I looked at the v6 test site on my phone and wrote down 7 things I didn't like. For each one I first asked what is possible with the data and what is not.
+- **The 7 changes:**
+  1. **Leetify on my own site.** Aim, Positioning, Utility, Clutch, Opening and the Leetify Rating per match are now shown on the site, exactly as Leetify sends them (not stored, not recalculated), with the official badge.
+  2. **Glossary.** Every page ends with "What do these words mean?" (K/D, ADR, HS%, Elo…). Short words also have a tooltip when you hover or tap them.
+  3. **Simpler chart.** The confusing line chart is now one bar per game: pink = win, grey = loss, a dashed line at K/D = 1, and one sentence explaining it.
+  4. **Best vs worst game.** Two cards side by side (picked by K/D, ADR breaks a tie) and a sentence comparing them.
+  5. **Find teammates.** I mostly play solo. FACEIT has no public player search in the data I use, so the page lists players who were on my team 2+ times, with their FACEIT level, wins together and a link to their profile.
+  6. **Clickable maps.** Tapping a map opens a panel: wins/losses, K/D, ADR, HS%, my last games there, my best game there and a tip.
+  7. **Tactics page.** Real tactics need demo files, so this page only uses play-style numbers FACEIT/Leetify really send (opening duels, clutches, flashes, utility damage, multi-kills) and says how each one is counted, what I do best, what is weakest and what to train. If a field is missing, it is not shown.
+- **What is not possible (and why):** a real social network or player search, Elo history per match, and real positioning/rotation analysis (needs demos).
+- **Tests:** 45 automatic checks pass (new: best/worst rule, map details match the raw games, teammates need 2+ games, tactics are counted from the real fields and disappear when FACEIT doesn't send them, Leetify values only shown "as returned").
+- **Pictures:** `images/v7-d-profile-test-data.png`, `images/v7-d-matches-test-data.png`, `images/v7-d-tactics-test-data.png`, `images/v7-d-squad-test-data.png`, `images/v7-m-maps-test-data.png`, `images/v7-p-tactics-test-data.png` (test data, not my real numbers)
+- **What I think / what I learned:** _[YOUR WORDS]_

@@ -10,6 +10,7 @@
 | [methods.md](methods.md) | Tools, steps and analysis methods |
 | [experiments.md](experiments.md) | Experiments log, including the before/after test "no FACEIT after 23:00" |
 | [presentation-outline.md](presentation-outline.md) | Plan for my 15-minute video |
+| [design-system.md](design-system.md) | The v5 design system: colours, fonts, spacing, source colours |
 | [images/](images/) | Screenshots of each version |
 
 Spots marked **TODO**, _[YOUR WORDS]_ or _[FILL IN]_ are for me to complete.
