@@ -855,7 +855,7 @@ const highlightsPage = `
 
 $("#app").innerHTML = `
   <div class="top">
-    <div class="logo">CS<span>/</span>SC</div>
+    <div class="logo">BUSIKS&nbsp;<span style="color:var(--text)">CS</span><span>&nbsp;/&nbsp;</span>SC</div>
     <div class="links">${pages.map(([id, t]) => `<button data-go="${id}" class="${id === "home" ? "on" : ""}">${t}</button>`).join("")}</div>
     ${p.url ? `<a class="btn-out" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.nickname)} ↗</a>` : `<span class="btn-out">${esc(p.nickname)}</span>`}
   </div>
