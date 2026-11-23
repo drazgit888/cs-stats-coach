@@ -161,3 +161,20 @@
 - **Tests:** 46 automatic checks, including that these per-game values pass through unchanged.
 - **Picture:** `images/v7-tactics-leetify-games-test-data.png` (test data)
 - **What I think:** _[YOUR WORDS]_
+
+## 2026-11-23: My 10-point review of the live site
+- **What happened:** after v7 went live I went through every page and wrote 10 points: too much text always open, Premier had no stats next to FACEIT, Leetify looked like a boring list, some charts were empty or unclear, the Premier page had almost no information, and I didn't want my 2-week playtime visible.
+- **What changed:**
+  - "What do these words mean?" is now closed by default on every page and opens when you tap it.
+  - Home and Profile show Premier win rate, K/D, HS%, ADR and streak next to FACEIT. These are calculated by the site from the kills, deaths, headshots, damage and rounds Leetify sends for each Premier game (Leetify's own ratings are never changed). FACEIT and Premier stay in separate blocks.
+  - Leetify on Profile now looks more like leetify.com: a rating circle, Aim/Positioning/Utility squares with 0–100 bars, and "Top stats" cards (reaction time, preaim, head accuracy, counter-strafing, trades, flashes) with the last game's value and a mini line of the last 10 games.
+  - Steam shows only total hours.
+  - Maps: the confusing scatter plot is gone; one chart shows wins and losses per map.
+  - Tactics: donut of multi-kill rounds, radar of Aim/Positioning/Utility, Leetify Rating per game and reaction time per game.
+  - Progress: "K/D by hour" (empty on the live site) became "K/D by time of day" with the number of games under each bar.
+  - Premier: my Premier stats, Leetify Rating per game, kills vs deaths per game, a donut of which maps I play and win rate per map, and readable dates.
+  - Charts are now drawn one by one, so if one fails the page shows a short message instead of an empty box.
+- **What is not possible:** Premier rating history and "better than X% of players" are only on leetify.com, not in their public API.
+- **Tests:** 50 automatic checks (new: Premier stats only count Premier games and match the raw kills/deaths, Leetify ratings unchanged, 2-week hours never reach the page).
+- **Pictures:** `images/v8-d-profile-test-data.png`, `images/v8-d-premier-test-data.png`, `images/v8-d-tactics-test-data.png`, `images/v8-d-progress-test-data.png`, `images/v8-d-maps-test-data.png`, `images/v8-m-home-test-data.png` (test data)
+- **What I think:** _[YOUR WORDS]_

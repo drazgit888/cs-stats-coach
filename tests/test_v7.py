@@ -88,3 +88,29 @@ def test_tactics_are_counted_from_the_fields(app, rich):
     assert all(t["how"] for t in rich["tactics"])
     assert {t["key"] for t in rich["tactics"]} <= {"entry", "clutch", "flash", "util", "multi", "awp"}
     assert "awp" not in {t["key"] for t in rich["tactics"]}  # no sniper field in the test data, so no card
+
+
+def test_premier_summary_only_counts_premier_games(rich):
+    from helpers import FAKE_LEETIFY_MATCHES
+    ps = rich["leetify"]["premier_stats"]
+    prem = [m for m in FAKE_LEETIFY_MATCHES if m["data_source"] == "matchmaking" and "rounds_won" in m["stats"][0]]
+    assert ps["games"] == len(prem)
+    assert ps["wins"] == sum(m["stats"][0]["rounds_won"] > m["stats"][0]["rounds_lost"] for m in prem)
+    k = sum(m["stats"][0]["total_kills"] for m in prem)
+    d = sum(m["stats"][0]["total_deaths"] for m in prem)
+    assert ps["kd"] == round(k / d, 2)
+    assert sum(v["games"] for v in ps["maps"].values()) == ps["games"]
+
+
+def test_leetify_ratings_in_rows_unchanged(rich):
+    from helpers import FAKE_LEETIFY_MATCHES
+    for row, src in zip(rich["leetify"]["matches"], FAKE_LEETIFY_MATCHES):
+        assert row["leetify_rating"] == src["stats"][0]["leetify_rating"]
+
+
+def test_steam_two_week_hours_never_reach_the_page(rich):
+    assert "2weeks" not in json.dumps(rich["steam"])
+
+
+def test_tod_has_kd(rich):
+    assert all("kd" in t for t in rich["tod"])

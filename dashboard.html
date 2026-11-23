@@ -223,8 +223,7 @@ details.card[open] summary::after { content: " −"; }
   pointer-events: none; opacity: 0; transition: opacity .12s; box-shadow: 0 10px 30px -10px #000; }
 #tipbox.on { opacity: 1; }
 /* glossary at the bottom of each page */
-.gloss h4 { margin-bottom: 14px; }
-.gloss dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 26px; }
+.gloss dl { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 26px; }
 .gloss dt { font: 700 15px var(--head); letter-spacing: .08em; text-transform: uppercase; color: var(--pink-2); }
 .gloss dd { color: #cfc8be; font-size: 14px; line-height: 1.4; margin-top: 2px; }
 /* chart legend + caption */
@@ -263,6 +262,29 @@ table.lg td:first-child { white-space: normal; min-width: 150px; }
 .sum3 .val { font: italic 800 26px/1.1 var(--head); text-transform: uppercase; margin-top: 6px; }
 .sum3 .val.plain { font: 600 17px/1.4 Barlow, system-ui, sans-serif; text-transform: none; }
 .srcline + .tag { margin-left: 10px; }
+
+/* Leetify profile (circle + skill squares + top stats) */
+.lt-top { display: flex; gap: 30px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.lt-ring { position: relative; width: 130px; height: 130px; flex: none; }
+.lt-ring .rv { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font: italic 900 34px/1 var(--head); }
+.lt-ring .rv small { display: block; font: 600 11px Barlow, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; font-style: normal; }
+.skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+.skill { background: rgba(255,255,255,.03); border: 1px solid var(--card-line); border-radius: 6px; padding: 14px; }
+.skill .sv { font: italic 900 40px/1 var(--head); }
+.skill .bar { height: 6px; background: rgba(255,255,255,.1); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.skill .bar i { display: block; height: 100%; background: #F84982; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.chips span { border: 1px solid var(--card-line); border-radius: 3px; padding: 5px 10px; font-size: 13px; color: var(--muted); }
+.chips b { color: var(--text); margin-left: 6px; }
+.tops { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+.topc { background: rgba(255,255,255,.03); border: 1px solid var(--card-line); border-radius: 6px; padding: 14px; }
+.topc .lab { font: 700 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.topc .val { font: italic 900 30px/1 var(--head); margin: 8px 0 4px; }
+.topc svg { width: 100%; height: 38px; display: block; margin-top: 6px; }
+.topc .hint { font-size: 12px; color: var(--muted); }
+.chart.sm { height: 240px; }
+.chart-err { color: var(--muted); font-style: italic; padding: 20px 0; }
+@media (max-width: 700px) { .skills, .tops { grid-template-columns: 1fr 1fr; } }
 
 footer { position: relative; z-index: 2; padding: 22px 40px 30px; color: #6f6962; font: 600 13px var(--head); letter-spacing: .12em; text-transform: uppercase; border-top: 1px solid var(--card-line); }
 
@@ -414,23 +436,38 @@ const GL = {
   lutildeath: ["Utility on death", "Value of grenades you still had when you died. Lower means you used them."],
   ltrade: ["Trades", "Trade attempts / trades won: you kill the enemy who just killed a teammate. Traded deaths: a teammate killed your killer."],
   lsurv: ["Rounds survived", "Share of rounds you were still alive at the end."],
-  hours: ["Playtime", "Hours Steam counted for CS2. Steam sends minutes; this page shows them as hours."],
+  pcalc: ["Premier stats", "Win rate, K/D, HS% and ADR for Premier are calculated by this site from the kills, deaths, headshots, damage and rounds Leetify sends for each Premier game."],
+  hours: ["Playtime", "Total hours Steam counted for CS2. Steam sends minutes; this page shows them as hours."],
 };
 const ab = (k, txt) => GL[k] ? `<span class="tt" tabindex="0" data-tip="${esc(GL[k][1])}">${txt ?? GL[k][0]}</span>` : (txt ?? k);
 const GLP = {
-  home: ["elo", "level", "wr", "kd", "premier"],
-  profile: ["elo", "level", "wr", "kd", "hs", "adr", "streak", "premier", "lskills", "lclutch", "lside", "hours"],
+  home: ["elo", "level", "wr", "kd", "premier", "pcalc"],
+  profile: ["elo", "level", "wr", "kd", "hs", "adr", "streak", "premier", "pcalc", "lrating", "lskills", "lclutch", "lside", "lreact", "lpreaim", "lacc", "lstrafe", "ltrade", "lflash", "hours"],
   briefing: ["kd", "adr", "wr", "veto"],
   matches: ["kd", "kda", "hs", "adr", "score", "mvp", "multi"],
   maps: ["kd", "adr", "hs", "wr", "kda", "veto"],
   tactics: ["multi", "entry", "clutch", "flash", "util", "lgames", "lreact", "lpreaim", "lacc", "lstrafe", "lflash", "lutildeath", "ltrade", "lsurv", "lskills", "lclutch", "lside"],
   squad: ["level", "wr", "kd"],
   progress: ["elo", "level", "streak", "kd"],
-  premier: ["premier", "kd", "lrating"],
+  premier: ["premier", "pcalc", "kd", "hs", "adr", "lrating", "streak"],
   steam: ["hours"],
 };
-const glossary = id => (GLP[id] || []).length ? `<div class="cards"><div class="card gloss"><h4>What do these words mean?</h4><dl>
-  ${GLP[id].map(k => `<div><dt>${GL[k][0]}</dt><dd>${GL[k][1]}</dd></div>`).join("")}</dl></div></div>` : "";
+const glossary = id => (GLP[id] || []).length ? `<div class="cards"><details class="card gloss"><summary>What do these words mean?</summary><dl>
+  ${GLP[id].map(k => `<div><dt>${GL[k][0]}</dt><dd>${GL[k][1]}</dd></div>`).join("")}</dl></details></div>` : "";
+
+const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? esc(iso || "") :
+  d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Amsterdam" }); };
+const PS = LT_OK ? L.premier_stats : null;
+const PG = LT_OK ? (L.matches || []).filter(m => m.data_source === "matchmaking").slice().reverse() : [];  // Premier games, oldest → newest
+const LGAMES = LT_OK ? (L.matches || []).filter(m => m.game && Object.keys(m.game).length).slice(0, 10).reverse() : [];
+function spark(vals, color = "#F84982") {
+  const v = vals.filter(isNum); if (v.length < 2) return "";
+  const lo = Math.min(...v), hi = Math.max(...v), span = hi - lo || 1;
+  const pts = v.map((x, i) => `${(i / (v.length - 1)) * 100},${34 - ((x - lo) / span) * 30}`).join(" ");
+  const last = pts.split(" ").pop().split(",");
+  return `<svg viewBox="0 -2 100 40" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`;
+}
 
 /* ---------- pages ---------- */
 const pages = [
@@ -453,10 +490,10 @@ const home = `
   <p class="lead">A personal coach built from ${esc(p.nickname)}'s last ${s.matches} FACEIT matches${LT_OK ? " and Premier" : ""}. See what works, fix what doesn't, and level up.</p>
   <button class="cta" data-go="briefing">See your briefing <span>›</span></button>
   <div class="features">
-    <div class="feat">${icon("cross", "")}<div><div class="t" style="color:var(--faceit)">FACEIT · ${ab("level")} ${p.level ?? "?"}</div><div class="v" style="color:var(--faceit)" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
+    <div class="feat">${icon("cross", "")}<div><div class="t" style="color:var(--faceit)">FACEIT ${ab("elo")} · ${ab("level")} ${p.level ?? "?"}</div><div class="v" style="color:var(--faceit)" data-count="${p.elo ?? ""}" data-dec="0"></div><div class="s">${p.to_next != null ? p.to_next + " Elo to level " + (p.level + 1) : "Max level"}</div></div></div>
+    <div class="feat">${icon("bars", "")}<div><div class="t" style="color:var(--faceit)">FACEIT ${ab("wr", "win rate")} · ${ab("kd")}</div><div class="v" style="color:var(--faceit)">${pct(s.win_rate)} · ${f2(s.kd)}</div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
     <div class="feat">${icon("star", "")}<div><div class="t" style="color:var(--premier)">Premier</div>${PREM != null ? `<div class="v" style="color:var(--premier)">${raw(PREM)}</div><div class="s">rating · via Leetify</div>` : `<div class="v" style="color:var(--muted);font-size:20px">Not available</div><div class="s">${LT_OK ? "no rating returned" : "Leetify is off"}</div>`}</div></div>
-    <div class="feat">${icon("bars", "")}<div><div class="t">FACEIT ${ab("wr", "win rate")}</div><div class="v" data-count="${s.win_rate * 100}" data-dec="0" data-unit="%"></div><div class="s">${s.wins}W · ${s.losses}L</div></div></div>
-    <div class="feat">${icon("laurel", "")}<div><div class="t">FACEIT ${ab("kd")}</div><div class="v" data-count="${s.kd ?? ""}" data-dec="2"></div><div class="s">kills per death</div></div></div>
+    <div class="feat">${icon("laurel", "")}<div><div class="t" style="color:var(--premier)">Premier ${ab("wr", "win rate")} · ${ab("kd")}</div>${PS ? `<div class="v" style="color:var(--premier)">${pct(PS.win_rate)} · ${f2(PS.kd)}</div><div class="s">${PS.wins}W · ${PS.losses}L · last ${PS.games} Premier games</div>` : `<div class="v" style="color:var(--muted);font-size:20px">Not available</div><div class="s">no Premier games from Leetify</div>`}</div></div>
   </div>`;
 
 /* PROFILE: me + one separate block per source */
@@ -468,13 +505,20 @@ const faceitBlock = `<div class="card faceit">${srcline("FACEIT", "var(--faceit)
       <div><b>${f0(s.hs)}%</b>${ab("hs")}</div><div><b>${f0(s.adr)}</b>${ab("adr")}</div><div><b>${s.streak}${s.streak_win ? "W" : "L"}</b>${ab("streak")}</div>
     </div>
     <p class="note">Last ${s.matches} FACEIT matches.${p.url ? ` <a class="lt-link" style="color:var(--faceit)" href="${esc(p.url)}" target="_blank" rel="noopener">Open FACEIT profile</a>` : ""}</p></div>`;
+function premierGrid() {
+  if (!PS) return `<p class="note">${LT_OK ? "Leetify sent no Premier games yet." : ""}</p>`;
+  return `<div class="statgrid">
+      <div><b>${PS.games}</b>games</div><div><b>${pct(PS.win_rate)}</b>${ab("wr", "win rate")}</div><div><b>${f2(PS.kd)}</b>${ab("kd")}</div>
+      <div><b>${PS.hs != null ? PS.hs + "%" : "–"}</b>${ab("hs")}</div><div><b>${PS.adr ?? "–"}</b>${ab("adr")}</div><div><b>${PS.streak}${PS.streak_win ? "W" : "L"}</b>${ab("streak")}</div>
+    </div><p class="note">Last ${PS.games} Premier games on Leetify. ${ab("pcalc", "Calculated by this site")} from Leetify's raw counts.</p>`;
+}
 const premierBlock = `<div class="card premier">${srcline("CS2 Premier", "var(--premier)")}
     ${PREM != null ? `<div class="bigv" style="color:var(--premier)">${raw(PREM)}</div><div class="note" style="margin-top:4px">Premier rating, as returned by Leetify</div>`
       : `<div class="bigv" style="color:var(--muted);font-size:40px">Not available</div><p class="note">${LT_OK ? "Leetify did not return a Premier rating." : esc(premierOff)}</p>`}
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div>
-    <p class="note">Premier is separate from FACEIT. The two ratings use different scales and are not compared.</p></div>`;
+    ${premierGrid()}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div>`;
 let steamV;
-if (ST_OK && ST.cs2 && ST.cs2.found) steamV = `<div class="bigv" style="color:var(--steam);font-size:48px">${hrs(ST.cs2.hours_total)}</div><div class="note" style="margin-top:4px">CS2 playtime · ${hrs(ST.cs2.hours_2weeks)} in the last 2 weeks</div>`;
+if (ST_OK && ST.cs2 && ST.cs2.found) steamV = `<div class="bigv" style="color:var(--steam);font-size:48px">${hrs(ST.cs2.hours_total)}</div><div class="note" style="margin-top:4px">Total CS2 playtime</div>`;
 else if (ST_OK && ST.games_visible === false) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Hours private</div><p class="note">Set "Game details" to Public in Steam privacy settings.</p>`;
 else if (ST) steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Unavailable</div><p class="note">${esc(ST.games_message || ST.message || "Steam not available")}</p>`;
 else steamV = `<div class="bigv" style="color:var(--muted);font-size:34px">Not connected</div><p class="note">Add STEAM_API_KEY in Secrets to show CS2 hours.</p>`;
@@ -485,12 +529,45 @@ const ltLabel = k => LT_NAMES[k] ? ab(LT_NAMES[k][1], LT_NAMES[k][0]) : esc(k);
 const ltRatings = () => Object.keys(LR).length
   ? `<div class="kv">${Object.keys(LR).map(k => `<span>${ltLabel(k)}</span><b>${raw(LR[k])}</b>`).join("")}</div>`
   : `<p class="na">Leetify returned no ratings for this profile.</p>`;
+const TOPS = [
+  ["reaction_time", "Reaction time", "lreact", "lower is faster", "#F84982"],
+  ["preaim", "Preaim", "lpreaim", "lower is better", "#F84982"],
+  ["accuracy_head", "Head accuracy", "lacc", "higher is better", "#F84982"],
+  ["counter_strafing_shots_good_ratio", "Counter-strafing", "lstrafe", "higher is better", "#F84982"],
+  ["trade_kills_success_percentage", "Trades won", "ltrade", "higher is better", "#F84982"],
+  ["flashbang_hit_foe", "Enemies flashed", "lflash", "higher is better", "#F84982"],
+];
+function topStats() {
+  const cards = TOPS.filter(([k]) => LGAMES.some(m => k in m.game)).map(([k, t, g, hint, col]) => {
+    const vals = LGAMES.map(m => m.game[k]);
+    const last = [...LGAMES].reverse().find(m => k in m.game);
+    return `<div class="topc"><div class="lab">${ab(g, t)}</div><div class="val">${raw(last.game[k])}</div>
+      <div class="hint">last game · ${hint}</div>${spark(vals, col)}<div class="hint">last ${vals.filter(isNum).length} games</div></div>`;
+  });
+  return cards.length ? `<h4 style="margin-top:26px">Top stats per game</h4><div class="tops">${cards.join("")}</div>` : "";
+}
+const SIGN = v => isNum(v) && v > 0 ? "+" + v : v;
 let leetifyBlock;
-if (LT_OK) leetifyBlock = `<div class="card leetify">${srcline("Leetify ratings", "#F84982")}
-    ${ltRatings()}
-    <div class="kv" style="margin-top:10px">${L.profile.total_matches != null ? `<span>Matches on Leetify</span><b>${raw(L.profile.total_matches)}</b>` : ""}${L.profile.winrate != null ? `<span>Win rate (as returned)</span><b>${raw(L.profile.winrate)}</b>` : ""}</div>
-    <p class="note">Exactly as Leetify returns them: not stored, not recalculated. These are Leetify's own scores, separate from FACEIT and Premier.</p>
+if (LT_OK) {
+  const rk = (L.profile.ranks || {}).leetify, wr = L.profile.winrate;
+  const sq = ["aim", "positioning", "utility"].filter(k => isNum(LR[k])).map(k => `<div class="skill"><div class="lab" style="font:700 12px var(--head);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">${ab("lskills", LT_NAMES[k][0])}</div>
+      <div class="sv" title="${esc(LR[k])}">${Math.round(LR[k])}</div><div class="bar"><i style="width:${Math.max(0, Math.min(100, LR[k]))}%"></i></div></div>`).join("");
+  const chips = ["clutch", "opening", "ct_leetify", "t_leetify"].filter(k => k in LR).map(k => `<span>${ltLabel(k)}<b>${raw(SIGN(LR[k]))}</b></span>`).join("");
+  leetifyBlock = `<div class="card leetify">${srcline("Leetify", "#F84982")}
+    <div class="lt-top">
+      <div class="lt-ring"><svg viewBox="0 0 130 130" width="130" height="130"><circle cx="65" cy="65" r="56" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+        <circle cx="65" cy="65" r="56" fill="none" stroke="#F84982" stroke-width="10" opacity=".85"/></svg>
+        <div class="rv"><div>${rk != null ? raw(SIGN(rk)) : "–"}<small>${ab("lrating", "Rating")}</small></div></div></div>
+      <div class="statgrid" style="flex:1;min-width:220px;grid-template-columns:repeat(2,1fr);margin-top:0">
+        <div><b>${isNum(wr) ? (wr * 100).toFixed(1) + "%" : raw(wr)}</b>${ab("wr", "win rate")} (Leetify)</div>
+        <div><b>${raw(L.profile.total_matches)}</b>matches on Leetify</div></div>
+    </div>
+    ${sq ? `<div class="skills">${sq}</div>` : ""}
+    ${chips ? `<div class="chips">${chips}</div>` : ""}
+    ${topStats()}
+    <p class="note">Leetify's own numbers, not stored and not recalculated. Rating squares are rounded like on leetify.com; hover for the exact value.</p>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div>`;
+}
 else if (L) leetifyBlock = `<div class="card leetify">${srcline("Leetify", "#F84982")}<p class="note">${esc(L.message || "Leetify not available.")}</p><div style="margin-top:14px">${ltBadge(false)}</div></div>`;
 else leetifyBlock = "";
 const steamBlock = `<div class="card steam">${srcline("Steam", "var(--steam)")}${steamV}</div>`;
@@ -501,7 +578,8 @@ const profilePage = `
       <div class="links">${p.country ? `<span>${esc(p.country)}</span>` : ""}${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">FACEIT</a>` : ""}${steamUrl ? `<a href="${esc(steamUrl)}" target="_blank" rel="noopener">Steam</a>` : ""}</div></div>
   </div>
   <div class="cards c2">${faceitBlock}${premierBlock}</div>
-  <div class="cards c2">${steamBlock}${leetifyBlock}</div>
+  ${leetifyBlock ? `<div class="cards">${leetifyBlock}</div>` : ""}
+  <div class="cards c2">${steamBlock}</div>
   <div class="cards"><details class="card" id="datacheck"><summary>Data check</summary>
     <p class="note">Field names only (no values, no keys). Send a screenshot of this box to plan the next pages.</p>
     <ul class="chk">
@@ -543,7 +621,6 @@ const matchesPage = `
   <h1>Matches</h1>
   <p class="lead">Every FACEIT match, one bar each. Your best and worst game side by side, and the full scoreboard.</p>
   <div class="cards"><div class="card"><h4>${ab("kd")} per game</h4>
-    <p>Each bar is one game, oldest on the left, newest on the right. A bar above the dashed line means you got more kills than deaths.</p>
     <div class="legend"><span><i style="background:#FF4FA3"></i>Win</span><span><i style="background:#6A5D6A"></i>Loss</span><span><i class="dash"></i>K/D = 1</span></div>
     <div class="chart"><canvas id="kdChart"></canvas></div></div></div>
   ${BW ? `<div class="cards c2">${gameCard(BW.best, "best")}${gameCard(BW.worst, "worst")}</div>
@@ -568,10 +645,9 @@ const mapsPage = `
       <div class="open">Open details ›</div>
     </div>`).join("")}</div>
   <div id="mapPanel"></div>
-  <div class="cards c2">
-    <div class="card"><h4>Does good aim mean I win?</h4><p>Every dot is a match. Pink = won, grey = lost.</p><div class="chart"><canvas id="scatter"></canvas></div></div>
-    <div class="card"><h4>Headshot % per map</h4><p>My average is ${f0(s.hs)}%.</p><div class="chart"><canvas id="hsMap"></canvas></div></div>
-  </div>`;
+  <div class="cards"><div class="card"><h4>Wins and losses per map</h4>
+    <div class="legend"><span><i style="background:#FF4FA3"></i>Win</span><span><i style="background:#6A5D6A"></i>Loss</span></div>
+    <div class="chart" style="height:${Math.max(160, D.maps.length * 38 + 50)}px"><canvas id="mapWL"></canvas></div></div></div>`;
 
 const squadPage = `
   <h1>Find teammates</h1>
@@ -617,7 +693,7 @@ const progressPage = `
   </div>
   <div class="cards c2">
     <div class="card"><h4>When do I win?</h4><p>Dutch time. Brighter pink = I win more. The small number is how many games.</p><div class="heat" id="heat"></div></div>
-    <div class="card"><h4>K/D by hour</h4><p>Do I play worse late at night?</p><div class="chart"><canvas id="hourChart"></canvas></div></div>
+    <div class="card"><h4>${ab("kd")} by time of day</h4><p>Do I play worse late at night? Same 4 times as the table. Under each bar: how many games.</p><div class="chart sm"><canvas id="todChart"></canvas></div></div>
   </div>`;
 
 /* TACTICS: play style from numbers FACEIT and Leetify really send. Nothing is guessed. */
@@ -693,7 +769,16 @@ function tacticsPage() {
         <div class="do"><b>Train:</b> ${LT_TRAIN[ltWorst]}</div>` : ""}
       <p class="note">Values exactly as Leetify returns them. Only Aim, Positioning and Utility are compared with each other, because they share one scale.</p>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div></div>` : "";
-  return intro + summary + faceitCards + ltGames() + ltPart;
+  const mc = D.multi || {}, hasMulti = Object.values(mc).some(v => v > 0);
+  const hasRadar = sk.length === 3, hasLR = LGAMES.some(m => isNum(m.game.leetify_rating)), hasRT = LGAMES.some(m => isNum(m.game.reaction_time));
+  const viz = (hasMulti || hasRadar ? `<div class="cards c2">
+      ${hasMulti ? `<div class="card faceit">${srcline("FACEIT", "var(--faceit)")}<h4>${ab("multi", "Multi-kill rounds")}</h4><p>All your 2k, 3k, 4k and 5k rounds in ${s.matches} games.</p><div class="chart sm"><canvas id="multiChart"></canvas></div></div>` : ""}
+      ${hasRadar ? `<div class="card leetify">${srcline("Leetify", "#F84982")}<h4>${ab("lskills", "Aim · Positioning · Utility")}</h4><p>Leetify's own scores on their 0–100 scale, as returned.</p><div class="chart sm"><canvas id="radarChart"></canvas></div></div>` : ""}
+    </div>` : "") + (hasLR || hasRT ? `<div class="cards c2">
+      ${hasLR ? `<div class="card leetify">${srcline("Leetify", "#F84982")}<h4>${ab("lrating")} per game</h4><p>Green = you helped your team win rounds, red = below zero. Oldest left.</p><div class="chart sm"><canvas id="lrChart"></canvas></div></div>` : ""}
+      ${hasRT ? `<div class="card leetify">${srcline("Leetify", "#F84982")}<h4>${ab("lreact")} per game</h4><p>Seconds, as Leetify sends them. Lower is faster. Oldest left.</p><div class="chart sm"><canvas id="rtChart"></canvas></div></div>` : ""}
+    </div>` : "");
+  return intro + summary + viz + faceitCards + ltGames() + ltPart;
 }
 
 /* PREMIER: from Leetify, shown exactly as returned, with the Leetify badge */
@@ -710,19 +795,27 @@ function premierPage() {
       <li>Match fields <code>${esc((c.match_fields || []).join(", ") || "none")}</code></li>
     </ul>${L.matches_message ? `<p class="na" style="margin-top:10px">${esc(L.matches_message)}</p>` : ""}</details>`;
   if (!LT_OK) return `${intro}<div class="cards c2"><div class="card premier"><p>${esc(L.message)}</p><div style="margin-top:16px">${ltBadge(true)}</div></div>${details}</div>`;
-  const rows = (L.matches || []).map(m => `<tr><td>${raw(m.finished_at)}</td><td>${raw(m.map_name)}</td><td>${raw(m.data_source)}</td>
-      <td>${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td><td>${raw(m.leetify_rating)}</td></tr>`).join("");
+  const rows = (L.matches || []).slice(0, 20).map(m => `<tr><td>${fmtDate(m.finished_at)}</td><td>${raw(m.map_name)}</td><td>${raw(m.data_source)}</td>
+      <td>${m.result ? `<span class="res ${m.result === "win" ? "w" : "l"}">${m.result.toUpperCase()}</span>` : ""} ${raw((m.team_scores || []).join(" : "))}</td><td>${raw(m.total_kills)}</td><td>${raw(m.total_deaths)}</td><td>${raw(m.kd_ratio)}</td><td>${raw(m.leetify_rating)}</td></tr>`).join("");
   return `${intro}
     <div class="cards c2">
       <div class="card premier">${srcline("CS2 Premier rating", "var(--premier)")}
         ${PREM != null ? `<div class="bigv" style="color:var(--premier);font-size:84px">${raw(PREM)}</div>` : `<p class="empty">Leetify did not return a Premier rating.</p>`}
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;flex-wrap:wrap">${ltBadge(true)}${ltView()}</div></div>
-      <div class="card premier">${srcline("Recent matches from Leetify", "var(--premier)")}
-        <p>Each match shows the data source exactly as Leetify labels it. Premier match stats will be split out once Leetify marks matches as Premier.</p>
-        <p class="note">Leetify data is fetched fresh on every visit and is not stored by this app.</p></div>
+      <div class="card premier">${srcline("My Premier games", "var(--premier)")}${premierGrid()}</div>
     </div>
+    ${PG.length ? `<div class="cards c2">
+      <div class="card premier">${srcline("Leetify", "#F84982")}<h4>${ab("lrating")} per Premier game</h4><p>Green above zero, red below. Oldest left.</p><div class="chart sm"><canvas id="pLR"></canvas></div></div>
+      <div class="card premier"><h4>Kills and deaths per game</h4><p>Cyan = kills, grey = deaths. When cyan is taller, your ${ab("kd")} was above 1.</p><div class="chart sm"><canvas id="pKD"></canvas></div></div>
+    </div>
+    <div class="cards c2">
+      <div class="card premier"><h4>Maps I play in Premier</h4><div class="chart sm"><canvas id="pMaps"></canvas></div></div>
+      <div class="card premier"><h4>${ab("wr", "Win rate")} per map</h4><p>Only Premier games.</p>
+        ${Object.entries(PS ? PS.maps : {}).sort((a, b) => b[1].games - a[1].games).map(([mp, v]) => bar(v.wins / v.games, `${v.wins} / ${v.games}`).replace('<div class="prog">', `<div class="prog"><div style="min-width:90px">${esc(mp)}</div>`)).join("")}</div>
+    </div>` : ""}
+    <p class="note">Leetify data is fetched fresh on every visit and is not stored by this app. Premier rating history is not in Leetify's public API, so there is no rating graph.</p>
     <div class="cards"><div class="card" style="overflow-x:auto"><h4>Matches</h4>
-      ${rows ? `<table><tr><th>Finished at</th><th>Map</th><th>Data source</th><th>Score</th><th>Kills</th><th>Deaths</th><th>${ab("kd", "K/D ratio")}</th><th>${ab("lrating")}</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}
+      ${rows ? `<table><tr><th>Date</th><th>Map</th><th>Data source</th><th>Result</th><th>Kills</th><th>Deaths</th><th>${ab("kd", "K/D ratio")}</th><th>${ab("lrating")}</th></tr>${rows}</table>` : `<p class="na">${esc(L.matches_message || "No matches returned by Leetify.")}</p>`}
       <div style="margin-top:16px">${ltBadge(false)}</div></div></div>
     <div class="cards">${details}</div>`;
 }
@@ -747,8 +840,8 @@ function steamPage() {
           <div><h3 style="margin:0">${esc(pr.name || "–")}</h3><a class="lt-link" style="color:var(--steam)" href="${esc(pr.url)}" target="_blank" rel="noopener">Open Steam profile</a></div></div>
         <div class="kv"><span>Profile</span><b>${pr.public ? "Public" : "Private"}</b>${pr.country ? `<span>Country</span><b>${esc(pr.country)}</b>` : ""}${since ? `<span>On Steam since</span><b>${esc(since)}</b>` : ""}</div></div>
       <div class="card steam">${srcline("CS2 playtime", "var(--steam)")}
-        ${c.found ? `<div class="bigv" style="color:var(--steam)">${hrs(c.hours_total)}</div><div class="kv"><span>Last 2 weeks</span><b>${hrs(c.hours_2weeks)}</b></div>
-          <p class="note">Steam reports minutes (${esc(c.minutes_total)} total, ${esc(c.minutes_2weeks)} last 2 weeks); shown here in hours.</p>`
+        ${c.found ? `<div class="bigv" style="color:var(--steam)">${hrs(c.hours_total)}</div>
+          <p class="note">Total playtime. Steam reports minutes (${esc(c.minutes_total)}); shown here in hours.</p>`
           : `<p class="empty">${esc(ST.games_message || "Steam sent no CS2 playtime.")}</p>`}</div>
     </div>
     <div class="cards">${details}</div>`;
@@ -813,13 +906,27 @@ function animate(root) {
 
 /* ---------- charts ---------- */
 const made = {};
+function chartErr(canvas, msg) {
+  if (!canvas) return;
+  const box = canvas.parentElement; box.style.height = "auto";
+  box.innerHTML = `<p class="chart-err">${esc(msg)}</p>`;
+}
+function mk(sel, cfg) {   // each chart on its own: one failing chart never blanks the others
+  const c = $(sel); if (!c) return;
+  try { new Chart(c, cfg); } catch (e) { chartErr(c, "This chart could not be drawn: " + e.message); console.error(sel, e); }
+}
 function charts(id) {
-  if (!window.Chart || made[id]) return;
+  if (made[id]) return;
   made[id] = true;
+  const pg = document.getElementById(id);
+  if (!window.Chart) { pg.querySelectorAll("canvas").forEach(c => chartErr(c, "Charts could not load (the chart library did not download). Refresh the page.")); return; }
   Chart.defaults.color = "#A898A8"; Chart.defaults.font.family = "Barlow";
   const grid = { color: "rgba(255,255,255,0.06)" };
+  const noLegend = { legend: { display: false } };
+  const lineOpts = (yTitle) => ({ maintainAspectRatio: false, plugins: noLegend, scales: { x: { grid: { display: false }, ticks: { display: false } }, y: { grid, title: { display: !!yTitle, text: yTitle } } } });
+  try {
   if (id === "matches") {
-    new Chart($("#kdChart"), { data: { labels: D.kd.map(x => x.n), datasets: [
+    mk("#kdChart", { data: { labels: D.kd.map(x => x.n), datasets: [
       { type: "bar", label: "K/D", data: D.kd.map(x => x.kd), backgroundColor: D.kd.map(x => x.won ? "#FF4FA3" : "#6A5D6A"), borderRadius: 2, order: 2 },
       { type: "line", label: "K/D = 1", data: D.kd.map(() => 1), borderColor: "rgba(255,255,255,.6)", borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0, order: 1 },
     ]}, options: { maintainAspectRatio: false, plugins: { legend: { display: false },
@@ -830,21 +937,50 @@ function charts(id) {
         y: { grid, beginAtZero: true, title: { display: true, text: "K/D" } } } } });
   }
   if (id === "maps") {
-    new Chart($("#scatter"), { type: "scatter", data: { datasets: [
-      { label: "Won", data: D.points.filter(x => x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "#FF4FA3", pointRadius: 5 },
-      { label: "Lost", data: D.points.filter(x => !x.won).map(x => ({ x: x.hs, y: x.kd })), backgroundColor: "rgba(168,152,168,.6)", pointRadius: 5 },
-    ]}, options: { maintainAspectRatio: false, scales: { x: { grid, title: { display: true, text: "Headshot %" } }, y: { grid, title: { display: true, text: "K/D" } } } } });
-    new Chart($("#hsMap"), { type: "bar", data: { labels: D.maps.map(m => m.map), datasets: [{ data: D.maps.map(m => m.hs),
-      backgroundColor: D.maps.map(m => m.hs >= s.hs ? "#FF4FA3" : "rgba(163,92,255,.45)"), borderRadius: 2 }] },
-      options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid }, y: { grid: { display: false } } } } });
+    mk("#mapWL", { type: "bar", data: { labels: D.maps.map(m => m.map), datasets: [
+      { label: "Wins", data: D.maps.map(m => Math.round(m.win_rate * m.games)), backgroundColor: "#FF4FA3", borderRadius: 2 },
+      { label: "Losses", data: D.maps.map(m => m.games - Math.round(m.win_rate * m.games)), backgroundColor: "#6A5D6A", borderRadius: 2 },
+    ]}, options: { indexAxis: "y", maintainAspectRatio: false, plugins: noLegend,
+      scales: { x: { stacked: true, grid, ticks: { precision: 0 }, title: { display: true, text: "Games" } }, y: { stacked: true, grid: { display: false } } } } });
   }
   if (id === "progress") {
-    new Chart($("#hourChart"), { type: "bar", data: { labels: D.hours.map(x => x.hour + ":00"), datasets: [{ data: D.hours.map(x => x.kd),
-      backgroundColor: D.hours.map(x => x.kd >= 1 ? "#FF4FA3" : "rgba(163,92,255,.45)"), borderRadius: 2 }] },
-      options: { maintainAspectRatio: false, plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: c => `K/D ${c.raw.toFixed(2)} · ${D.hours[c.dataIndex].games} games` } } },
-        scales: { y: { grid }, x: { grid: { display: false } } } } });
+    const T = (D.tod || []).filter(x => x.games);
+    mk("#todChart", { type: "bar", data: { labels: T.map(x => [x.label, `${x.games} games`]), datasets: [{ data: T.map(x => x.kd),
+      backgroundColor: T.map(x => x.kd >= 1 ? "#FF4FA3" : "rgba(163,92,255,.55)"), borderRadius: 2 },
+      { type: "line", data: T.map(() => 1), borderColor: "rgba(255,255,255,.6)", borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { filter: i => i.datasetIndex === 0,
+        callbacks: { label: c => `K/D ${isNum(c.raw) ? c.raw.toFixed(2) : "–"} · ${T[c.dataIndex].games} games` } } },
+        scales: { y: { grid, beginAtZero: true, title: { display: true, text: "K/D" } }, x: { grid: { display: false } } } } });
   }
+  if (id === "tactics") {
+    const mc = D.multi || {}, keys = ["k2", "k3", "k4", "k5"].filter(k => k in mc);
+    mk("#multiChart", { type: "doughnut", data: { labels: keys.map(k => `${k.slice(1)}k rounds`), datasets: [{ data: keys.map(k => mc[k]),
+      backgroundColor: ["#A35CFF", "#FF4FA3", "#FF86C4", "#FF5500"], borderColor: "#1a131e", borderWidth: 3 }] },
+      options: { maintainAspectRatio: false, cutout: "58%", plugins: { legend: { position: "right" } } } });
+    const sk = ["aim", "positioning", "utility"];
+    mk("#radarChart", { type: "radar", data: { labels: sk.map(k => LT_NAMES[k][0]), datasets: [{ data: sk.map(k => LR[k]), borderColor: "#F84982",
+      backgroundColor: "rgba(248,73,130,.25)", pointBackgroundColor: "#F84982" }] },
+      options: { maintainAspectRatio: false, plugins: noLegend, scales: { r: { min: 0, max: 100, grid: { color: "rgba(255,255,255,.1)" },
+        angleLines: { color: "rgba(255,255,255,.1)" }, ticks: { display: false }, pointLabels: { color: "#F7EEF4", font: { size: 13 } } } } } });
+    const lr = LGAMES.map(m => m.game.leetify_rating);
+    mk("#lrChart", { type: "bar", data: { labels: LGAMES.map(m => fmtDate(m.finished_at)), datasets: [{ data: lr,
+      backgroundColor: lr.map(v => v >= 0 ? "#52d18a" : "#ff5b6b"), borderRadius: 2 }] }, options: lineOpts("Leetify Rating") });
+    mk("#rtChart", { type: "line", data: { labels: LGAMES.map(m => fmtDate(m.finished_at)), datasets: [{ data: LGAMES.map(m => m.game.reaction_time),
+      borderColor: "#F84982", pointBackgroundColor: "#F84982", tension: .3, spanGaps: true }] }, options: lineOpts("Seconds") });
+  }
+  if (id === "premier" && PG.length) {
+    const lr = PG.map(m => m.leetify_rating);
+    mk("#pLR", { type: "bar", data: { labels: PG.map(m => `${fmtDate(m.finished_at)} · ${m.map_name}`), datasets: [{ data: lr,
+      backgroundColor: lr.map(v => v >= 0 ? "#52d18a" : "#ff5b6b"), borderRadius: 2 }] }, options: lineOpts("Leetify Rating") });
+    mk("#pKD", { type: "bar", data: { labels: PG.map(m => `${fmtDate(m.finished_at)} · ${m.map_name}`), datasets: [
+      { label: "Kills", data: PG.map(m => m.total_kills), backgroundColor: "#4FD1E8", borderRadius: 2 },
+      { label: "Deaths", data: PG.map(m => m.total_deaths), backgroundColor: "#6A5D6A", borderRadius: 2 }] }, options: lineOpts("") });
+    const mp = Object.entries(PS ? PS.maps : {}).sort((a, b) => b[1].games - a[1].games);
+    mk("#pMaps", { type: "doughnut", data: { labels: mp.map(x => x[0]), datasets: [{ data: mp.map(x => x[1].games),
+      backgroundColor: ["#4FD1E8", "#A35CFF", "#FF4FA3", "#FF86C4", "#8FB3D9", "#6A5D6A", "#52d18a"], borderColor: "#1a131e", borderWidth: 3 }] },
+      options: { maintainAspectRatio: false, cutout: "58%", plugins: { legend: { position: "right" } } } });
+  }
+  } catch (e) { console.error(e); }
 }
 
 /* ---------- map detail panel ---------- */

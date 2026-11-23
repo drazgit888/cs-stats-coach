@@ -17,7 +17,7 @@ def test_profile_and_cs2_hours():
     assert out["profile"]["name"] == "busiks1" and out["profile"]["public"] is True
     assert out["cs2"]["found"] is True
     assert out["cs2"]["minutes_total"] == 12645 and out["cs2"]["hours_total"] == 210.8
-    assert out["cs2"]["minutes_2weeks"] == 754 and out["cs2"]["hours_2weeks"] == 12.6
+    assert "hours_2weeks" not in out["cs2"] and "minutes_2weeks" not in out["cs2"]  # hidden on purpose
 
 
 def test_key_never_in_result_or_page():

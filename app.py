@@ -626,7 +626,7 @@ def build_payload(player, cs2, matches, mates):
         "kd": records(kd, {"n": "match_nr", "kd": "kd", "avg10": "avg10", "map": "map", "won": "won"}),
         "maps": records(maps, {"map": "map", "games": "games", "win_rate": "win_rate", "kd": "avg_kd",
                                "hs": "hs", "adr": "adr", "tag": "tag"}),
-        "tod": records(tod, {"label": "label", "games": "games", "win_rate": "win_rate"}),
+        "tod": records(tod, {"label": "label", "games": "games", "win_rate": "win_rate", "kd": "avg_kd"}),
         "hours": records(hours, {"hour": "hour", "games": "games", "kd": "kd"}),
         "heat": {"cols": [t.split(" (")[0] for t in TIME_ORDER], "rows": heat_rows},
         "squad": squad,
@@ -641,6 +641,7 @@ def build_payload(player, cs2, matches, mates):
         "map_details": map_details(matches),
         "partners": partners(mates),
         "tactics": tactics(matches),
+        "multi": {k: int(matches[k].sum()) for k in ("k2", "k3", "k4", "k5") if k in matches and matches[k].notna().any()},
         "loaded": f"{datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC",
     }
 

@@ -181,5 +181,5 @@ def test_data_check_lists_names_only():
     c = out["check"]
     assert c["my_stat_fields"] == sorted(["kd_ratio", "leetify_rating", "steam64_id", "total_deaths", "total_kills", "reaction_time",
                                           "preaim", "flashbang_hit_foe", "trade_kills_success_percentage", "utility_on_death_avg", "some_new_field"])
-    assert c["data_sources"] == ["matchmaking"]
+    assert c["data_sources"] == ["faceit", "matchmaking"]
     assert all(isinstance(x, str) for x in c["my_stat_fields"])
