@@ -39,7 +39,86 @@ Fill in the _[RESULT]_ parts by looking at the live app with your real data.
 - **Result:** _[RESULT: copy the tips the app gives you]_
 - **Test with a real person:** _[Did a friend read the tips? Did they understand them? Did you follow one in your next games, and what happened?]_
 
+## Experiment 7: No FACEIT after 23:00 (before/after)
+This is the **real data-driven decision** of my project: I follow one coach tip and measure if it helps.
+
+### 1. Question and hypothesis
+- **Question:** Do I win more and play better if I stop playing FACEIT after 23:00?
+- **Why this tip:** _[TODO: what does the "When I play" page say about late-night games? Copy win rate and number of games per time of day.]_
+- **Hypothesis (write it BEFORE you start):** _[TODO, e.g. "After the rule my win rate and K/D will go up, because I'm less tired."]_
+
+### 2. Rule
+- **Decision:** no FACEIT match that **starts after 23:00** (Dutch time). Everything else stays the same as normal (same maps, same friends if possible).
+- **Start date:** _[TODO]_  **End date:** _[TODO]_
+- If I break the rule, I still write the match down and mark it (see column "Broke rule?").
+
+### 3. Design
+| | Before (baseline) | After (with the rule) |
+|---|---|---|
+| Matches | my **last 10** FACEIT matches before the start date | my **next 10** FACEIT matches after the start date |
+| Where I get the numbers | Matches page in the app (or FACEIT match page) | same |
+
+10 vs 10 is small, but it's what I can play in about one week. If there's time, I go up to 15 vs 15.
+
+### 4. What I measure
+| Metric | What it means | Why |
+|---|---|---|
+| **Win rate** | % of matches won | the main goal |
+| **K/D** | kills ÷ deaths | my own performance, less dependent on the team |
+| **ADR** | average damage per round | performance, also when I don't get the kill |
+| **HS %** | % of kills that were headshots | aim quality |
+| **Elo change** | Elo at end − Elo at start | does it help me climb? |
+
+### 5. Data: before (last 10 matches)
+| # | Date | Start time | Map | Won? (W/L) | K/D | ADR | HS % |
+|---|---|---|---|---|---|---|---|
+| 1 | | | | | | | |
+| 2 | | | | | | | |
+| 3 | | | | | | | |
+| 4 | | | | | | | |
+| 5 | | | | | | | |
+| 6 | | | | | | | |
+| 7 | | | | | | | |
+| 8 | | | | | | | |
+| 9 | | | | | | | |
+| 10 | | | | | | | |
+
+### 6. Data: after (next 10 matches)
+| # | Date | Start time | Map | Won? (W/L) | K/D | ADR | HS % | Broke rule? |
+|---|---|---|---|---|---|---|---|---|
+| 1 | | | | | | | | |
+| 2 | | | | | | | | |
+| 3 | | | | | | | | |
+| 4 | | | | | | | | |
+| 5 | | | | | | | | |
+| 6 | | | | | | | | |
+| 7 | | | | | | | | |
+| 8 | | | | | | | | |
+| 9 | | | | | | | | |
+| 10 | | | | | | | | |
+
+### 7. Results
+| Metric | Before | After | Difference (after − before) |
+|---|---|---|---|
+| Win rate | | | |
+| Average K/D | | | |
+| Average ADR | | | |
+| Average HS % | | | |
+| Elo change | | | |
+
+How to calculate: win rate = wins ÷ 10 × 100; averages = sum of the column ÷ 10.
+
+### 8. Conclusion
+- **Was my hypothesis right?** _[TODO]_
+- **Could it be luck?** With 10 matches, one lucky game changes the win rate by 10 %, two by 20 %. A difference of only a few % says almost nothing. _[TODO: is your difference big or small?]_
+- **Other things that changed:** _[TODO: new friends in the team, different maps, a new CS update, exams, work shifts…]_
+- **My decision:** _[TODO: keep the rule, drop it, or test longer?]_
+
+### 9. What I learned
+_[TODO, YOUR WORDS]_
+
 ## Ideas for next experiments
-- Follow one tip for a week (e.g. no FACEIT after 23:00) and compare before/after. ← a real data-driven decision!
+- ~~Follow one tip for a week (e.g. no FACEIT after 23:00) and compare before/after.~~ → now Experiment 7.
+- A personal **form index** (weighted K/D, ADR and win rate per 10 matches + trend line), inspired by the CS2 "aged like fine wine" video.
 - Add Premier matches.
 - Compare myself with friends using the nickname box.
