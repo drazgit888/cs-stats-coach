@@ -153,3 +153,28 @@
 - **Tests:** 45 automatic checks pass (new: best/worst rule, map details match the raw games, teammates need 2+ games, tactics are counted from the real fields and disappear when FACEIT doesn't send them, Leetify values only shown "as returned").
 - **Pictures:** `images/v7-d-profile-test-data.png`, `images/v7-d-matches-test-data.png`, `images/v7-d-tactics-test-data.png`, `images/v7-d-squad-test-data.png`, `images/v7-m-maps-test-data.png`, `images/v7-p-tactics-test-data.png` (test data, not my real numbers)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-23: Leetify numbers per game on the Tactics page
+- **Why:** the Data check showed FACEIT does not send entry, clutch or flash numbers for my matches, but Leetify sends a lot per game (reaction time, preaim, flashes, trades, utility left when dying, rounds survived). I didn't like that Leetify mostly showed links on my site.
+- **What I built:** a "Leetify · my last games" table on Tactics: one column per game, the numbers exactly as Leetify sends them (no averages, because Leetify's rules say not to recalculate), with the field name under each label and every word in the glossary.
+- **Decision:** I kept Leetify instead of using only FACEIT, because it is the only source for Premier and has the most detailed play-style data.
+- **Tests:** 46 automatic checks, including that these per-game values pass through unchanged.
+- **Picture:** `images/v7-tactics-leetify-games-test-data.png` (test data)
+- **What I think:** _[YOUR WORDS]_
+
+## 2026-11-23: My 10-point review of the live site
+- **What happened:** after v7 went live I went through every page and wrote 10 points: too much text always open, Premier had no stats next to FACEIT, Leetify looked like a boring list, some charts were empty or unclear, the Premier page had almost no information, and I didn't want my 2-week playtime visible.
+- **What changed:**
+  - "What do these words mean?" is now closed by default on every page and opens when you tap it.
+  - Home and Profile show Premier win rate, K/D, HS%, ADR and streak next to FACEIT. These are calculated by the site from the kills, deaths, headshots, damage and rounds Leetify sends for each Premier game (Leetify's own ratings are never changed). FACEIT and Premier stay in separate blocks.
+  - Leetify on Profile now looks more like leetify.com: a rating circle, Aim/Positioning/Utility squares with 0–100 bars, and "Top stats" cards (reaction time, preaim, head accuracy, counter-strafing, trades, flashes) with the last game's value and a mini line of the last 10 games.
+  - Steam shows only total hours.
+  - Maps: the confusing scatter plot is gone; one chart shows wins and losses per map.
+  - Tactics: donut of multi-kill rounds, radar of Aim/Positioning/Utility, Leetify Rating per game and reaction time per game.
+  - Progress: "K/D by hour" (empty on the live site) became "K/D by time of day" with the number of games under each bar.
+  - Premier: my Premier stats, Leetify Rating per game, kills vs deaths per game, a donut of which maps I play and win rate per map, and readable dates.
+  - Charts are now drawn one by one, so if one fails the page shows a short message instead of an empty box.
+- **What is not possible:** Premier rating history and "better than X% of players" are only on leetify.com, not in their public API.
+- **Tests:** 50 automatic checks (new: Premier stats only count Premier games and match the raw kills/deaths, Leetify ratings unchanged, 2-week hours never reach the page).
+- **Pictures:** `images/v8-d-profile-test-data.png`, `images/v8-d-premier-test-data.png`, `images/v8-d-tactics-test-data.png`, `images/v8-d-progress-test-data.png`, `images/v8-d-maps-test-data.png`, `images/v8-m-home-test-data.png` (test data)
+- **What I think:** _[YOUR WORDS]_

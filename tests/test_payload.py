@@ -72,6 +72,14 @@ def test_leetify_values_pass_through_unchanged(payload):
     assert lt["profile"]["winrate"] == 0.52  # not turned into 52
 
 
+def test_leetify_game_fields_pass_through_unchanged(payload):
+    game = payload["leetify"]["matches"][0]["game"]
+    assert game == {"leetify_rating": 0.05, "reaction_time": 0.612, "preaim": 9.87, "flashbang_hit_foe": 7,
+                    "trade_kills_success_percentage": 0.333, "utility_on_death_avg": 145.5}
+    html = (ROOT / "dashboard.html").read_text(encoding="utf-8")
+    assert "raw(m.game[k])" in html  # shown only through raw()
+
+
 def test_leetify_badge_files_unmodified_and_used():
     lt = build_test_payload()["leetify"]
     import base64
@@ -171,6 +179,7 @@ def test_data_check_lists_names_only():
     from helpers import FakeLeetifySession
     out = load_leetify("76561198000000001", api_key="k", session=FakeLeetifySession())
     c = out["check"]
-    assert c["my_stat_fields"] == ["kd_ratio", "leetify_rating", "steam64_id", "total_deaths", "total_kills"]
-    assert c["data_sources"] == ["matchmaking"]
+    assert c["my_stat_fields"] == sorted(["kd_ratio", "leetify_rating", "steam64_id", "total_deaths", "total_kills", "reaction_time",
+                                          "preaim", "flashbang_hit_foe", "trade_kills_success_percentage", "utility_on_death_avg", "some_new_field"])
+    assert c["data_sources"] == ["faceit", "matchmaking"]
     assert all(isinstance(x, str) for x in c["my_stat_fields"])

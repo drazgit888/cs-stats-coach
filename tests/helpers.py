@@ -53,8 +53,33 @@ FAKE_LEETIFY_PROFILE = {
 FAKE_LEETIFY_MATCHES = [{"finished_at": "2026-11-19T20:00:00Z", "map_name": "de_mirage", "data_source": "matchmaking",
                          "team_scores": [{"score": 13}, {"score": 9}],
                          "stats": [{"steam64_id": "76561198000000001", "total_kills": 21, "total_deaths": 15,
-                                    "kd_ratio": 1.4, "leetify_rating": 0.05}]}]
+                                    "kd_ratio": 1.4, "leetify_rating": 0.05, "reaction_time": 0.612,
+                                    "preaim": 9.87, "flashbang_hit_foe": 7, "trade_kills_success_percentage": 0.333,
+                                    "utility_on_death_avg": 145.5, "some_new_field": 1}]}]
 
+
+
+def _more_leetify_matches(n=12, seed=5):
+    """Extra fake Leetify matches (TEST DATA) with rounds, damage and per-game fields."""
+    rnd = random.Random(seed)
+    out = []
+    for i in range(n):
+        won, lost = (13, rnd.randint(3, 11)) if rnd.random() > .45 else (rnd.randint(3, 11), 13)
+        k, d = rnd.randint(8, 26), rnd.randint(9, 20)
+        out.append({"finished_at": f"2026-11-{18 - i // 2:02d}T2{i % 4}:10:00Z", "map_name": rnd.choice(["de_mirage", "de_anubis", "de_dust2", "de_nuke"]),
+                    "data_source": "matchmaking" if i % 4 else "faceit",
+                    "team_scores": [{"team_number": 2, "score": won}, {"team_number": 3, "score": lost}],
+                    "stats": [{"steam64_id": "76561198000000001", "initial_team_number": 2, "rounds_won": won, "rounds_lost": lost,
+                               "rounds_count": won + lost, "total_kills": k, "total_deaths": d, "total_hs_kills": rnd.randint(2, k),
+                               "total_damage": rnd.randint(1400, 2600), "kd_ratio": round(k / d, 2),
+                               "leetify_rating": round(rnd.uniform(-0.06, 0.08), 4), "reaction_time": round(rnd.uniform(0.45, 0.75), 3),
+                               "preaim": round(rnd.uniform(7, 14), 2), "accuracy_head": round(rnd.uniform(0.1, 0.3), 3),
+                               "counter_strafing_shots_good_ratio": round(rnd.uniform(0.5, 0.85), 3),
+                               "trade_kills_success_percentage": round(rnd.uniform(0.2, 0.6), 3), "flashbang_hit_foe": rnd.randint(0, 12)}]})
+    return out
+
+
+FAKE_LEETIFY_MATCHES += _more_leetify_matches()
 
 class FakeResponse:
     def __init__(self, status, body):

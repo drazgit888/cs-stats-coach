@@ -85,6 +85,29 @@ def _field_names(obj):
     return []
 
 
+# Per-game Leetify fields shown on the Tactics page, values passed through untouched.
+LEETIFY_GAME_FIELDS = [
+    "leetify_rating", "ct_leetify_rating", "t_leetify_rating",
+    "reaction_time", "preaim", "accuracy_head", "spray_accuracy", "counter_strafing_shots_good_ratio",
+    "flashbang_thrown", "flashbang_hit_foe", "flashbang_leading_to_kill", "he_foes_damage_avg", "utility_on_death_avg",
+    "trade_kill_attempts_percentage", "trade_kills_success_percentage", "traded_deaths_success_percentage",
+    "rounds_survived_percentage",
+]
+
+
+def _result(mine, match):
+    """win / loss / draw for this player, from the rounds Leetify returns."""
+    won, lost = mine.get("rounds_won"), mine.get("rounds_lost")
+    if not (isinstance(won, (int, float)) and isinstance(lost, (int, float))):
+        team = mine.get("initial_team_number")
+        mine_s = [t.get("score") for t in match.get("team_scores") or [] if isinstance(t, dict) and t.get("team_number") == team]
+        other = [t.get("score") for t in match.get("team_scores") or [] if isinstance(t, dict) and t.get("team_number") != team]
+        if team is None or len(mine_s) != 1 or len(other) != 1:
+            return None
+        won, lost = mine_s[0], other[0]
+    return "win" if won > lost else "loss" if won < lost else "draw"
+
+
 def _my_match_row(match, steam_id):
     """Pick this player's own numbers out of one match, values as returned."""
     mine = next((p for p in match.get("stats") or []
@@ -95,10 +118,52 @@ def _my_match_row(match, steam_id):
         "map_name": match.get("map_name"),
         "data_source": match.get("data_source"),
         "team_scores": [s.get("score") for s in scores if isinstance(s, dict)],
+        "result": _result(mine, match),
         "total_kills": mine.get("total_kills"),
         "total_deaths": mine.get("total_deaths"),
+        "total_hs_kills": mine.get("total_hs_kills"),
+        "total_damage": mine.get("total_damage"),
+        "rounds_count": mine.get("rounds_count"),
         "kd_ratio": mine.get("kd_ratio"),
         "leetify_rating": mine.get("leetify_rating"),
+        "game": {k: mine.get(k) for k in LEETIFY_GAME_FIELDS if k in mine},
+    }
+
+
+PREMIER_SOURCE = "matchmaking"  # Leetify's data_source for CS2 Premier games
+
+
+def premier_summary(rows):
+    """Premier totals CALCULATED BY THIS APP from raw counts Leetify returns
+    (kills, deaths, headshot kills, damage, rounds, result). No Leetify rating is changed."""
+    games = [r for r in rows if r.get("data_source") == PREMIER_SOURCE and r.get("result")]
+    if not games:
+        return None
+
+    def total(key):
+        vals = [r.get(key) for r in games if isinstance(r.get(key), (int, float))]
+        return sum(vals) if vals else None
+
+    wins = sum(r["result"] == "win" for r in games)
+    losses = sum(r["result"] == "loss" for r in games)
+    kills, deaths, hs, dmg, rounds = (total(k) for k in ("total_kills", "total_deaths", "total_hs_kills", "total_damage", "rounds_count"))
+    streak, first = 0, games[0]["result"]
+    for r in games:  # newest first
+        if r["result"] != first:
+            break
+        streak += 1
+    maps = {}
+    for r in games:
+        m = maps.setdefault(str(r.get("map_name")), {"games": 0, "wins": 0})
+        m["games"] += 1
+        m["wins"] += r["result"] == "win"
+    return {
+        "games": len(games), "wins": wins, "losses": losses, "draws": len(games) - wins - losses,
+        "win_rate": round(wins / len(games), 3),
+        "kd": round(kills / deaths, 2) if kills is not None and deaths else None,
+        "hs": round(100 * hs / kills) if hs is not None and kills else None,
+        "adr": round(dmg / rounds) if dmg is not None and rounds else None,
+        "streak": streak, "streak_win": first == "win", "maps": maps,
     }
 
 
@@ -123,6 +188,7 @@ def load_leetify(steam_id, api_key=None, steam_id_from="", session=None):
         "profile": None,
         "matches": [],
         "matches_message": "",
+        "premier_stats": None,
     }
     if not steam_id:
         out["message"] = MESSAGES["no_steam_id"]
@@ -177,7 +243,8 @@ def load_leetify(steam_id, api_key=None, steam_id_from="", session=None):
                          if isinstance(p, dict) and str(p.get("steam64_id")) == str(steam_id)), None)
             check["my_stat_fields"] = sorted(mine.keys()) if mine else []
             check["data_sources"] = sorted({str(m.get("data_source")) for m in matches if isinstance(m, dict)})
-            out["matches"] = [_my_match_row(m, steam_id) for m in matches[:15] if isinstance(m, dict)]
+            out["matches"] = [_my_match_row(m, steam_id) for m in matches[:50] if isinstance(m, dict)]
+            out["premier_stats"] = premier_summary(out["matches"])
     except LeetifyError as err:
         out["matches_message"] = str(err)
     return out
@@ -248,8 +315,7 @@ def load_steam(steam_id, api_key=None, steam_id_from="", session=None):
         "enabled": True, "status": "error", "message": "",
         "steam_id": str(steam_id or ""), "steam_id_from": steam_id_from,
         "profile": None,
-        "cs2": {"found": False, "hours_total": None, "hours_2weeks": None,
-                "minutes_total": None, "minutes_2weeks": None},
+        "cs2": {"found": False, "hours_total": None, "minutes_total": None},
         "games_visible": None,
         "games_message": "",
     }
@@ -298,7 +364,6 @@ def load_steam(steam_id, api_key=None, steam_id_from="", session=None):
     if cs2 is None:
         out["games_message"] = "CS2 was not found in this Steam library."
         return out
-    total, recent = cs2.get("playtime_forever"), cs2.get("playtime_2weeks", 0)
-    out["cs2"] = {"found": True, "minutes_total": total, "minutes_2weeks": recent,
-                  "hours_total": _hours(total), "hours_2weeks": _hours(recent)}
+    total = cs2.get("playtime_forever")  # playtime_2weeks is left out on purpose (diana's choice)
+    out["cs2"] = {"found": True, "minutes_total": total, "hours_total": _hours(total)}
     return out
