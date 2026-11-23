@@ -255,6 +255,8 @@ details.card[open] summary::after { content: " −"; }
 .tv { font: italic 900 52px/1 var(--head); margin: 6px 0 10px; }
 .how { color: var(--muted); font-size: 13px; margin-top: 8px; }
 .card.leetify { border-top: 3px solid #F84982; }
+table.lg td, table.lg th { white-space: nowrap; }
+table.lg td:first-child { white-space: normal; min-width: 150px; }
 .card.leetify:hover { border-color: rgba(248,73,130,.45); border-top-color: #F84982; }
 .sum3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .sum3 .lab { font: 700 13px var(--head); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -403,6 +405,15 @@ const GL = {
   lskills: ["Aim · Positioning · Utility", "Leetify's own skill scores. Shown exactly as Leetify returns them, not changed by this app."],
   lclutch: ["Clutch · Opening (Leetify)", "Leetify's own clutch and opening-duel ratings. They use a different scale from Aim, so they are shown on their own."],
   lside: ["CT / T Leetify", "Leetify Rating on the CT side and on the T side."],
+  lgames: ["Leetify per game", "Numbers Leetify sends for each of your games, exactly as sent. Percent fields are fractions (0.5 = half)."],
+  lreact: ["Reaction time", "Seconds between an enemy appearing and you starting to shoot. Lower is faster."],
+  lpreaim: ["Preaim", "How far (in degrees) your crosshair was from the enemy when they appeared. Lower is better."],
+  lacc: ["Head accuracy · Spray accuracy", "Share of your shots that hit the head, and share of spray shots that hit."],
+  lstrafe: ["Counter-strafing", "Share of shots fired while standing still after stopping correctly. Higher is better."],
+  lflash: ["Flashes", "Flashes thrown, enemies blinded, and flashes that led to a kill."],
+  lutildeath: ["Utility on death", "Value of grenades you still had when you died. Lower means you used them."],
+  ltrade: ["Trades", "Trade attempts / trades won: you kill the enemy who just killed a teammate. Traded deaths: a teammate killed your killer."],
+  lsurv: ["Rounds survived", "Share of rounds you were still alive at the end."],
   hours: ["Playtime", "Hours Steam counted for CS2. Steam sends minutes; this page shows them as hours."],
 };
 const ab = (k, txt) => GL[k] ? `<span class="tt" tabindex="0" data-tip="${esc(GL[k][1])}">${txt ?? GL[k][0]}</span>` : (txt ?? k);
@@ -412,7 +423,7 @@ const GLP = {
   briefing: ["kd", "adr", "wr", "veto"],
   matches: ["kd", "kda", "hs", "adr", "score", "mvp", "multi"],
   maps: ["kd", "adr", "hs", "wr", "kda", "veto"],
-  tactics: ["entry", "clutch", "flash", "util", "multi", "awp", "lskills", "lclutch", "lside"],
+  tactics: ["multi", "entry", "clutch", "flash", "util", "lgames", "lreact", "lpreaim", "lacc", "lstrafe", "lflash", "lutildeath", "ltrade", "lsurv", "lskills", "lclutch", "lside"],
   squad: ["level", "wr", "kd"],
   progress: ["elo", "level", "streak", "kd"],
   premier: ["premier", "kd", "lrating"],
@@ -620,6 +631,33 @@ const LT_TRAIN = {
   positioning: "After each death ask: could a teammate trade me? Hold angles closer to your team.",
   utility: "Learn 2 smokes and 2 flashes for the site you play most on your best map.",
 };
+const LG_ROWS = [
+  ["Rating", [["leetify_rating", "Leetify Rating", "lrating"], ["ct_leetify_rating", "CT Leetify", "lside"], ["t_leetify_rating", "T Leetify", "lside"]]],
+  ["Aim", [["reaction_time", "Reaction time", "lreact"], ["preaim", "Preaim", "lpreaim"], ["accuracy_head", "Head accuracy", "lacc"],
+    ["spray_accuracy", "Spray accuracy", "lacc"], ["counter_strafing_shots_good_ratio", "Counter-strafing", "lstrafe"]]],
+  ["Utility", [["flashbang_thrown", "Flashes thrown", "lflash"], ["flashbang_hit_foe", "Enemies flashed", "lflash"],
+    ["flashbang_leading_to_kill", "Flashes → kill", "lflash"], ["he_foes_damage_avg", "HE damage to enemies", "util"], ["utility_on_death_avg", "Utility on death", "lutildeath"]]],
+  ["Trades", [["trade_kill_attempts_percentage", "Trade attempts", "ltrade"], ["trade_kills_success_percentage", "Trades won", "ltrade"],
+    ["traded_deaths_success_percentage", "Traded deaths", "ltrade"]]],
+  ["Survival", [["rounds_survived_percentage", "Rounds survived", "lsurv"]]],
+];
+function ltGames() {
+  if (!LT_OK) return "";
+  const G = (L.matches || []).filter(m => m.game && Object.keys(m.game).length).slice(0, 6);
+  if (!G.length) return `<div class="cards"><div class="card leetify">${srcline("Leetify · my last games", "#F84982")}<p class="na">${esc(L.matches_message || "Leetify sent no per-game numbers.")}</p></div></div>`;
+  const head = G.map(m => `<th>${raw(String(m.finished_at || "").slice(0, 10))}<br><span style="color:var(--text)">${raw(m.map_name)}</span><br><span class="na" style="font-style:normal">${raw(m.data_source)}</span></th>`).join("");
+  const body = LG_ROWS.map(([grp, rows]) => {
+    const rs = rows.filter(([k]) => G.some(m => k in m.game));
+    if (!rs.length) return "";
+    return `<tr><td colspan="${G.length + 1}" style="color:var(--pink-2);font:700 13px var(--head);letter-spacing:.14em;text-transform:uppercase;padding-top:16px">${grp}</td></tr>` +
+      rs.map(([k, t, g]) => `<tr><td>${ab(g, t)}<br><code style="font-size:11px;color:var(--muted)">${k}</code></td>${G.map(m => `<td>${k in m.game ? raw(m.game[k]) : `<span class="na">–</span>`}</td>`).join("")}</tr>`).join("");
+  }).join("");
+  return `<div class="cards"><div class="card leetify" style="overflow-x:auto">${srcline("Leetify · my last games", "#F84982")}
+    <h4>${ab("lgames", "Per game, as Leetify sends it")}</h4>
+    <p>One column per game, newest first. Hover or tap a name to see what it means. Nothing here is averaged or changed.</p>
+    <table class="lg"><tr><th>Field</th>${head}</tr>${body}</table>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div></div>`;
+}
 function tacticsPage() {
   const T = D.tactics || [];
   const fmt = t => t.fmt === "pct" ? pct(t.value) : (isNum(t.value) ? t.value.toFixed(t.value < 10 ? 2 : 1) : "–");
@@ -633,7 +671,7 @@ function tacticsPage() {
   const worstName = weak.length ? weak[0].title : ltWorst ? `${LT_NAMES[ltWorst][0]} (Leetify)` : null;
   const trainTxt = weak.length && TRAIN[weak[0].key] ? TRAIN[weak[0].key][0] : ltWorst ? LT_TRAIN[ltWorst] : null;
   const intro = `<h1>Tactics</h1><p class="lead">How do I play? Real tactics (positions, rotations) need demo files. This page only uses play-style numbers that FACEIT${LT_OK ? " and Leetify" : ""} really send, and says how each one is counted.</p>`;
-  if (!T.length && !sk.length) return `${intro}<div class="cards"><div class="card"><p class="empty">FACEIT did not send play-style numbers (opening duels, clutches, flashes) for these matches${L ? "" : ", and Leetify is off"}.</p>
+  if (!T.length && !sk.length && !(LT_OK && (L.matches || []).some(m => m.game && Object.keys(m.game).length))) return `${intro}<div class="cards"><div class="card"><p class="empty">FACEIT did not send play-style numbers (opening duels, clutches, flashes) for these matches${L ? "" : ", and Leetify is off"}.</p>
     <p class="note">Open Profile → Data check and send a screenshot, so I can see which fields exist.</p></div></div>`;
   const summary = `<div class="cards"><div class="card"><div class="sum3">
       <div><div class="lab">What you do best</div><div class="val" style="color:var(--good)">${esc(bestName || "Not enough data")}</div></div>
@@ -655,7 +693,7 @@ function tacticsPage() {
         <div class="do"><b>Train:</b> ${LT_TRAIN[ltWorst]}</div>` : ""}
       <p class="note">Values exactly as Leetify returns them. Only Aim, Positioning and Utility are compared with each other, because they share one scale.</p>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap">${ltBadge(false)}${ltView()}</div></div></div>` : "";
-  return intro + summary + faceitCards + ltPart;
+  return intro + summary + faceitCards + ltGames() + ltPart;
 }
 
 /* PREMIER: from Leetify, shown exactly as returned, with the Leetify badge */

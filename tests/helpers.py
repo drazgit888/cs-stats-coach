@@ -53,7 +53,9 @@ FAKE_LEETIFY_PROFILE = {
 FAKE_LEETIFY_MATCHES = [{"finished_at": "2026-11-19T20:00:00Z", "map_name": "de_mirage", "data_source": "matchmaking",
                          "team_scores": [{"score": 13}, {"score": 9}],
                          "stats": [{"steam64_id": "76561198000000001", "total_kills": 21, "total_deaths": 15,
-                                    "kd_ratio": 1.4, "leetify_rating": 0.05}]}]
+                                    "kd_ratio": 1.4, "leetify_rating": 0.05, "reaction_time": 0.612,
+                                    "preaim": 9.87, "flashbang_hit_foe": 7, "trade_kills_success_percentage": 0.333,
+                                    "utility_on_death_avg": 145.5, "some_new_field": 1}]}]
 
 
 class FakeResponse:

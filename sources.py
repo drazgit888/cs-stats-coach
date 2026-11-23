@@ -85,6 +85,16 @@ def _field_names(obj):
     return []
 
 
+# Per-game Leetify fields shown on the Tactics page, values passed through untouched.
+LEETIFY_GAME_FIELDS = [
+    "leetify_rating", "ct_leetify_rating", "t_leetify_rating",
+    "reaction_time", "preaim", "accuracy_head", "spray_accuracy", "counter_strafing_shots_good_ratio",
+    "flashbang_thrown", "flashbang_hit_foe", "flashbang_leading_to_kill", "he_foes_damage_avg", "utility_on_death_avg",
+    "trade_kill_attempts_percentage", "trade_kills_success_percentage", "traded_deaths_success_percentage",
+    "rounds_survived_percentage",
+]
+
+
 def _my_match_row(match, steam_id):
     """Pick this player's own numbers out of one match, values as returned."""
     mine = next((p for p in match.get("stats") or []
@@ -99,6 +109,7 @@ def _my_match_row(match, steam_id):
         "total_deaths": mine.get("total_deaths"),
         "kd_ratio": mine.get("kd_ratio"),
         "leetify_rating": mine.get("leetify_rating"),
+        "game": {k: mine.get(k) for k in LEETIFY_GAME_FIELDS if k in mine},
     }
 
 

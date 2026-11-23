@@ -153,3 +153,11 @@
 - **Tests:** 45 automatic checks pass (new: best/worst rule, map details match the raw games, teammates need 2+ games, tactics are counted from the real fields and disappear when FACEIT doesn't send them, Leetify values only shown "as returned").
 - **Pictures:** `images/v7-d-profile-test-data.png`, `images/v7-d-matches-test-data.png`, `images/v7-d-tactics-test-data.png`, `images/v7-d-squad-test-data.png`, `images/v7-m-maps-test-data.png`, `images/v7-p-tactics-test-data.png` (test data, not my real numbers)
 - **What I think / what I learned:** _[YOUR WORDS]_
+
+## 2026-11-23: Leetify numbers per game on the Tactics page
+- **Why:** the Data check showed FACEIT does not send entry, clutch or flash numbers for my matches, but Leetify sends a lot per game (reaction time, preaim, flashes, trades, utility left when dying, rounds survived). I didn't like that Leetify mostly showed links on my site.
+- **What I built:** a "Leetify · my last games" table on Tactics: one column per game, the numbers exactly as Leetify sends them (no averages, because Leetify's rules say not to recalculate), with the field name under each label and every word in the glossary.
+- **Decision:** I kept Leetify instead of using only FACEIT, because it is the only source for Premier and has the most detailed play-style data.
+- **Tests:** 46 automatic checks, including that these per-game values pass through unchanged.
+- **Picture:** `images/v7-tactics-leetify-games-test-data.png` (test data)
+- **What I think:** _[YOUR WORDS]_
